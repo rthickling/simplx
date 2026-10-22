@@ -25,7 +25,7 @@ public:
 		setRepeat(Time::Second(1));
 	}
 	
-	void onTimeout(const tredzone::DateTime&) throw() override
+	void onTimeout(const tredzone::DateTime&) noexcept override
 	{
 		m_Count++;
 		cout << "Timer count " << m_Count << endl;

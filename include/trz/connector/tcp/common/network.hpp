@@ -71,7 +71,7 @@ class Network : public Actor
     class EpollCreateException : public exception
     {
         public:
-        virtual const char *what() const throw() { return "Couldn't create epollSocket"; }
+        virtual const char *what() const noexcept { return "Couldn't create epollSocket"; }
     };
 
     /**
@@ -88,7 +88,7 @@ class Network : public Actor
             m_msg << "Failed to direct send message: " << m_err;
         }
 
-        virtual const char *what() const throw() { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
 
         private:
         ostringstream m_msg;

@@ -70,7 +70,7 @@ public:
                   << " port:" << m_currentListenningParam.m_port << ")";
         }
 
-        virtual const char *what() const throw() { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
 
         private:
         ostringstream m_msg;

@@ -11,6 +11,7 @@
 #include <list>
 #include <ostream>
 #include <typeinfo>
+#include <new>
 
 #include "trz/engine/internal/mforwardchain.h"
 
@@ -161,7 +162,8 @@ template <class _Allocator, class _Value> class PropertyValue : public PropertyA
     virtual PropertyAbstractValue *clone(const PropertyBase &) const; // throw (std::bad_alloc)
     void *operator new(size_t);                                       // throw (std::bad_alloc)
     inline void *operator new(std::size_t size, void *ptr) noexcept { return ::operator new(size, ptr); }
-    inline void operator delete(void *)noexcept;
+    inline void operator delete(
+        PropertyValue*, std::destroying_delete_t) noexcept;
     inline void operator delete(void *, void *)noexcept;
 };
 
@@ -215,7 +217,7 @@ class PropertyValue<_Allocator,
     virtual PropertyAbstractValue *clone(const PropertyBase &) const; // throw (std::bad_alloc)
     void *operator new(size_t);                                       // throw (std::bad_alloc)
     inline void *operator new(std::size_t size, void *ptr) noexcept { return ::operator new(size, ptr); }
-    inline void operator delete(void *)noexcept;
+    inline static void operator delete(PropertyValue*, std::destroying_delete_t) noexcept;
     inline void operator delete(void *, void *)noexcept;
 };
 
@@ -622,11 +624,23 @@ PropertyAbstractValue *PropertyValue<_Allocator, _Value>::clone(const PropertyBa
         PropertyValue(otherProperty, value);
 }
 
-template <class _Allocator, class _Value> void PropertyValue<_Allocator, _Value>::operator delete(void *p) noexcept
+template <class _Allocator, class _Value>
+inline void PropertyValue<_Allocator, _Value>::operator delete(
+    PropertyValue* p, std::destroying_delete_t) noexcept
 {
-    typename _Allocator::template rebind<PropertyValue>::other(((PropertyValue *)p)->property.get_allocator())
-        .deallocate((PropertyValue *)p, 1);
+    using Allocator =
+        typename _Allocator::template rebind<PropertyValue>::other;
+
+    Allocator allocator{p->property.get_allocator()};
+
+    p->~PropertyValue();
+    allocator.deallocate(p, 1);
 }
+// template <class _Allocator, class _Value> void PropertyValue<_Allocator, _Value>::operator delete(void *p) noexcept
+// {
+//     typename _Allocator::template rebind<PropertyValue>::other(((PropertyValue *)p)->property.get_allocator())
+//         .deallocate((PropertyValue *)p, 1);
+// }
 
 template <class _Allocator, class _Value>
 void PropertyValue<_Allocator, _Value>::operator delete(void *, void *p) noexcept
@@ -647,12 +661,23 @@ PropertyValue<_Allocator,
 }
 
 template <class _Allocator>
-void PropertyValue<_Allocator,
-                   std::basic_string<char, std::char_traits<char>, typename _Allocator::template rebind<char>::other>>::
-operator delete(void *p) noexcept
+inline void PropertyValue<
+    _Allocator,
+    std::basic_string<
+        char,
+        std::char_traits<char>,
+        typename _Allocator::template rebind<char>::other
+    >
+>::operator delete(
+    PropertyValue* p, std::destroying_delete_t) noexcept
 {
-    typename _Allocator::template rebind<PropertyValue>::other(((PropertyValue *)p)->value.get_allocator())
-        .deallocate((PropertyValue *)p, 1);
+    using Allocator =
+        typename _Allocator::template rebind<PropertyValue>::other;
+
+    Allocator allocator{p->value.get_allocator()};
+
+    p->~PropertyValue();
+    allocator.deallocate(p, 1);
 }
 
 template <class _Allocator>

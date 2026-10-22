@@ -11,7 +11,7 @@
 #include "simplx.h"
 #include "trz/connector/tcpconnector.hpp"
 #include "trz/connector/http/server/server.hpp"
-#include "trz/util/timer.h"
+#include "trz/pattern/timer.h"
 
 #include <fstream>
 #include <sstream>

@@ -77,7 +77,7 @@ template <class _TNetwork> class IClient
                   << ")";
         }
 
-        virtual const char *what() const throw() { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
 
         private:
         ostringstream        m_msg;
@@ -102,7 +102,7 @@ template <class _TNetwork> class IClient
             m_msg << "TcpClient (" << m_actorId << "): TcpClient not connected";
         }
 
-        virtual const char *what() const throw() { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
 
         private:
         ostringstream m_msg;
@@ -127,7 +127,7 @@ template <class _TNetwork> class IClient
             m_msg << "TcpClient (" << m_actorId << "): Fail to bufferize data: buffer full";
         }
 
-        virtual const char *what() const throw() { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
 
         private:
         ostringstream m_msg;

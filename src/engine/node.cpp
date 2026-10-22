@@ -440,12 +440,15 @@ void AsyncNodeManager::shutdown() noexcept
     {
         asyncActorPerformanceNeutralCallbackChain.front()->unregister();
     }
-    for (Actor::EventTable *i = freeEventTable; i != 0;)
+    for (Actor::EventTable *i = freeEventTable; i != nullptr;)
     {
         Actor::EventTable *tmp = i;
         i = i->nextUnused;
+        void* allocation = tmp->deallocatePointer;
+
         tmp->~EventTable();
-        nodeAllocator.deallocate(sizeof(Actor::EventTable) + CACHE_LINE_SIZE - 1, tmp->deallocatePointer);
+
+        nodeAllocator.deallocate(sizeof(Actor::EventTable) + CACHE_LINE_SIZE - 1, allocation);
     }
     while (!freeNodeConnectionChain.empty())
     {

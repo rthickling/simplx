@@ -16,7 +16,7 @@ include_directories(${SIMPLX_DIR}/include)
 
 function(trz_set_cxx_flags)
     
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++26 -freflection")
     
     # search for user-defined c++ version
     string(FIND ${CMAKE_CXX_FLAGS} "--std=c++" USER_CXX_VERSION_POS)
@@ -24,8 +24,8 @@ function(trz_set_cxx_flags)
         # user-defined C++ version
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     else()
-        # default is c++11
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
+        # default is c++26
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++26")
     endif()
 
     # add pthread
@@ -50,7 +50,7 @@ function(trz_set_cxx_flags)
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")       			# -g already defined
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")					# adding flags here doesn't work
     elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-        set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11")
+        set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++26")
     else()
         message (FATAL_ERROR "unsupported C++ compiler ${CMAKE_CXX_COMPILER_ID}")
     endif()

@@ -180,6 +180,9 @@ Actor::CoreId Actor::ActorId::getCore() const
 
 //---- vanilla CTOR ------------------------------------------------------------
 
+// Turning off uninitialized warning: false positive here
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wuninitialized"
     Actor::Actor()
         : ActorBase(), eventTable((assert(asyncNode != 0), asyncNode->retainEventTable(*this))),
         singletonActorIndex(AsyncNodeBase::StaticShared::SINGLETON_ACTOR_INDEX_SIZE),
@@ -193,6 +196,7 @@ Actor::CoreId Actor::ActorId::getCore() const
     
     onAdded(*asyncNode);
 }
+#pragma GCC diagnostic pop
 
 //---- Actor DTOR --------------------------------------------------------------
 

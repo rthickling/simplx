@@ -10,6 +10,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <new>
 
 #include "trz/engine/event.h"
 #include "trz/engine/internal/cacheline.h"
@@ -58,7 +59,7 @@ struct FeatureNotImplementedException : std::exception
  * @param e std::exception
  * @note optionally break to debugger before throwing exception
  */
-inline void breakThrow(const std::exception &e) throw()
+[[noreturn]] inline void breakThrow(const std::exception &e)
 {
     TRZ_DEBUG_BREAK();
 
@@ -770,7 +771,7 @@ public:
      * @brief Base-class of callback handler.
      * To qualify as argument of registerCallback() and registerPerformanceNeutralCallback() actor methods,
      * a class must publicly derive from Callback and implement the public method:<br>
-     * <code>void onCallback() throw()</code>
+     * <code>void onCallback() noexcept</code>
      */
     class Callback : private MultiDoubleChainLink<Callback>
     {
@@ -1501,7 +1502,7 @@ public:
      * The callback-handler is of template generic type _Callback
      * which must meet the following conditions:
      * - has Actor::Callback as a public super-class
-     * - publicly implement the method <code>void onCallback() throw()</code>
+     * - publicly implement the method <code>void onCallback() noexcept</code>
      *
      * This method causes the event-loop (cpu-core) running this actor
      * to call onCallback() <b>once</b> on the next loop iteration.
@@ -1688,7 +1689,7 @@ public:
      * \code
      * class MyActor : public tredzone::Actor {
      * protected:
-     *     virtual void onDestroyRequest() throw() {
+     *     virtual void onDestroyRequest() noexcept {
      *         if (isWorkflowCompleted())
      *         {    // work finished, accept destruction
      *              acceptDestroy();
@@ -1701,7 +1702,7 @@ public:
      *
      * private:
      *
-     *     bool isWorkflowCompleted() throw();
+     *     bool isWorkflowCompleted() noexcept;
      * };
      * \endcode
      */
@@ -1786,16 +1787,14 @@ public:
             _Actor(actorInit)
         {
         }
-        
+
         inline
-        void operator delete(void *p) noexcept
+        static void operator delete(
+        ActorWrapper* p, std::destroying_delete_t) noexcept
         {
-            // crashes on gcc6 & 7
-            // AllocatorBase(*  static_cast<ActorWrapper *>(p)->_Actor::asyncNode).deallocate(sizeof(ActorWrapper), p);                      // bad (original)
-            // AllocatorBase(*static_cast<ActorWrapper *>(static_cast<_Actor *>(p))->getAsyncNode()).deallocate(sizeof(ActorWrapper), p);    // ok (shrubb)
-            
-            // fix: don't walk around diamond-like classes to fetch a member variable
-            AllocatorBase(*(static_cast<ActorWrapper *>(static_cast<_Actor *>(p)))->getAsyncNode()).deallocate(sizeof(ActorWrapper), p);                           // ok
+            auto* node = p->getAsyncNode();
+            p->~ActorWrapper();
+            AllocatorBase(*node).deallocate(sizeof(ActorWrapper), p);
         }
         
         // (we assume that this function must be implemented by STL allocator interface but is never called)
@@ -1843,8 +1842,8 @@ public:
     bool isRegisteredHighPriorityEventHandler(EventId) const noexcept;
     bool isRegisteredEventHandler(EventId) const noexcept;
     bool isRegisteredUndeliveredEventHandler(EventId) const noexcept;
-    void registerCallback(void (*onCallback)(Callback &) /*noexcept*/, Callback &) noexcept;
-    void registerPerformanceNeutralCallback(void (*onCallback)(Callback &) /*noexcept*/, Callback &) noexcept;
+    void registerCallback(void (*onCallback)(Callback &) noexcept, Callback &) noexcept;
+    void registerPerformanceNeutralCallback(void (*onCallback)(Callback &) noexcept, Callback &) noexcept;
     Actor *getSingletonActor(SingletonActorIndex) noexcept;
     void reserveSingletonActor(SingletonActorIndex); // throw (CircularReferenceException)
     void setSingletonActor(SingletonActorIndex, Actor &) noexcept;
@@ -2335,7 +2334,7 @@ private:
  *         registerCallback(*this);
  *     }
  *
- *     void onCallback() throw() {
+ *     void onCallback() noexcept {
  *         registerCallback(*this);
  *         try {
  *             if (batch.isPushCommitted(pipeToDestinationActor)) {

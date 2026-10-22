@@ -199,7 +199,7 @@ class DateTime : public Time
                                  localMinute(0)
     {
     }
-    
+    DateTime(const DateTime&) noexcept = default;
     DateTime &operator=(const DateTime &t) noexcept
     {
         Time::operator=(t);

@@ -82,7 +82,8 @@ string  GetHostnameIP(const string &name)
 
 vector<string> exec_command(const string cmd_s, const bool strip_whitespace_f)
 {
-    unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd_s.c_str(), "r"), pclose);
+    auto close_pipe = [](FILE* f) { pclose(f); };
+    unique_ptr<FILE, decltype(close_pipe)> pipe(popen(cmd_s.c_str(), "r"), close_pipe);
     if (!pipe)  return {"error: popen() failed"};
     
     array<char, 512>    ascii_buffer;

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstring>
+#include <new>
 #include <memory>
 
 #include "trz/engine/actor.h"
@@ -442,7 +443,7 @@ public:
      * Any Actor can be declared as a Service from the StartSequence using the addService() method.
      * This Actor is identified by a service-tag.
      * Any Actor during runtime can ask the ServiceIndex for the ActorId corresponding to a given service-tag.
-     * @note service-tag must implement <code>static const char* name() throw()</code> public method,
+     * @note service-tag must implement <code>static const char* name() noexcept</code> public method,
      * or inherit from Service which contains a default name method.
      */
     class ServiceIndex
@@ -1003,19 +1004,16 @@ public:
         serviceSingletonActor->unregisterServiceActor(*this);
         destroyEventActor->serviceActor = 0;
     }
-    inline void operator delete(void *p) noexcept
+    inline static void operator delete(
+        ServiceActorWrapper* p, std::destroying_delete_t) noexcept
     {
-        Actor::Allocator<ServiceActorWrapper>(
-            Actor::AllocatorBase(*static_cast<ServiceActorWrapper *>(p)->Actor::asyncNode))
-            .deallocate(static_cast<ServiceActorWrapper *>(p), 1);
-    }
-    inline void operator delete(void *, void *p) noexcept
-    {
-        Actor::Allocator<ServiceActorWrapper>(
-            Actor::AllocatorBase(*static_cast<ServiceActorWrapper *>(p)->Actor::asyncNode))
-            .deallocate(static_cast<ServiceActorWrapper *>(p), 1);
-    }
+        Actor::Allocator<ServiceActorWrapper> allocator{
+            Actor::AllocatorBase{*p->Actor::asyncNode}
+        };
 
+        p->~ServiceActorWrapper();
+        allocator.deallocate(p, 1);
+    }
 private:
     
     friend class StartSequence;

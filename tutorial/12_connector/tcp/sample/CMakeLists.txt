@@ -11,7 +11,7 @@ include_directories(${SIMPLX_DIR}/include)
 trz_add_topdir(src/engine)
 
 add_executable(tcpclient.bin tcpclient.cpp)
-target_link_libraries(tcpclient.bin engine)
+target_link_libraries(tcpclient.bin PRIVATE engine)
 
 add_executable(tcpserver.bin tcpserver.cpp)
-target_link_libraries(tcpserver.bin engine)
+target_link_libraries(tcpserver.bin PRIVATE engine)

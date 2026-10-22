@@ -166,7 +166,7 @@ void setThreadAffinity(std::thread &thread, std::size_t core)
     }
 }
 
-int main(int argc, char **argv)
+int main(int, char **)
 { 
     MyThread    userTread{"from2to1", "from1to2", true, true};
     std::thread startedThread(&MyThread::run, &userTread);

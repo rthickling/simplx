@@ -2,6 +2,7 @@
 /build
 **/build/
 **/tbuild/
+**/build-gcc16/
 /src/engine/build
 /tutorial/build
 /tutorial/build_*

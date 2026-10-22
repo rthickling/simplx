@@ -153,7 +153,7 @@ struct MyActor : public tredzone::Actor
         cout << "MyActor::MyActor()" << endl;
         eternal = newReferencedSingletonActor<EternalActor>(serviceDestroyedFlag);
     }
-    ~MyActor() throw() { cout << "MyActor::~MyActor()" << endl; }
+    ~MyActor() noexcept { cout << "MyActor::~MyActor()" << endl; }
     
     void onDestroyRequest() noexcept override
     {
@@ -216,12 +216,12 @@ struct ActorMultipleReferenceTest : tredzone::Actor
         {
             cout << "ActorMultipleReferenceTest::ActorMultipleReferenceTest::InnerActor()" << endl;
         }
-        virtual ~InnerActor() throw()
+        virtual ~InnerActor() noexcept
         {
             DestroyFlags::reportRegularActorDestroy();
             cout << "ActorMultipleReferenceTest::ActorMultipleReferenceTest::~InnerActor()" << endl;
         }
-        virtual void onDestroyRequest() throw()
+        virtual void onDestroyRequest() noexcept
         {
             ASSERT_GT(destroyRetryCount, 0u);
             if (--destroyRetryCount == 0)
@@ -249,7 +249,7 @@ struct ActorMultipleReferenceTest : tredzone::Actor
         cout << "ActorMultipleReferenceTest::ActorMultipleReferenceTest(" << this << ")"
                   << (serviceId == 0 ? "" : " [service]") << endl;
     }
-    virtual ~ActorMultipleReferenceTest() throw()
+    virtual ~ActorMultipleReferenceTest() noexcept
     {
         if (serviceId != 0)
         {
@@ -262,7 +262,7 @@ struct ActorMultipleReferenceTest : tredzone::Actor
         cout << "ActorMultipleReferenceTest::~ActorMultipleReferenceTest(" << this << ")"
                   << (serviceId == 0 ? "" : " [service]") << endl;
     }
-    virtual void onDestroyRequest() throw()
+    virtual void onDestroyRequest() noexcept
     {
         ASSERT_GT(destroyRetryCount, 0u);
         if (--destroyRetryCount == 0)
@@ -290,12 +290,12 @@ struct ActorMultipleReferenceTest2 : ActorMultipleReferenceTest
         {
             cout << "ActorMultipleReferenceTest::ActorMultipleReferenceTest2::InnerSingletonActor()" << endl;
         }
-        virtual ~InnerSingletonActor() throw()
+        virtual ~InnerSingletonActor() noexcept
         {
             DestroyFlags::reportServiceDependentDestroyed(serviceId);
             cout << "ActorMultipleReferenceTest::ActorMultipleReferenceTest2::~InnerSingletonActor()" << endl;
         }
-        virtual void onDestroyRequest() throw()
+        virtual void onDestroyRequest() noexcept
         {
             ASSERT_GT(destroyRetryCount, 0u);
             if (--destroyRetryCount == 0)
@@ -348,7 +348,7 @@ class ActorIds
             actorIds->setActorId(*this);
             cout << "ActorIds::Actor::Actor() [service], this=" << this << endl;
         }
-        virtual ~Actor() throw() { cout << "ActorIds::Actor::~Actor() [service], this=" << this << endl; }
+        virtual ~Actor() noexcept { cout << "ActorIds::Actor::~Actor() [service], this=" << this << endl; }
     };
     typedef set<tredzone::Actor::ActorId> ActorIdSet;
 
@@ -361,7 +361,7 @@ class ActorIds
         actorIdSet.insert(actorId);
         cout << "ActorIds::setActorId(), actorId=" << actorId << endl;
     }
-    const ActorIdSet &getCoreActorIds() const throw()
+    const ActorIdSet &getCoreActorIds() const noexcept
     {
         EXPECT_NE(mainThreadId, tredzone::ThreadId::current());
         getCoreActorIdsCalledFlag = true;
@@ -379,7 +379,7 @@ class ActorIds
 
 struct AbstractActorReferenceTreeFactory
 {
-    virtual ~AbstractActorReferenceTreeFactory() throw() {}
+    virtual ~AbstractActorReferenceTreeFactory() noexcept {}
     virtual tredzone::Actor::ActorReference<tredzone::Actor> newActorReference(tredzone::Actor &) const = 0;
     virtual AbstractActorReferenceTreeFactory *clone() const = 0;
 };
@@ -396,7 +396,7 @@ class ActorReferenceTreeNodeActor : public tredzone::Actor
             actorReferenceList.push_back(actorReference);
         }
     }
-    virtual ~ActorReferenceTreeNodeActor() throw() {}
+    virtual ~ActorReferenceTreeNodeActor() noexcept {}
 
   private:
     list<ActorReference<tredzone::Actor>, Allocator<ActorReference<tredzone::Actor>>> actorReferenceList;
@@ -419,7 +419,7 @@ class TestDetectionOfEventLoopEndActor : public tredzone::Actor, public tredzone
             }
             cout << "TestDetectionOfEventLoopEndActor::InnerActor::InnerActor(), this=" << this << endl;
         }
-        virtual ~InnerActor() throw()
+        virtual ~InnerActor() noexcept
         {
             cout << "TestDetectionOfEventLoopEndActor::InnerActor::~InnerActor(), this=" << this << endl;
         }
@@ -429,8 +429,8 @@ class TestDetectionOfEventLoopEndActor : public tredzone::Actor, public tredzone
     {
         registerCallback(*this);
     }
-    virtual ~TestDetectionOfEventLoopEndActor() throw() {}
-    void onCallback() throw()
+    virtual ~TestDetectionOfEventLoopEndActor() noexcept {}
+    void onCallback() noexcept
     {
         actor1 = treeFactoryPtr->newActorReference(*this);
         actor2 = newReferencedSingletonActor<InnerSingleton>(treeFactoryPtr.get());
@@ -438,7 +438,7 @@ class TestDetectionOfEventLoopEndActor : public tredzone::Actor, public tredzone
     }
 
   protected:
-    virtual void onDestroyRequest() throw()
+    virtual void onDestroyRequest() noexcept
     {
         if (isRegistered())
         {
@@ -574,7 +574,7 @@ struct TestLoopPerformanceNeutralActor : tredzone::Actor
             tredzone::Mutex::Lock lock(mutex);
             actorIdSet.insert(actorId);
         }
-        void remove(const ActorId &actorId) throw()
+        void remove(const ActorId &actorId) noexcept
         {
             tredzone::Mutex::Lock lock(mutex);
             actorIdSet.erase(actorId);
@@ -605,8 +605,8 @@ struct TestLoopPerformanceNeutralActor : tredzone::Actor
     {
         ActorIdSetThreadSafe::instance.add(*this);
     }
-    virtual ~TestLoopPerformanceNeutralActor() throw() { ActorIdSetThreadSafe::instance.remove(*this); }
-    virtual void onDestroyRequest() throw()
+    virtual ~TestLoopPerformanceNeutralActor() noexcept { ActorIdSetThreadSafe::instance.remove(*this); }
+    virtual void onDestroyRequest() noexcept
     {
         cout << "TestLoopPerformanceNeutralActor::onDestroyRequest(), getCoreUsageLoopCount()="
                   << getCorePerformanceCounters().getLoopUsageCount() << endl;
@@ -627,7 +627,7 @@ struct TestLoopPerformanceNeutralCallbackActor : TestLoopPerformanceNeutralActor
     {
         registerPerformanceNeutralCallback(*this);
     }
-    void onCallback() throw() { cout << "TestLoopPerformanceNeutralCallbackActor::onCallback()" << endl; }
+    void onCallback() noexcept { cout << "TestLoopPerformanceNeutralCallbackActor::onCallback()" << endl; }
 };
 
 struct TestLoopPerformanceCallbackActor : TestLoopPerformanceNeutralActor, tredzone::Actor::Callback
@@ -637,7 +637,7 @@ struct TestLoopPerformanceCallbackActor : TestLoopPerformanceNeutralActor, tredz
     {
         registerCallback(*this);
     }
-    void onCallback() throw() { cout << "TestLoopPerformanceCallbackActor::onCallback()" << endl; }
+    void onCallback() noexcept { cout << "TestLoopPerformanceCallbackActor::onCallback()" << endl; }
 };
 
 struct TestLoopPerformanceDestroyActor : TestLoopPerformanceNeutralActor
@@ -648,7 +648,7 @@ struct TestLoopPerformanceDestroyActor : TestLoopPerformanceNeutralActor
     {
         requestDestroy();
     }
-    virtual void onDestroyRequest() throw()
+    virtual void onDestroyRequest() noexcept
     {
         cout << "TestLoopPerformanceDestroyActor::onDestroyRequest()" << endl;
         if (++detroyRetryCount == 2)
@@ -670,7 +670,7 @@ struct TestLoopPerformanceLocalEventActor : TestLoopPerformanceNeutralActor
         registerEventHandler<Event>(*this);
         Event::Pipe(*this, *this).push<Event>();
     }
-    void onEvent(const Event &) throw() { cout << "TestLoopPerformanceLocalEventActor::onEvent()" << endl; }
+    void onEvent(const Event &) noexcept { cout << "TestLoopPerformanceLocalEventActor::onEvent()" << endl; }
 };
 
 struct TestLoopPerformanceLocalUndeliveredEventActor : TestLoopPerformanceNeutralActor
@@ -681,7 +681,7 @@ struct TestLoopPerformanceLocalUndeliveredEventActor : TestLoopPerformanceNeutra
         registerUndeliveredEventHandler<Event>(*this);
         Event::Pipe(*this).push<Event>();
     }
-    void onUndeliveredEvent(const Event &) throw()
+    void onUndeliveredEvent(const Event &) noexcept
     {
         uint64_t outOfBoundWrittenSize =
             getCorePerformanceCounters().getTotalWrittenEventByteSizeTo((NodeId)getEngine().getCoreSet().size());
@@ -707,12 +707,12 @@ struct TestLoopPerformanceEventActor: TestLoopPerformanceNeutralActor, tredzone:
         registerEventHandler<Event>(*this);
         registerPerformanceNeutralCallback(*this);
     }
-    void onCallback() throw()
+    void onCallback() noexcept
     {
         cout << "TestLoopPerformanceEventActor::onCallback()" << endl;
         Event::Pipe(*this, ActorIdSetThreadSafe::instance.getOtherThan(*this)).push<Event>();
     }
-    void onEvent(const Event &) throw() { cout << "TestLoopPerformanceEventActor::onEvent()" << endl; }
+    void onEvent(const Event &) noexcept { cout << "TestLoopPerformanceEventActor::onEvent()" << endl; }
 };
 
 struct TestLoopPerformanceUndeliveredEventActor : TestLoopPerformanceNeutralActor, tredzone::Actor::Callback
@@ -723,13 +723,13 @@ struct TestLoopPerformanceUndeliveredEventActor : TestLoopPerformanceNeutralActo
         registerUndeliveredEventHandler<Event>(*this);
         registerPerformanceNeutralCallback(*this);
     }
-    void onCallback() throw()
+    void onCallback() noexcept
     {
         cout << "TestLoopPerformanceUndeliveredEventActor::onCallback()" << endl;
         Event::Pipe(*this, TestLoopPerformanceEventActor::ActorIdSetThreadSafe::instance.getOtherThan(*this))
             .push<Event>();
     }
-    void onUndeliveredEvent(const Event &) throw()
+    void onUndeliveredEvent(const Event &) noexcept
     {
         uint64_t outOfBoundWrittenSize =
             getCorePerformanceCounters().getTotalWrittenEventByteSizeTo((NodeId)getEngine().getCoreSet().size());

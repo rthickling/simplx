@@ -53,7 +53,7 @@ class UserThreadContext
         std::cout << "UserThreadContext stopping." << std::endl;
     }
 
-    void onData(const Data &e) { std::cout << "UserThreadContext::onData(const Data & e)" << std::endl; }
+    void onData(const Data &) { std::cout << "UserThreadContext::onData(const Data & e)" << std::endl; }
 
     void onData(const Message &e)
     {
@@ -114,7 +114,7 @@ class ThreadInterfaceActor : public Actor, public Actor::Callback
             registerCallback(*this);
     }
 
-    void onData(const Data &e) { std::cout << "Actor::onData(const Data & e)" << std::endl; }
+    void onData(const Data &) { std::cout << "Actor::onData(const Data & e)" << std::endl; }
 
     void onData(const Message &e)
     {
@@ -161,7 +161,7 @@ void setThreadAffinity(std::thread &thread, std::size_t core)
     }
 }
 
-int main(int argc, char **argv)
+int main(int, char **)
 {
     UserThreadContext  userTread{};
     std::thread startedThread(&UserThreadContext::run, &userTread);
