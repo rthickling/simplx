@@ -1,0 +1,55 @@
+name: Build and test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-and-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gcc16:
+    name: GCC 16.2 / ${{ matrix.build_type }}
+    runs-on: ubuntu-24.04
+    container: gcc:16.2.0-trixie
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+    defaults:
+      run:
+        shell: bash
+    env:
+      CC: gcc
+      CXX: g++
+      CMAKE_GENERATOR: Ninja
+      CMAKE_BUILD_PARALLEL_LEVEL: 2
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install build tools
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends cmake ninja-build
+
+      - name: Initialise Google Test
+        run: git submodule update --init --depth 1 thirdparty/googletest
+
+      - name: Show toolchain
+        run: |
+          g++ --version
+          cmake --version
+
+      - name: Build, test and compile tutorials
+        run: bash test/build-and-test.sh "${{ matrix.build_type }}"

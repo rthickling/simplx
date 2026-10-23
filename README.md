@@ -11,13 +11,12 @@ Tredzone was founded in 2013 and operates in France, the UK and US.
 
 ## Requirements
 
-This code has been built and unit-tested on Linux with:
+The current build configuration targets Linux with GCC 16.2, C++26 and the pthreads library.
+It also enables GCC's reflection support. Earlier compiler versions listed in historical
+documentation are no longer the supported build baseline.
 
-- Linux kernel 2.6+
-- g++ versions 4.9.4, 5.5, 6.4, 7.3 and 8.2
-- clang++ 3.9.1 and 4.0 with the libstdc++ runtime
-
-It requires either C++ 11, 14 or 17 and the pthreads library. Support for Windows/VisualC++ will be announced soon.
+Install Git, CMake 3.x (3.28 or newer recommended), and a build tool such as Make or Ninja.
+Some project CMake files still use legacy policies, so CI currently uses CMake 3.x.
 
 
 ## License
@@ -32,42 +31,58 @@ About a dozen tutorials are included here, please see the [Tutorials README](./t
 To build the first tutorial, open a terminal at the root of the repository and type:
 
 ```
-cd tutorials/01_hello_actor
+cd tutorial/01_hello_actor
 mkdir build && cd build
 cmake ..
 make -j8
 ```
 
 
-## Unit Tests
+## Build and test
 
-To build and run the unit tests, which depend on the Google Test submodule, open a terminal at the root of the repository and type:
+From the repository root, with GCC 16.2 selected on your PATH:
 
-```
+```bash
 git submodule update --init thirdparty/googletest
-cd test/engine
-mkdir tbuild && cd tbuild
-cmake ..
-make -j8
+bash test/build-and-test.sh Debug
+bash test/build-and-test.sh Release
 ```
 
-to then run the unit tests type:
+The script builds and runs the engine and TCP test suites, then compiles every tracked
+tutorial CMake project. Tutorials are built without running the interactive examples or
+long-running servers. Failed builds, failed tests, empty test suites and tests exceeding
+the timeout make the command fail. Tests run sequentially because they share CPU affinity
+and network ports.
 
+Google Test is pinned to the public v1.17.0 release. An older submodule reference was no
+longer available from its configured upstream and prevented clean checkouts from building.
+
+Ring-buffer tests directly exercise single-element, bulk and callback operations for both
+fixed and dynamic capacities. These calls also make the compiler instantiate the template
+members, so unused broken overloads cannot silently escape this coverage.
+
+Builds go under `build/ci/<configuration>`. Set `CMAKE_BUILD_PARALLEL_LEVEL` to change the
+default of two build workers, `CTEST_TIMEOUT` to change the per-executable timeout in seconds
+(default 300), or `SIMPLX_BUILD_ROOT` to choose a different build directory.
+
+Select compilers through `CC` and `CXX`; additional script arguments are passed to every
+CMake configure invocation. For example:
+
+```bash
+CC=/opt/gcc-16/bin/gcc CXX=/opt/gcc-16/bin/g++ \
+    bash test/build-and-test.sh Release -DCMAKE_BUILD_RPATH=/opt/gcc-16/lib64
 ```
-make test
-```
 
-## Docker
+Use a fresh `SIMPLX_BUILD_ROOT` when changing compilers or generators. The script does not
+read personal `CMakeUserPresets.json` files, so local paths cannot affect CI.
 
-There's a Bash that'll compile the tutorials and run the unit tests under all above-mentionned versions of gcc and clang under Docker:
+[GitHub Actions](.github/workflows/build-and-test.yml) runs the same script in Debug and
+Release on pull requests, pushes to `master`, and manual runs. Its official
+`gcc:16.2.0-trixie` container supplies the compiler and runtime without relying on a local
+installation. The workflow initializes only the public Google Test submodule.
 
-```
-./test/docker_test.sh
-```
-
-If a compilation or unit test failure occurs, the script will stop and report the error.
-
-The 1st run takes a while to download the Docker images, as per usual with Docker.
+The older `test/docker_test.sh` retains its historical compiler matrix; use the new script
+and workflow for the GCC 16 build.
  
 
 ## Documentation

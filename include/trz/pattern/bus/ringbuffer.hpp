@@ -196,7 +196,7 @@ template <typename T, std::size_t _MaxSize> class ringbuffer : public internal::
     public:
     inline bool enqueue(T const &t) noexcept { return internal::ringbuffer<T>::enqueue(t, array_.data(), max_size); }
 
-    inline bool dequeue(T *ret) noexcept { return internal::ringbuffer<T>::dequeue(ret, 1)==1; }
+    inline bool dequeue(T *ret) noexcept { return dequeue(ret, 1) == 1; }
 
     template <bool _All = true> inline size_t enqueue(T const *t, size_t size) noexcept
     {
@@ -229,7 +229,7 @@ template <typename T> class ringbuffer<T, 0> : public internal::ringbuffer<T>
 
     inline bool enqueue(T const &t) noexcept { return internal::ringbuffer<T>::enqueue(t, array_.get(), max_size_); }
 
-    inline bool dequeue(T *ret) noexcept { return internal::ringbuffer<T>::dequeue(ret, array_.get(), max_size_); }
+    inline bool dequeue(T *ret) noexcept { return dequeue(ret, 1) == 1; }
 
     template <bool _All = true> inline size_t enqueue(T const *t, size_t size) noexcept
     {
