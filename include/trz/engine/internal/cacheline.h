@@ -24,6 +24,8 @@ static const int CACHE_LINE_SIZE = TREDZONE_CACHE_LINE_SIZE; // architecture dep
 class CacheLineAlignedBuffer
 {
   public:
+    CacheLineAlignedBuffer(const CacheLineAlignedBuffer&) = delete;
+    CacheLineAlignedBuffer& operator=(const CacheLineAlignedBuffer&) = delete;
     /**
      * throw (std::bad_alloc)
      */
@@ -54,6 +56,9 @@ class CacheLineAlignedBuffer
 template <typename T> class CacheLineAlignedArray
 {
   public:
+    CacheLineAlignedArray(const CacheLineAlignedArray&) = delete;
+    CacheLineAlignedArray& operator=(const CacheLineAlignedArray&) = delete;
+
     inline explicit CacheLineAlignedArray(size_t n)
         : // throw (std::bad_alloc, ...)
           ptr(new char[n * ALIGNED_T_SZ + CACHE_LINE_SIZE - 1]),
@@ -117,6 +122,8 @@ template <typename T> class CacheLineAlignedArray
 
 template <typename T> struct CacheLineAlignedObject : private CacheLineAlignedBuffer
 {
+    CacheLineAlignedObject(const CacheLineAlignedObject&) = delete;
+    CacheLineAlignedObject& operator=(const CacheLineAlignedObject&) = delete;
     inline CacheLineAlignedObject()
         : // throw (std::bad_alloc, ...)
           CacheLineAlignedBuffer(sizeof(T))
@@ -140,6 +147,8 @@ template <typename T> struct CacheLineAlignedObject : private CacheLineAlignedBu
 class CacheLineAlignedBufferContainer
 {
   public:
+    CacheLineAlignedBufferContainer(const CacheLineAlignedBufferContainer&) = delete;
+    CacheLineAlignedBufferContainer& operator=(const CacheLineAlignedBufferContainer&) = delete;
     inline CacheLineAlignedBufferContainer() noexcept : head(0) { assert((unsigned)CACHE_LINE_SIZE >= sizeof(void *)); }
     inline ~CacheLineAlignedBufferContainer() noexcept
     {
