@@ -29,3 +29,4 @@ doc/latex/
 e2e_localhost.txt
 /.vscode
 **/.vscode/*
+**/CMakeUserPresets.json
