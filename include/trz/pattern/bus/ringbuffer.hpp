@@ -221,11 +221,11 @@ template <typename T> class ringbuffer<T, 0> : public internal::ringbuffer<T>
 {
     typedef std::size_t size_t;
     const size_t        max_size_;
-    std::unique_ptr<T>  array_;
+    std::unique_ptr<T[]>  array_;
 
     public:
     //! Constructs a ringbuffer for max_size elements
-    explicit ringbuffer(size_t const max_size) : max_size_(max_size + 1), array_(new T[max_size + 1]) {}
+    explicit ringbuffer(size_t const max_size) : max_size_(max_size + 1), array_(std::make_unique<T[]>(max_size + 1)) {}
 
     inline bool enqueue(T const &t) noexcept { return internal::ringbuffer<T>::enqueue(t, array_.get(), max_size_); }
 
