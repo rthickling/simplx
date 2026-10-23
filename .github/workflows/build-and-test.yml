@@ -44,8 +44,10 @@ jobs:
           apt-get install --yes --no-install-recommends cmake ninja-build
 
       - name: Initialise Google Test
-        run: git submodule update --init --depth 1 thirdparty/googletest
-
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule update --init --depth 1 thirdparty/googletest
+          
       - name: Show toolchain
         run: |
           g++ --version
