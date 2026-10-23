@@ -10,7 +10,7 @@ include_directories(${SIMPLX_DIR}/include)
 include_directories(${SIMPLX_DIR}/test/connector/tcp)
 
 enable_testing()
-trz_add_topdir(thirdparty/googletest/googletest)
+trz_add_topdir(thirdparty/googletest)
 trz_add_topdir(src/engine)
 
 trz_add_test(circularbuffertestu.bin circularbuffertestu.cpp engine gtest)

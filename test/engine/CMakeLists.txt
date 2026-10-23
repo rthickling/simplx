@@ -8,7 +8,7 @@ trz_set_cxx_flags()
 
 enable_testing()
 trz_add_topdir(src/pattern/timer)                          # order matters ?? [PL]
-trz_add_topdir(thirdparty/googletest/googletest)
+trz_add_topdir(thirdparty/googletest)
 trz_add_topdir(src/engine)
 
 trz_add_test(testasync.bin testasync.cpp engine gtest)
