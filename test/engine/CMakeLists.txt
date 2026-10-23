@@ -23,4 +23,5 @@ trz_add_test(testproperty.bin testproperty.cpp engine gtest)
 trz_add_test(testtime.bin testtime.cpp engine gtest)
 trz_add_test(testtimer.bin testtimeractor.cpp engine timer gtest)
 trz_add_test(teststream.bin testdataiostream.cpp engine gtest)
+trz_add_test(testringbuffer.bin testringbuffer.cpp engine gtest)
 
