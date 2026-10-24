@@ -65,7 +65,7 @@ template <class Queue> void checkBulkOperations(Queue &queue)
 
 TEST(RingBuffer, FixedCapacitySingleElement)
 {
-    xthreadbus::ringbuffer<int, 4> queue;
+    xthreadbus::ringbuffer<int, 4> queue{};
     checkSingleElementOperations(queue);
 }
 
@@ -77,7 +77,7 @@ TEST(RingBuffer, DynamicCapacitySingleElement)
 
 TEST(RingBuffer, FixedCapacityBulk)
 {
-    xthreadbus::ringbuffer<int, 4> queue;
+    xthreadbus::ringbuffer<int, 4> queue{};
     checkBulkOperations(queue);
 }
 

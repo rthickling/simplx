@@ -176,7 +176,6 @@ class Actor : private MultiDoubleChainLink<Actor, 2u>, virtual private ActorBase
             }
             m_RefDestChain->push_back(this);
             ++(m_SelfActor->m_ReferenceFromCount);
-            ENTERPRISE_0X5017(org.asyncNode, &org, &dest);
         }
         
         // dtor
@@ -1727,7 +1726,6 @@ public:
     friend class EngineToEngineConnector;
     friend class EngineToEngineSharedMemoryConnector;
     friend class RefMapper;
-    ENTERPRISE_0X5032
     
     typedef MultiDoubleChainLink<Actor, 2u> super;
     typedef uint16_t SingletonActorIndex;
@@ -1776,7 +1774,6 @@ public:
         {
             _Actor &actor = static_cast<_Actor&>(*this);
             (void)actor;
-            ENTERPRISE_0X5018(static_cast<Actor*>(&actor));
 
             TraceREF(actor.getAsyncNode(), __func__, actor.actorId, cppDemangledTypeInfoName(typeid(actor)), "-1.-1", "null")
         }
@@ -2711,7 +2708,6 @@ class Actor::Event::Pipe
         EventChain *destinationEventChain;
         _Event *ret = newEvent<_Event>(destinationEventChain);
         destinationEventChain->push_back(ret);
-        ENTERPRISE_0X5019(sourceActor.getAsyncNode(), ret, &sourceActor, this);
         return *ret;
     }
     /**
@@ -2735,7 +2731,6 @@ class Actor::Event::Pipe
 		EventChain* destinationEventChain;
 		_Event* ret = newEvent<_Event>(destinationEventChain, args...);
 		destinationEventChain->push_back(ret);
-        ENTERPRISE_0X5020(sourceActor.getAsyncNode(), ret, &sourceActor, this);
 		return *ret;
 	}
 
@@ -2744,7 +2739,6 @@ class Actor::Event::Pipe
 		EventChain* destinationEventChain;
 		_Event* ret = newEvent<_Event>(destinationEventChain, eventInit);
 		destinationEventChain->push_back(ret);
-        ENTERPRISE_0X5021(sourceActor.getAsyncNode(), ret, &sourceActor, this);
 
 		return *ret;
 	}
@@ -2974,7 +2968,6 @@ class Actor::Event::BufferedPipe : public Actor::Event::Pipe
         _Event *ret = newEvent<_Event>(destinationEventChain);
         assert(oldDestinationEventChain == 0 || oldDestinationEventChain == destinationEventChain);
         eventChain.push_back(ret);
-        ENTERPRISE_0X5022(sourceActor.getAsyncNode(), ret, &sourceActor, this);
         return *ret;
     }
     /**
@@ -3008,7 +3001,6 @@ class Actor::Event::BufferedPipe : public Actor::Event::Pipe
         _Event *ret = newEvent<_Event>(destinationEventChain, eventInit);
         assert(oldDestinationEventChain == 0 || oldDestinationEventChain == destinationEventChain);
         eventChain.push_back(ret);
-        ENTERPRISE_0X5023(sourceActor.getAsyncNode(), ret, &sourceActor, this);
         return *ret;
     }
     /**
@@ -3105,7 +3097,6 @@ void Actor::registerEventHandler(_EventHandler &eventHandler)
     {
         throw AlreadyRegisterdEventHandlerException();
     }
-    ENTERPRISE_0X5024(static_cast<Actor*>(this), Event::getClassId<_Event>(), &eventHandler, StaticEventHandler<_Event, _EventHandler>::onEvent);
     registerHighPriorityEventHandler(Event::getClassId<_Event>(), &eventHandler,
                                      StaticEventHandler<_Event, _EventHandler>::onEvent);
 }
@@ -3151,9 +3142,7 @@ Actor::ActorReference<_Actor> Actor::referenceLocalActor(const ActorId &pactorId
 
 template <class _Actor> Actor::ActorReference<_Actor> Actor::newReferencedActor()
 {
-    ENTERPRISE_0X5025(asyncNode, this);
     _Actor &actor = newActor<_Actor>(*asyncNode);
-    ENTERPRISE_0X5026(asyncNode, this, static_cast<Actor*>(&actor));
     
     TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
     
@@ -3171,9 +3160,7 @@ template <class _Actor> Actor::ActorReference<_Actor> Actor::newReferencedActor(
 template <class _Actor, class _ActorInit>
 Actor::ActorReference<_Actor> Actor::newReferencedActor(const _ActorInit &init)
 {
-    ENTERPRISE_0X5027(asyncNode, this);
     _Actor &actor = newActor<_Actor>(*asyncNode, init);
-    ENTERPRISE_0X5028(asyncNode, this, static_cast<Actor*>(&actor));
 
     TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
     
@@ -3217,9 +3204,7 @@ template <class _Actor> Actor::ActorReference<_Actor> Actor::newReferencedSingle
 template<class _Actor>
 const Actor::ActorId& Actor::newUnreferencedActor()
 {
-    ENTERPRISE_0X5029(asyncNode, this);
 	_Actor& actor = newActor<_Actor>(*asyncNode);
-    ENTERPRISE_0X502A(asyncNode, this, static_cast<Actor*>(&actor));
 
     TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
     
@@ -3256,9 +3241,7 @@ Actor::ActorReference<_Actor> Actor::newReferencedSingletonActor(const _ActorIni
 template<class _Actor, class _ActorInit>
 const Actor::ActorId& Actor::newUnreferencedActor(const _ActorInit& init)
 {
-    ENTERPRISE_0X501A(asyncNode, this);
 	_Actor& actor = newActor<_Actor>(*asyncNode, init);
-    ENTERPRISE_0X501B(asyncNode, this, static_cast<Actor*>(&actor));
 
     TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
     

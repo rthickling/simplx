@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: [Debug, Release]
+        build_type: [debug, release]
     defaults:
       run:
         shell: bash
@@ -41,12 +41,12 @@ jobs:
       - name: Install build tools
         run: |
           apt-get update
-          apt-get install --yes --no-install-recommends cmake ninja-build
+          apt-get install --yes --no-install-recommends cmake ninja-build just
 
       - name: Initialise Google Test
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule update --init --depth 1 thirdparty/googletest
+          just deps
           
       - name: Show toolchain
         run: |
@@ -54,4 +54,4 @@ jobs:
           cmake --version
 
       - name: Build, test and compile tutorials
-        run: bash test/build-and-test.sh "${{ matrix.build_type }}"
+        run: just test "${{ matrix.build_type }}"

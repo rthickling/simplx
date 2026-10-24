@@ -808,9 +808,6 @@ public:
         std::unique_ptr<AsyncNodeAllocator> asyncNodeAllocator;
         StarterChain starterChain;
 
-        ENTERPRISE_0X5031
-        
-
         RedZoneCoreIdList redZoneCoreIdList;
         ThreadRealTimeParam redZoneParam;
         AsyncExceptionHandler *asyncExceptionHandler;
@@ -1094,9 +1091,7 @@ template <class _Actor> Actor::ActorId Engine::newCore(CoreId coreId, bool isRed
     {
 		virtual Actor::ActorId start(AsyncNode& node)
         {
-            ENTERPRISE_0X5000(&node, static_cast<Actor*>(nullptr));
             _Actor& actor = Actor::newActor<_Actor>(node);
-            ENTERPRISE_0X5001(&node, static_cast<Actor*>(nullptr), static_cast<Actor*>(&actor));
 
             TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
 
@@ -1116,9 +1111,7 @@ Actor::ActorId Engine::newCore(CoreId coreId, bool isRedZone, const _ActorInit &
         inline NewActorCoreStarter(const _ActorInit &pactorInit) noexcept : actorInit(pactorInit) {}
         virtual Actor::ActorId start(AsyncNode &node)
         {
-            ENTERPRISE_0X5002(&node, static_cast<Actor*>(nullptr));
 			_Actor& actor = Actor::newActor<_Actor>(node, actorInit);
-            ENTERPRISE_0X5003(&node, static_cast<Actor*>(nullptr), static_cast<Actor*>(&actor));
             
             TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
             
@@ -1137,9 +1130,7 @@ template <class _Actor> void Engine::StartSequence::addActor(CoreId coreId)
         virtual ~AddActorStarter() noexcept {}
         virtual Actor::ActorId onStart(Engine &, AsyncNode &node, const Actor::ActorId &, bool) const
         {
-            ENTERPRISE_0X5004(&node, static_cast<Actor*>(nullptr));
 			_Actor  &actor = Actor::newActor<_Actor>(node);
-            ENTERPRISE_0X5005(&node, static_cast<Actor*>(nullptr), static_cast<Actor*>(&actor));
             (void)actor;
             
             TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
@@ -1163,9 +1154,7 @@ void Engine::StartSequence::addActor(CoreId coreId, const _ActorInit &actorInit)
         
         virtual Actor::ActorId onStart(Engine&, AsyncNode& node, const Actor::ActorId&, bool) const
         {
-            ENTERPRISE_0X5006(&node, static_cast<Actor*>(nullptr));
             _Actor  &actor = Actor::newActor<_Actor, _ActorInit>(node, this->actorInit);
-            ENTERPRISE_0X5007(&node, static_cast<Actor*>(nullptr), static_cast<Actor*>(&actor));
             (void)actor;
             
             TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
@@ -1195,12 +1184,10 @@ void Engine::StartSequence::addServiceActor(CoreId coreId, const _ActorInit &act
                                             const Actor::ActorId &previousServiceDestroyActorId,
                                             bool isLastService) const
         {
-            ENTERPRISE_0X5008(&asyncNode, static_cast<Actor*>(nullptr));
             ServiceActorWrapper<_Actor, _ActorInit> &serviceActor = *new (
                 Actor::Allocator<ServiceActorWrapper<_Actor, _ActorInit>>(Actor::AllocatorBase(asyncNode))
                     .allocate(1)) ServiceActorWrapper<_Actor, _ActorInit>(asyncNode, this->actorInit,
                                                                           previousServiceDestroyActorId, isLastService);
-            ENTERPRISE_0X5009(&asyncNode, static_cast<Actor*>(nullptr), static_cast<Actor*>(&serviceActor));                                  
             if (EngineStartSequenceServiceTraits<_Service>::isAnonymous() == false)
             {
                 assert(engine.serviceIndex.getServiceActorId<_Service>() == tredzone::null);

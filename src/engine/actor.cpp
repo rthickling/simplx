@@ -661,7 +661,6 @@ void Actor::setSingletonActor(SingletonActorIndex singletonActorIndex, Actor &ac
     singletonActorIndexEntry.asyncActor = &actor;
     singletonActorIndexEntry.reservedFlag = false;
     asyncNode->singletonActorIndexChain.push_back(&singletonActorIndexEntry);
-    ENTERPRISE_0X5014(asyncNode, &actor);
 }
 
 void Actor::unsetSingletonActor(SingletonActorIndex singletonActorIndex) noexcept
@@ -703,8 +702,6 @@ void Actor::registerCallback(void (*ponCallback)(Callback &) noexcept, Callback 
     pcallback.actorEventTable = &eventTable;
     pcallback.nodeActorId = eventTable.nodeActorId;
     pcallback.onCallback = ponCallback;
-    ENTERPRISE_0X5015(pcallback.actorEventTable->asyncActor->getAsyncNode(), &pcallback, pcallback.actorEventTable->asyncActor);
-    
 }
 
 void Actor::registerPerformanceNeutralCallback(void (*ponCallback)(Callback &) noexcept,
@@ -715,7 +712,6 @@ void Actor::registerPerformanceNeutralCallback(void (*ponCallback)(Callback &) n
     pcallback.actorEventTable = &eventTable;
     pcallback.nodeActorId = eventTable.nodeActorId;
     pcallback.onCallback = ponCallback;
-    ENTERPRISE_0X5016(pcallback.actorEventTable->asyncActor->getAsyncNode(), &pcallback, pcallback.actorEventTable->asyncActor);
 }
 
 Actor::AllocatorBase::AllocatorBase(AsyncNode &asyncNode) noexcept : asyncNodeAllocator(&asyncNode.nodeAllocator)

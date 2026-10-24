@@ -503,7 +503,6 @@ struct Engine_start_NodeThread
 
 void Engine::start(const StartSequence &startSequence)
 {
-    ENTERPRISE_0X5012(this, &startSequence);
     struct NodeThreadList : std::list<Engine_start_NodeThread>
     {
         iterator find(CoreId coreId) noexcept
@@ -701,8 +700,6 @@ Engine::CoreId Engine::CoreSet::at(NodeId nodeId) const
     std::stringstream s;
     s << (uint64_t)getPID() << '-' << getTSC() << std::ends;
     engineSuffix = s.str();
-
-    ENTERPRISE_0X5013(this);
 }
 
     Engine::StartSequence::~StartSequence() noexcept

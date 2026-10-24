@@ -55,9 +55,7 @@ void Actor::EventTable::onUndeliveredEvent(const Event &event) const
         if (undeliveredEvent[i].eventId != MAX_EVENT_ID_COUNT)
         {
             assert(undeliveredEvent[i].staticEventHandler != 0);
-            ENTERPRISE_0X501C(static_cast<Actor*>(static_cast<const Actor::EventTable*>(event.getDestinationActorId().eventTable)->asyncActor)->getAsyncNode(), &event, static_cast<void*>(undeliveredEvent[i].eventHandler));
             (*undeliveredEvent[i].staticEventHandler)(undeliveredEvent[i].eventHandler, event);
-            ENTERPRISE_0X501D(static_cast<Actor*>(static_cast<const Actor::EventTable*>(event.getDestinationActorId().eventTable)->asyncActor)->getAsyncNode());
         }
     }
 }

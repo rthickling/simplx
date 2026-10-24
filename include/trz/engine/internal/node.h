@@ -792,9 +792,6 @@ class AsyncNode : private AsyncNodeBase, public AsyncNodeManager::Node
     typedef CoreSet::UndefinedCoreException UndefinedCoreException;
     typedef Engine::CoreInUseException CoreInUseException;
     typedef EngineCustomEventLoopFactory EventLoopFactory;
-    
-    ENTERPRISE_0X5030
-    
     class Thread
     {
       public:
@@ -870,10 +867,8 @@ class AsyncNode : private AsyncNodeBase, public AsyncNodeManager::Node
     template<class _Actor>
     inline _Actor& newActor()
     {
-        ENTERPRISE_0X500A(this, static_cast<Actor*>(nullptr));
         // throw (std::bad_alloc, Actor::ShutdownException, ...)
 		_Actor& actor = Actor::newActor<_Actor>(*this);
-        ENTERPRISE_0X500B(this, static_cast<Actor*>(nullptr), &actor);
 
         TraceREF(this, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
         
@@ -883,10 +878,8 @@ class AsyncNode : private AsyncNodeBase, public AsyncNodeManager::Node
     template<class _Actor, class _ActorInit>
     inline _Actor& newActor(const _ActorInit& init)
     {
-        ENTERPRISE_0X500C(this, static_cast<Actor*>(nullptr));
         // throw (std::bad_alloc, Actor::ShutdownException, ...)
         _Actor& actor = Actor::newActor<_Actor, _ActorInit>(*this, init);
-        ENTERPRISE_0X500D(this, static_cast<Actor*>(nullptr), static_cast<Actor*>(&actor));
         
         TraceREF(this, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
         
@@ -945,7 +938,6 @@ class AsyncNode : private AsyncNodeBase, public AsyncNodeManager::Node
         ++corePerformanceCounters.loopTotalCount;
         corePerformanceCounters.loopUsageCount += loopUsagePerformanceCounterIncrement;
         loopUsagePerformanceCounterIncrement = 0;
-        ENTERPRISE_0X500E(this);
     }
     inline static uint8_t synchronizeAsyncActorCallbacks(AsyncActorCallbackChain &callbackChain,
                                                          uint64_t &performanceCounter) noexcept
@@ -967,7 +959,6 @@ class AsyncNode : private AsyncNodeBase, public AsyncNodeManager::Node
                 {
                     ++performanceCounter;
                     (*callback.onCallback)(callback);
-                    ENTERPRISE_0X500F((Actor*)(callback.actorEventTable->getActor()), &callback);
                 }
             }
             return 1;
@@ -1150,9 +1141,7 @@ bool Actor::EventTable::onEvent(const Event &event, uint64_t &performanceCounter
     }
     ++performanceCounter;
     assert(hfEvent[i].staticEventHandler != 0);
-    ENTERPRISE_0X5010(static_cast<Actor*>(static_cast<const Actor::EventTable*>(event.getDestinationActorId().eventTable)->asyncActor)->getAsyncNode(), &event, static_cast<void*>(hfEvent[i].eventHandler));
     bool ret =  (*hfEvent[i].staticEventHandler)(hfEvent[i].eventHandler, event);
-    ENTERPRISE_0X5011(static_cast<Actor*>(static_cast<const Actor::EventTable*>(event.getDestinationActorId().eventTable)->asyncActor)->getAsyncNode());
     return ret;
 }
 
