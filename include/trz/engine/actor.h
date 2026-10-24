@@ -22,9 +22,6 @@
 #include "trz/engine/internal/stringstream.h"
 #include "trz/engine/internal/thread.h"
 #include "trz/engine/internal/RefMapper.h"
-#include "trz/pattern/enterprise.h"
-
-
 
 namespace tredzone
 {

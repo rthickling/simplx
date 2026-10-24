@@ -18,7 +18,6 @@
 #include "trz/engine/internal/intrinsics.h"
 #include "trz/engine/internal/parallel.h"
 #include "trz/engine/internal/RefMapper.h"
-#include "trz/pattern/enterprise.h"
 
 #define CRITICAL_ASSERT(x)                                                                                             \
     if (!(x))                                                                                                          \
