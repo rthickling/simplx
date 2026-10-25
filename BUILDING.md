@@ -7,7 +7,7 @@ per-tutorial CMakeLists.txt files or `test/build-and-test.sh`.
 
 ## Requirements
 
-- Linux, GCC 16.2 with C++26 support (the supported compiler baseline).
+- Linux, GCC 16.2 or Clang 22 with C++26 mode support.
 - CMake 3.28 or newer, Ninja, Git and just. GDB is needed for `just debug`.
 - The public Google Test submodule. Initialise it with `just deps`.
 
@@ -91,6 +91,67 @@ pretty-printing setup. Set breakpoints in both actors' `onEvent()` handlers.
 
 ## CI
 
-The GitHub Actions workflow installs just and calls the same `just test debug`
-and `just test release` recipes in its GCC 16.2 container. It no longer invokes
-the old shell build script.
+The GitHub Actions workflow runs four jobs: GCC 16.2 and Clang 22, each in Debug
+and Release. Each job installs the build tools and calls the same `just test`
+recipe used locally. A failure in any job fails the workflow.
+
+
+## Docker compiler matrix
+
+`test/docker_test.sh` has been replaced by these root justfile recipes:
+
+```sh
+just docker-check                 # GCC + Clang, Debug + Release
+just docker-test gcc debug         # One compiler/configuration
+just docker-test clang release
+just docker-test clang relwithdebinfo
+just docker-build clang            # Build/refresh only the tool image
+```
+
+The host needs Docker with a working daemon, Git and just; CMake, Ninja and the
+compilers run inside containers. `docker-test` initialises the public Google
+Test submodule on the host. It builds the engine, all 17 tutorials and all 15
+test executables, then runs the tests sequentially. Tutorials are build-only.
+A failed image build, compilation or test returns a nonzero status. There is no
+interactive terminal requirement, log-marker parsing or privileged container.
+
+The default base images are `gcc:16.2.0-trixie` and `silkeh/clang:22-trixie`.
+They use versioned tags rather than `latest`; Clang uses the image's default
+Linux standard library (libstdc++), not a separate libc++ matrix. These are C++26
+language-mode builds, not a claim of complete C++26 feature support. GCC's
+`-freflection` is probed separately; it is not passed to Clang. GCC retains its
+explicit warning set; Clang treats its default enabled warnings as errors; both retain the legacy
+deprecation-warning suppression.
+
+`test/Dockerfile` adds the common build tools; `test/.dockerignore` excludes
+sources and historical build trees from the image context. Docker caches that layer between
+runs; `--pull` checks for updates to the selected base image. Override either
+image explicitly when trying another version, for example:
+
+```sh
+SIMPLX_CLANG_IMAGE=silkeh/clang:21-trixie just docker-test clang debug
+```
+
+When changing the image/compiler version, first remove or move that compiler's
+`build/docker/gcc` or `build/docker/clang` directory to avoid reusing its CMake
+cache. `docker-check` runs sequentially and stops on the first failure; GitHub
+Actions runs the four jobs independently, so every result is visible.
+
+Sources are mounted read-only; only the selected Docker build directory is
+writable. Containers run with your host UID/GID, so output files belong to you.
+Builds persist at `build/docker/<compiler>/<configuration>` (for example,
+`build/docker/clang/debug/bin/pingpong.bin`), separate from native
+`build/debug` and `build/release`. These binaries use container toolchain runtime
+libraries and are intended to run inside that container. GitHub Actions uses
+fresh workspaces, so its existing preset paths need no additional isolation.
+
+Compiler matrix changes should update both the justfile's image defaults and
+the GitHub Actions matrix. Test timeouts and parallelism use the same
+`CTEST_TIMEOUT` and `CMAKE_BUILD_PARALLEL_LEVEL` environment overrides as native
+builds. Docker correctness tests are separate from latency measurements on
+pinned cores.
+
+Clang's diagnostics also exposed dangling `what()` message pointers in five TCP
+exception classes. Those exceptions now own their message strings and copy
+without retaining references to constructor arguments. The TCP test executable
+includes message-lifetime and copy regression checks.

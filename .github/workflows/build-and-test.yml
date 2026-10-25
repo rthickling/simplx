@@ -14,21 +14,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  gcc16:
-    name: GCC 16.2 / ${{ matrix.build_type }}
+  compilers:
+    name: ${{ matrix.toolchain.name }} / ${{ matrix.build_type }}
     runs-on: ubuntu-24.04
-    container: gcc:16.2.0-trixie
+    container: ${{ matrix.toolchain.image }}
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         build_type: [debug, release]
+        toolchain:
+          - name: GCC 16.2
+            image: gcc:16.2.0-trixie
+            cc: gcc
+            cxx: g++
+          - name: Clang 22
+            image: silkeh/clang:22-trixie
+            cc: clang
+            cxx: clang++
     defaults:
       run:
         shell: bash
     env:
-      CC: gcc
-      CXX: g++
+      CC: ${{ matrix.toolchain.cc }}
+      CXX: ${{ matrix.toolchain.cxx }}
       CMAKE_GENERATOR: Ninja
       CMAKE_BUILD_PARALLEL_LEVEL: 2
 
@@ -47,10 +56,10 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           just deps
-          
+
       - name: Show toolchain
         run: |
-          g++ --version
+          "$CXX" --version
           cmake --version
 
       - name: Build, test and compile tutorials

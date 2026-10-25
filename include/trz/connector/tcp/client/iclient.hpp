@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cstdint>
 #include <exception>
+#include <sstream>
 #include <string>
 #include <tuple>
 
@@ -58,31 +59,20 @@ template <class _TNetwork> class IClient
     {
         public:
         AlreadyConnectedException(const Actor::ActorId &actorId, const ConnectParam &currentConnectParam)
-            : m_msg(), m_actorId(actorId), m_currentConnectParam(currentConnectParam)
         {
-            m_msg << "TcpClient (" << m_actorId << ") already connected ("
-                  << " ipAddress:" << m_currentConnectParam.m_ipAddress
-                  << " addressFamily:" << m_currentConnectParam.m_addressFamily
-                  << " port:" << m_currentConnectParam.m_port << " timeoutUSec:" << m_currentConnectParam.m_timeoutUSec
-                  << ")";
+            ostringstream msg;
+            msg << "TcpClient (" << actorId << ") already connected ("
+                << " ipAddress:" << currentConnectParam.m_ipAddress
+                << " addressFamily:" << currentConnectParam.m_addressFamily
+                << " port:" << currentConnectParam.m_port << " timeoutUSec:" << currentConnectParam.m_timeoutUSec
+                << ")";
+            m_msg = msg.str();
         }
 
-        AlreadyConnectedException(const AlreadyConnectedException &other)
-            : m_msg(), m_actorId(other.m_actorId), m_currentConnectParam(other.m_currentConnectParam)
-        {
-            m_msg << "TcpClient (" << m_actorId << ") already connected ("
-                  << " ipAddress:" << m_currentConnectParam.m_ipAddress
-                  << " addressFamily:" << m_currentConnectParam.m_addressFamily
-                  << " port:" << m_currentConnectParam.m_port << " timeoutUSec:" << m_currentConnectParam.m_timeoutUSec
-                  << ")";
-        }
-
-        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.c_str(); }
 
         private:
-        ostringstream        m_msg;
-        const Actor::ActorId m_actorId;
-        const ConnectParam & m_currentConnectParam;
+        string m_msg;
     };
 
     /**
@@ -92,21 +82,17 @@ template <class _TNetwork> class IClient
     class NotConnectedException : public exception
     {
         public:
-        NotConnectedException(const Actor::ActorId &actorId):m_actorId(actorId)
+        NotConnectedException(const Actor::ActorId &actorId)
         {
-            m_msg << "TcpClient (" << m_actorId << "): TcpClient not connected";
+            ostringstream msg;
+            msg << "TcpClient (" << actorId << "): TcpClient not connected";
+            m_msg = msg.str();
         }
 
-        NotConnectedException(const NotConnectedException &other):m_actorId(other.m_actorId)
-        {
-            m_msg << "TcpClient (" << m_actorId << "): TcpClient not connected";
-        }
-
-        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.c_str(); }
 
         private:
-        ostringstream m_msg;
-        const Actor::ActorId &m_actorId;
+        string m_msg;
     };
 
     /**
@@ -117,21 +103,17 @@ template <class _TNetwork> class IClient
     class SendBufferFullException : public exception
     {
         public:
-        SendBufferFullException(const Actor::ActorId &actorId):m_actorId(actorId)
+        SendBufferFullException(const Actor::ActorId &actorId)
         {
-            m_msg << "TcpClient (" << m_actorId << "): Fail to bufferize data: buffer full";
+            ostringstream msg;
+            msg << "TcpClient (" << actorId << "): Fail to bufferize data: buffer full";
+            m_msg = msg.str();
         }
 
-        SendBufferFullException(const SendBufferFullException &other):m_actorId(other.m_actorId)
-        {
-            m_msg << "TcpClient (" << m_actorId << "): Fail to bufferize data: buffer full";
-        }
-
-        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.c_str(); }
 
         private:
-        ostringstream m_msg;
-        const Actor::ActorId &m_actorId;
+        string m_msg;
     };
 
     /**

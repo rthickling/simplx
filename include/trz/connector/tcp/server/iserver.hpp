@@ -54,27 +54,20 @@ public:
     class AlreadyListeningException : public exception
     {
         public:
-        AlreadyListeningException(const ListenParam &currentListenningParam):m_msg(), m_currentListenningParam(currentListenningParam)
+        AlreadyListeningException(const ListenParam &currentListenningParam)
         {
-            m_msg << "TcpServer already listening ("
-                  << " addressFamily:" << m_currentListenningParam.m_addressFamily
-                  << " addressType:" << m_currentListenningParam.m_addressType
-                  << " port:" << m_currentListenningParam.m_port << ")";
+            ostringstream msg;
+            msg << "TcpServer already listening ("
+                << " addressFamily:" << currentListenningParam.m_addressFamily
+                << " addressType:" << currentListenningParam.m_addressType
+                << " port:" << currentListenningParam.m_port << ")";
+            m_msg = msg.str();
         }
 
-        AlreadyListeningException(const AlreadyListeningException &other):m_msg(), m_currentListenningParam(other.m_currentListenningParam)
-        {
-            m_msg << "TcpServer already listening ("
-                  << " addressFamily:" << m_currentListenningParam.m_addressFamily
-                  << " addressType:" << m_currentListenningParam.m_addressType
-                  << " port:" << m_currentListenningParam.m_port << ")";
-        }
-
-        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.c_str(); }
 
         private:
-        ostringstream m_msg;
-        const ListenParam& m_currentListenningParam;
+        string m_msg;
     };
 
     /**

@@ -7,11 +7,13 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# This project has no C++ modules; do not require clang-scan-deps.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
-# CMake 3.28 accepts the value 26 but has no GNU C++26 flag mapping.
+# CMake 3.28 accepts the value 26 but may lack C++26 flag mappings for recent compilers.
 # Check the compiler itself before configuring targets or FindThreads probes.
 include(CheckCXXCompilerFlag)
-if(CMAKE_CXX_STANDARD EQUAL 26 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+if(CMAKE_CXX_STANDARD EQUAL 26 AND CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$"
    AND NOT DEFINED CMAKE_CXX26_STANDARD_COMPILE_OPTION)
     function(simplx_detect_cxx26)
         # The flag checks must use a dialect already understood by old CMake.
@@ -23,7 +25,7 @@ if(CMAKE_CXX_STANDARD EQUAL 26 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
         else()
             check_cxx_compiler_flag("-std=c++2c" SIMPLX_HAS_STD_CXX2C)
             if(NOT SIMPLX_HAS_STD_CXX2C)
-                message(FATAL_ERROR "The selected compiler supports neither -std=c++26 nor -std=c++2c. Select your GCC 16 compiler with CXX.")
+                message(FATAL_ERROR "The selected compiler supports neither -std=c++26 nor -std=c++2c. Select a recent GCC or Clang compiler with CXX.")
             endif()
             set(CMAKE_CXX26_STANDARD_COMPILE_OPTION "-std=c++2c" PARENT_SCOPE)
             set(CMAKE_CXX26_EXTENSION_COMPILE_OPTION "-std=gnu++2c" PARENT_SCOPE)
@@ -58,6 +60,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(SIMPLX_HAS_REFLECTION)
         target_compile_options(simplx_build_options INTERFACE -freflection)
     endif()
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Match the legacy deprecation policy without GCC-only warning switches.
+    target_compile_options(simplx_build_options INTERFACE -Wno-deprecated
+        $<$<BOOL:${SIMPLX_WARNINGS_AS_ERRORS}>:-Werror>)
 endif()
 
 add_library(engine STATIC

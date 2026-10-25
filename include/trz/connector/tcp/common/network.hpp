@@ -81,18 +81,12 @@ class Network : public Actor
     class DirectSendException : public exception
     {
         public:
-        DirectSendException(const string &err) : m_err(err) { m_msg << "Failed to direct send message: " << m_err; }
+        DirectSendException(const string &err) : m_msg("Failed to direct send message: " + err) {}
 
-        DirectSendException(const DirectSendException &other) : m_err(other.m_err)
-        {
-            m_msg << "Failed to direct send message: " << m_err;
-        }
-
-        virtual const char *what() const noexcept { return m_msg.str().c_str(); }
+        virtual const char *what() const noexcept { return m_msg.c_str(); }
 
         private:
-        ostringstream m_msg;
-        const string &m_err;
+        string m_msg;
     };
 
     /**
