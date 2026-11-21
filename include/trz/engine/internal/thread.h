@@ -11,6 +11,7 @@
 #include <list>
 
 #include "trz/engine/platform.h"
+#include "trz/engine/internal/macro.h"
 
 #include "trz/engine/internal/parallel/parallel_xplat.h"
 

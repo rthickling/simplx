@@ -10,7 +10,6 @@
 #include <bitset>
 #include <cassert>
 #include <cerrno>
-#include <cmath>
 #include <cstdlib>
 #include <vector>
 #include <string>
@@ -26,11 +25,10 @@
 #include "trz/engine/internal/linux/platform_linux.h"
 
 #include "trz/engine/internal/dlldecoration.h"      // Windows-only
-#include "trz/engine/internal/macro.h"
 #include "trz/engine/internal/rtexception.h"
 #include "trz/engine/internal/time.h"
 
-#include "trz/engine/internal/parallel/parallel_xplat.h"
+#include "trz/engine/internal/parallel/parallel_pthread.h"
 
 // get host endianness from compiler
 #ifndef __BYTE_ORDER__

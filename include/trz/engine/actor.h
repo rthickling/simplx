@@ -13,6 +13,7 @@
 #include <new>
 
 #include "trz/engine/event.h"
+#include "trz/engine/internal/macro.h"
 #include "trz/engine/internal/cacheline.h"
 #include "trz/engine/internal/intrinsics.h"
 #include "trz/engine/internal/mdoublechain.h"

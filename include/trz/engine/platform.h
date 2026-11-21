@@ -62,12 +62,12 @@
 
 #if defined(TREDZONE_PLATFORM_LINUX)
     #if defined(__GNUG__)
-        #include "trz/engine/internal/linux/platform_gcc.h"
+        #include "trz/engine/internal/linux/platform_gcc.h" // IWYU pragma: export
     #else
         #error No supported C++ compiler for LINUX
     #endif
     
-    #include "trz/engine/internal/linux/platform_linux.h"
+    #include "trz/engine/internal/linux/platform_linux.h" // IWYU pragma: export
     
 #elif defined(TREDZONE_PLATFORM_APPLE)
     #error Apple platform is currently under development!
