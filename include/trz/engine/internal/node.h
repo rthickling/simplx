@@ -35,10 +35,10 @@ using std::string;
 class EngineToEngineConnector;
 class AsyncNode;
 
-#pragma pack(push)
-#pragma pack(1)
 struct Actor::EventTable
 {
+    // Keep the callback array compact. These fields are accessed by value.
+#pragma pack(push, 1)
     struct RegisteredEvent
     {
         EventId eventId;
@@ -46,6 +46,7 @@ struct Actor::EventTable
         bool (*staticEventHandler)(void *, const Event &);
         inline RegisteredEvent() noexcept;
     };
+#pragma pack(pop)
     static const int HIGH_FREQUENCY_CALLBACK_ARRAY_SIZE =
         (3 * CACHE_LINE_SIZE - sizeof(NodeActorId) - 5 * sizeof(void *) - sizeof(size_t)) / sizeof(RegisteredEvent);
     static const int LOW_FREQUENCY_ARRAY_ALIGNEMENT = 5;
@@ -71,6 +72,7 @@ struct Actor::EventTable
 };
 
 // is e2e-related?
+#pragma pack(push, 1)
 struct Actor::NodeConnection : public MultiDoubleChainLink<NodeConnection>
 {
     using OnOutboundEventFn = void (*)(EngineToEngineConnector *, const Actor::Event &);
@@ -102,8 +104,6 @@ class AsyncNodesHandle
     struct WriterSharedHandle;
     typedef Actor::Event::Chain EventChain;
 
-#pragma pack(push)
-#pragma pack(1)
     struct Shared
     {
         struct UnreachableNodeConnection : MultiForwardChainLink<UnreachableNodeConnection>
@@ -172,10 +172,11 @@ class AsyncNodesHandle
             void *allocateEvent(size_t, uint32_t &, size_t &); // throw (std::bad_alloc)
         };
 
+        sig_atomic_t readerCAS;
+        bool isReaderActive;
         WriteCache writeCache;
-        char cacheLinePadding1[TREDZONE_CACHE_LINE_PADDING(sizeof(sig_atomic_t) + sizeof(bool) + sizeof(WriteCache))];
-        ReadWriteLocked readWriteLocked;
-        char cacheLinePadding2[TREDZONE_CACHE_LINE_PADDING(sizeof(ReadWriteLocked))];
+        // The reader accesses the locked state on separate cache lines.
+        alignas(CACHE_LINE_SIZE) ReadWriteLocked readWriteLocked;
 
         Shared(size_t eventAllocatorPageSize); // throw (std::bad_alloc)
     };
@@ -190,15 +191,14 @@ class AsyncNodesHandle
             
         } cl1;
 
-        char cacheLinePadding[TREDZONE_CACHE_LINE_PADDING(sizeof(CacheLine1))];
-
         struct CacheLine2
         {
             bool isWriterActive;
             bool isWriteLocked;
             inline CacheLine2() noexcept : isWriterActive(false), isWriteLocked(false) {}
             
-        } cl2;
+        };
+        alignas(CACHE_LINE_SIZE) CacheLine2 cl2;
 
         ReaderSharedHandle() noexcept;
         void init(WriterSharedHandle &) noexcept;
@@ -236,18 +236,14 @@ class AsyncNodesHandle
             inline CacheLine1() noexcept : isWriterActive(0), isWriteLocked(0), writerNodeHandle(0) {}
         } cl1;
 
-        char cacheLinePadding[TREDZONE_CACHE_LINE_PADDING(sizeof(CacheLine1))];
-
         struct CacheLine2
         {
-            sig_atomic_t readerCAS;
-            bool isReaderActive;
             Shared shared;
             /**
              * throw (std::bad_alloc)
              */
             inline CacheLine2(size_t eventAllocatorPageSize)
-                : readerCAS(0), isReaderActive(false), shared(eventAllocatorPageSize)
+                : shared(eventAllocatorPageSize)
             {
             }
         } cl2;
@@ -265,9 +261,9 @@ class AsyncNodesHandle
             assert(cl1.isWriterActive != 0);
             *cl1.isWriterActive = isWriterActive;
         }
-        inline bool getIsReaderActive() noexcept { return cl2.isReaderActive; }
-        inline void setIsReaderActive(bool isReaderActive) noexcept { cl2.isReaderActive = isReaderActive; }
-        inline sig_atomic_t &getReferenceToReaderCAS() noexcept { return cl2.readerCAS; }
+        inline bool getIsReaderActive() noexcept { return cl2.shared.isReaderActive; }
+        inline void setIsReaderActive(bool isReaderActive) noexcept { cl2.shared.isReaderActive = isReaderActive; }
+        inline sig_atomic_t &getReferenceToReaderCAS() noexcept { return cl2.shared.readerCAS; }
         inline bool getIsWriteLocked() noexcept
         {
             assert(cl1.isWriteLocked != 0);
@@ -287,7 +283,6 @@ class AsyncNodesHandle
         void onUndeliveredEvent(const Actor::Event &) noexcept;
         void onUndeliveredEventToSourceActor(const Actor::Event &) noexcept;
     };
-#pragma pack(pop)
     struct NodeHandle
     {
         CacheLineAlignedArray<ReaderSharedHandle> readerSharedHandles;
@@ -693,8 +688,6 @@ public:
         char                                    cacheLineTrailerPadding[CACHE_LINE_SIZE - 1];
     };
     
-#pragma pack(push)
-#pragma pack(1)
     struct SingletonActorIndexEntry : MultiDoubleChainLink<SingletonActorIndexEntry>
     {
         typedef DoubleChain<> Chain;
@@ -707,7 +700,6 @@ public:
             assert(asyncActor == 0);
         }
     };
-#pragma pack(pop)
     class NodeActorCountListener : private MultiDoubleChainLink<NodeActorCountListener>
     {
       public:

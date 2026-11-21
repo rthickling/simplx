@@ -5,6 +5,7 @@
  * Please see accompanying LICENSE file for licensing terms.
  */
 
+#include <cstddef>
 #include <iostream>
 #include <fstream>
 
@@ -29,6 +30,7 @@ Actor::EventTable::EventTable(void *pdeallocatePointer) noexcept : nodeActorId(0
                                                                         nextUnused(0),
                                                                         deallocatePointer(pdeallocatePointer)
 {
+    static_assert(sizeof(EventTable) <= 3 * CACHE_LINE_SIZE);
     CRITICAL_ASSERT((uintptr_t) this % CACHE_LINE_SIZE == 0);
 }
 
@@ -154,6 +156,7 @@ size_t Actor::EventTable::lfRegisteredEventArraySize(RegisteredEvent *registered
 
 AsyncNodesHandle::ReaderSharedHandle::ReaderSharedHandle() noexcept
 {
+    static_assert(offsetof(ReaderSharedHandle, cl2) == CACHE_LINE_SIZE);
     CRITICAL_ASSERT((uintptr_t)&cl1 % CACHE_LINE_SIZE == 0);
     CRITICAL_ASSERT((uintptr_t)&cl2 % CACHE_LINE_SIZE == 0);
     CRITICAL_ASSERT(sizeof(CacheLine1) <= (size_t)CACHE_LINE_SIZE);
@@ -162,8 +165,8 @@ AsyncNodesHandle::ReaderSharedHandle::ReaderSharedHandle() noexcept
 
 void AsyncNodesHandle::ReaderSharedHandle::init(WriterSharedHandle &writerSharedHandle) noexcept
 {
-    cl1.isReaderActive = &writerSharedHandle.cl2.isReaderActive;
-    cl1.readerCAS = &writerSharedHandle.cl2.readerCAS;
+    cl1.isReaderActive = &writerSharedHandle.cl2.shared.isReaderActive;
+    cl1.readerCAS = &writerSharedHandle.getReferenceToReaderCAS();
     cl1.sharedReadWriteLocked = &writerSharedHandle.cl2.shared.readWriteLocked;
 }
 
@@ -216,9 +219,10 @@ void AsyncNodesHandle::ReaderSharedHandle::dispatchUnreachableNodes(
 
 //---- WriterSharedHandle CTOR -------------------------------------------------
 
-    AsyncNodesHandle::WriterSharedHandle::WriterSharedHandle(size_t eventAllocatorPageSize) : cl2(eventAllocatorPageSize)
+AsyncNodesHandle::WriterSharedHandle::WriterSharedHandle(size_t eventAllocatorPageSize)
+    : cl2(eventAllocatorPageSize)
 {
-
+    static_assert(offsetof(WriterSharedHandle, cl2) == CACHE_LINE_SIZE);
     CRITICAL_ASSERT((uintptr_t)&cl1 % CACHE_LINE_SIZE == 0);
     CRITICAL_ASSERT((uintptr_t)&cl2 % CACHE_LINE_SIZE == 0);
     CRITICAL_ASSERT((uintptr_t)&cl2.shared.readWriteLocked % CACHE_LINE_SIZE == 0);
@@ -284,8 +288,12 @@ AsyncNodesHandle::Shared::WriteCache::WriteCache(size_t peventAllocatorPageSize)
 /**
  * throw (std::bad_alloc)
  */
-AsyncNodesHandle::Shared::Shared(size_t eventAllocatorPageSize) : writeCache(eventAllocatorPageSize)
+AsyncNodesHandle::Shared::Shared(size_t eventAllocatorPageSize)
+    : readerCAS(0), isReaderActive(false), writeCache(eventAllocatorPageSize)
 {
+    static_assert(offsetof(Shared, readWriteLocked) % CACHE_LINE_SIZE == 0);
+    static_assert(offsetof(WriteCache, toBeDeliveredEventChain) % alignof(EventChain) == 0);
+    static_assert(offsetof(ReadWriteLocked, usedEventAllocatorPageChain) % alignof(EventAllocatorPageChain) == 0);
     CRITICAL_ASSERT((uintptr_t)&readWriteLocked % CACHE_LINE_SIZE == 0);
 }
 
