@@ -13,7 +13,7 @@
 
 template <unsigned _CHAIN_COUNT, unsigned _CHAIN_ID> class TestSelfDoubleChainedPointers
 {
-  private:
+private:
     struct Value : private tredzone::MultiDoubleChainLink<Value, _CHAIN_COUNT>
     {
         struct Chain : tredzone::MultiDoubleChainLink<Value, _CHAIN_COUNT>::template DoubleChain<_CHAIN_ID, Chain>
@@ -39,16 +39,16 @@ template <unsigned _CHAIN_COUNT, unsigned _CHAIN_ID> class TestSelfDoubleChained
     };
 
     typedef typename Value::Chain Test;
-    typedef std::list<Value> Control;
+    typedef std::list<Value>      Control;
 
-    Test test;
+    Test    test;
     Control control;
 
     template <class _TestIterator, class _ControlIterator>
     static void iteratorCheck(_TestIterator testBegin, _TestIterator testEnd, _ControlIterator controlBegin,
                               _ControlIterator controlEnd)
     {
-        _TestIterator it;
+        _TestIterator    it;
         _ControlIterator ic;
         for (it = testBegin, ic = controlBegin; it != testEnd && ic != controlEnd; ++ic, ++it)
         {
@@ -73,7 +73,7 @@ template <unsigned _CHAIN_COUNT, unsigned _CHAIN_ID> class TestSelfDoubleChained
 
     static void check(Test &test, Control &control)
     {
-        const Test &const_test = test;
+        const Test    &const_test    = test;
         const Control &const_control = control;
         iteratorCheck(test.begin(), test.end(), control.begin(), control.end());
         iteratorCheck(test.rbegin(), test.rend(), control.rbegin(), control.rend());
@@ -119,12 +119,12 @@ template <unsigned _CHAIN_COUNT, unsigned _CHAIN_ID> class TestSelfDoubleChained
         swap();
     }
 
-  public:
+public:
     class iterator
     {
-      public:
+    public:
         typedef typename Control::iterator::reference reference;
-        typedef typename Control::iterator::pointer pointer;
+        typedef typename Control::iterator::pointer   pointer;
 
         iterator() {}
 
@@ -165,9 +165,9 @@ template <unsigned _CHAIN_COUNT, unsigned _CHAIN_ID> class TestSelfDoubleChained
             return ret;
         }
 
-      private:
+    private:
         template <unsigned, unsigned> friend class TestSelfDoubleChainedPointers;
-        typename Test::iterator testIterator;
+        typename Test::iterator    testIterator;
         typename Control::iterator controlIterator;
         iterator(const typename Test::iterator &pTestIterator, const typename Control::iterator &pControlIterator)
             : testIterator(pTestIterator), controlIterator(pControlIterator)
@@ -180,14 +180,14 @@ template <unsigned _CHAIN_COUNT, unsigned _CHAIN_ID> class TestSelfDoubleChained
     void insert(iterator pos)
     {
         typename Control::iterator ic = control.insert(pos.controlIterator, Value());
-        typename Test::iterator it = test.insert(pos.testIterator, &*ic);
+        typename Test::iterator    it = test.insert(pos.testIterator, &*ic);
         iteratorCheck(it, test.end(), ic, control.end());
         check();
     }
 
     void erase(iterator pos)
     {
-        typename Test::iterator it = test.erase(pos.testIterator);
+        typename Test::iterator    it = test.erase(pos.testIterator);
         typename Control::iterator ic = control.erase(pos.controlIterator);
         iteratorCheck(it, test.end(), ic, control.end());
         check();
@@ -385,7 +385,7 @@ void testDoubleChain2()
 {
     TestDoubleChain2::DoubleChain<0u> chain0;
     TestDoubleChain2::DoubleChain<1u> chain1;
-    std::list<TestDoubleChain2> list;
+    std::list<TestDoubleChain2>       list;
 
     list.push_back(0);
     ASSERT_TRUE(chain0.empty());

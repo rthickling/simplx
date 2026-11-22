@@ -9,9 +9,5 @@
 
 namespace tredzone
 {
-    
-    
-    
-} // namespace tredzone
 
-    
+} // namespace tredzone

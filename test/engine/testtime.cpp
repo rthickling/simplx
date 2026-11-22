@@ -19,8 +19,8 @@ using namespace tredzone;
 TEST(Time, testAll)
 {
     tzset();
-    tredzone::DateTime dateTime = tredzone::timeGetEpoch();
-    time_t epochSecond = dateTime.extractSeconds();
+    tredzone::DateTime dateTime    = tredzone::timeGetEpoch();
+    time_t             epochSecond = dateTime.extractSeconds();
 
     struct tm *ptm;
     ptm = gmtime(&epochSecond);

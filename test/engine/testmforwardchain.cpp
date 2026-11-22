@@ -21,16 +21,16 @@ struct TestItemWithOneLink : private tredzone::MultiForwardChainLink<TestItemWit
 
     const uintptr_t v;
 
-    TestItemWithOneLink() : v((uintptr_t) this) {}
+    TestItemWithOneLink() : v((uintptr_t)this) {}
     TestItemWithOneLink(const TestItemWithOneLink &)
-        : tredzone::MultiForwardChainLink<TestItemWithOneLink, _CHAIN_COUNT>(), v((uintptr_t) this)
+        : tredzone::MultiForwardChainLink<TestItemWithOneLink, _CHAIN_COUNT>(), v((uintptr_t)this)
     {
     }
 };
 
 template <unsigned _CHAIN_COUNT> class TestChainWithOneLink
 {
-  public:
+public:
     template <unsigned _CHAIN_ID = 0u>
     struct ForwardChain
         : tredzone::MultiForwardChainLink<TestItemWithOneLink<_CHAIN_COUNT>,
@@ -62,18 +62,18 @@ template <unsigned _CHAIN_COUNT> class TestChainWithOneLink
         }
     };
 
-  private:
+private:
     typedef std::list<TestItemWithOneLink<_CHAIN_COUNT>> ControlList;
-    ControlList controlList;
-    typedef ForwardChain<> Chain;
-    Chain chain;
-    typedef typename ControlList::iterator iterator;
+    ControlList                                          controlList;
+    typedef ForwardChain<>                               Chain;
+    Chain                                                chain;
+    typedef typename ControlList::iterator               iterator;
 
-  public:
+public:
     TestChainWithOneLink() { control(); }
     void control(const typename ControlList::const_iterator &beginilist,
-                 const typename Chain::const_iterator &beginichain,
-                 const typename Chain::const_iterator &endichain) const
+                 const typename Chain::const_iterator       &beginichain,
+                 const typename Chain::const_iterator       &endichain) const
     {
         ASSERT_EQ(controlList.empty(), chain.empty());
         if (!controlList.empty())
@@ -90,7 +90,7 @@ template <unsigned _CHAIN_COUNT> class TestChainWithOneLink
             ASSERT_EQ(&*(++i), &*(++(controlList.begin())));
         }
         typename ControlList::const_iterator ilist = beginilist, endilist = controlList.end();
-        typename Chain::const_iterator ichain = beginichain;
+        typename Chain::const_iterator       ichain = beginichain;
         for (; ilist != endilist && ichain != endichain; ++ilist, ++ichain)
         {
             ASSERT_EQ(&*ichain, &*ilist);
@@ -125,7 +125,7 @@ template <unsigned _CHAIN_COUNT> class TestChainWithOneLink
             ASSERT_EQ(&*(++i), &*(++(controlList.begin())));
         }
         typename ControlList::iterator ilist = beginilist, endilist = controlList.end();
-        typename Chain::iterator ichain = beginichain;
+        typename Chain::iterator       ichain = beginichain;
         for (; ilist != endilist && ichain != endichain; ++ilist, ++ichain)
         {
             ASSERT_EQ(&*ichain, &*ilist);
@@ -161,7 +161,7 @@ template <unsigned _CHAIN_COUNT> class TestChainWithOneLink
                                                                  typename Chain::const_iterator());
     }
     void controlWithoutCallingChainEnd(const typename ControlList::iterator &beginilist,
-                                       const typename Chain::iterator &beginichain)
+                                       const typename Chain::iterator       &beginichain)
     {
         control(beginilist, beginichain, typename Chain::iterator());
     }
@@ -255,8 +255,8 @@ template <unsigned _CHAIN_COUNT> class TestChainWithOneLink
     {
         ASSERT_EQ(controlList.empty(), chain.empty());
         ASSERT_TRUE(!chain.empty());
-        typename Chain::iterator ichain = chain.erase(chain.begin());
-        typename ControlList::iterator ilist = controlList.erase(controlList.begin());
+        typename Chain::iterator       ichain = chain.erase(chain.begin());
+        typename ControlList::iterator ilist  = controlList.erase(controlList.begin());
         controlWithoutCallingChainEnd(ilist, ichain);
         controlWithoutCallingChainEnd();
     }
@@ -264,8 +264,8 @@ template <unsigned _CHAIN_COUNT> class TestChainWithOneLink
     {
         ASSERT_TRUE(controlList.size() > 1);
         ASSERT_EQ(controlList.empty(), chain.empty());
-        typename Chain::iterator ichain = chain.erase(++chain.begin());
-        typename ControlList::iterator ilist = controlList.erase(++controlList.begin());
+        typename Chain::iterator       ichain = chain.erase(++chain.begin());
+        typename ControlList::iterator ilist  = controlList.erase(++controlList.begin());
         controlWithoutCallingChainEnd(ilist, ichain);
         controlWithoutCallingChainEnd();
     }
@@ -664,7 +664,7 @@ void testSwap()
 
 void testDoubleChain()
 {
-    TestChainWithOneLink<2u> test;
+    TestChainWithOneLink<2u>                   test;
     TestChainWithOneLink<2u>::ForwardChain<1u> chain2;
     test.push_back();
     chain2.push_front(&*test.begin());

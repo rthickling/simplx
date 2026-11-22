@@ -25,7 +25,7 @@ class ClientTestActor : public ClientTestBase<_TNetwork, _SendBufferSize, _Recei
 {
     using parent = ClientTestBase<_TNetwork, _SendBufferSize, _ReceiveBufferSize>;
 
-    public:
+public:
     class ConnectParam : public IClient<_TNetwork>::ConnectParam
     {
     };
@@ -66,7 +66,7 @@ private:
      */
     class TestStarter : public Actor::Callback
     {
-        public:
+    public:
         ClientTestActor &myactor;
         TestStarter(ClientTestActor &actor) : myactor(actor) { myactor.registerCallback(*this); }
 

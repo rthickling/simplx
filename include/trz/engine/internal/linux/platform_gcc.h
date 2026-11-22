@@ -10,21 +10,21 @@
 #include <bitset>
 #include <cassert>
 #include <cerrno>
-#include <cstdlib>
-#include <vector>
-#include <string>
-#include <pthread.h>
 #include <cstdint>
+#include <cstdlib>
+#include <pthread.h>
+#include <string>
 #include <sys/time.h>
 #include <unistd.h>
+#include <vector>
 
 #ifndef NDEBUG
-    #include <execinfo.h>
+#    include <execinfo.h>
 #endif
 
 #include "trz/engine/internal/linux/platform_linux.h"
 
-#include "trz/engine/internal/dlldecoration.h"      // Windows-only
+#include "trz/engine/internal/dlldecoration.h" // Windows-only
 #include "trz/engine/internal/rtexception.h"
 #include "trz/engine/internal/time.h"
 
@@ -32,17 +32,17 @@
 
 // get host endianness from compiler
 #ifndef __BYTE_ORDER__
-    #error gcc __BYTE_ORDER__ not defined!
+#    error gcc __BYTE_ORDER__ not defined!
 #endif
 
 #if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-    // little-endian host
-    #define TREDZONE_LITTLE_ENDIAN
+// little-endian host
+#    define TREDZONE_LITTLE_ENDIAN
 #elif (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-    // big-endian host
-    #define TREDZONE_BIG_ENDIAN
+// big-endian host
+#    define TREDZONE_BIG_ENDIAN
 #else
-    #error unsupported endian order!
+#    error unsupported endian order!
 #endif
 
 namespace tredzone
@@ -52,7 +52,7 @@ using std::string;
 using std::vector;
 
 typedef pthread_cond_t signal_t;
-typedef pthread_key_t tls_t;
+typedef pthread_key_t  tls_t;
 
 vector<string> debugBacktrace(const uint8_t stackTraceSize = 32) noexcept;
 
@@ -62,11 +62,11 @@ string demangleFromSymbolName(char *) noexcept;
 string cppDemangledTypeInfoName(const std::type_info &);
 
 // system
-inline pid_t getPID();
-inline size_t systemPageSize();
-inline void *alignMalloc(size_t alignement, size_t size);
-inline void alignFree(size_t, void *);
-template <typename _Type> inline bool atomicCompareAndSwap(_Type *ptr, _Type oldval, _Type newval);
+inline pid_t                           getPID();
+inline size_t                          systemPageSize();
+inline void                           *alignMalloc(size_t alignement, size_t size);
+inline void                            alignFree(size_t, void *);
+template <typename _Type> inline bool  atomicCompareAndSwap(_Type *ptr, _Type oldval, _Type newval);
 template <typename _Type> inline _Type atomicAddAndFetch(_Type *ptr, unsigned delta);
 template <typename _Type> inline _Type atomicSubAndFetch(_Type *ptr, unsigned delta);
 
@@ -96,15 +96,15 @@ struct HighResolutionTime
 };
 
 inline signal_t mutexSignalCreate();
-inline void mutexSignalDestroy(signal_t &);
-inline void mutexSignalWait(signal_t &, mutex_t &lockedMutex);
-inline void mutexSignalWait(signal_t &, mutex_t &lockedMutex, const Time &timeOut, const Time & = timeGetEpoch());
-inline void mutexSignalNotify(signal_t &);
+inline void     mutexSignalDestroy(signal_t &);
+inline void     mutexSignalWait(signal_t &, mutex_t &lockedMutex);
+inline void     mutexSignalWait(signal_t &, mutex_t &lockedMutex, const Time &timeOut, const Time & = timeGetEpoch());
+inline void     mutexSignalNotify(signal_t &);
 
 // CPUs
 typedef std::bitset<1024> cpuset_type;
-size_t cpuGetCount();
-size_t cpuGetConfiguredCount();
+size_t                    cpuGetCount();
+size_t                    cpuGetConfiguredCount();
 /** Online CPUs that are also in this process's affinity mask (nosmt-safe). */
 cpuset_type cpuGetUsableSet();
 // thread
@@ -114,21 +114,21 @@ struct ThreadRealTimeParam
     inline ThreadRealTimeParam() noexcept : sched_priority(-1) {}
 };
 
-thread_t threadCreate(void (*)(void *), void *, size_t stackSizeBytes = 0);
-cpuset_type threadGetAffinity();
-void threadSetAffinity(const cpuset_type &);
-void threadSetAffinity(unsigned);
-void threadSetRealTime(bool, const ThreadRealTimeParam &);
-inline void threadYield() noexcept;
-void threadSleep(const Time &delay = Time());
+thread_t        threadCreate(void (*)(void *), void *, size_t stackSizeBytes = 0);
+cpuset_type     threadGetAffinity();
+void            threadSetAffinity(const cpuset_type &);
+void            threadSetAffinity(unsigned);
+void            threadSetRealTime(bool, const ThreadRealTimeParam &);
+inline void     threadYield() noexcept;
+void            threadSleep(const Time &delay = Time());
 inline thread_t threadCurrent();
-inline bool threadEqual(const thread_t &, const thread_t &);
+inline bool     threadEqual(const thread_t &, const thread_t &);
 
 // tls (thread local storage)
-tls_t tlsCreate();
-void tlsDestroy(tls_t);
+tls_t        tlsCreate();
+void         tlsDestroy(tls_t);
 inline void *tlsGet(tls_t);
-inline void tlsSet(tls_t, void *);
+inline void  tlsSet(tls_t, void *);
 
 // inlines
 pid_t getPID() { return getpid(); }
@@ -138,7 +138,7 @@ size_t systemPageSize() { return (size_t)getpagesize(); }
 void *alignMalloc(size_t alignement, size_t size)
 {
     void *ret;
-    int cc;
+    int   cc;
     if ((cc = posix_memalign(&ret, alignement, size)) != 0)
     {
         if (cc != ENOMEM)
@@ -167,8 +167,7 @@ template <typename _Type> _Type atomicSubAndFetch(_Type *ptr, unsigned delta)
     return __sync_sub_and_fetch(ptr, (_Type)delta);
 }
 
-inline
-uint64_t getTSC()
+inline uint64_t getTSC()
 {
 #ifdef __i386__
     uint64_t x;
@@ -180,8 +179,8 @@ uint64_t getTSC()
     return (d << 32) | a;
 #else
     uint32_t cc = 0;
-    __asm__ volatile ("mrc p15, 0, %0, c9, c13, 0":"=r" (cc));
-    return (uint64_t)cc; 
+    __asm__ volatile("mrc p15, 0, %0, c9, c13, 0" : "=r"(cc));
+    return (uint64_t)cc;
 #endif
 }
 
@@ -215,7 +214,7 @@ void mutexSignalWait(signal_t &signal, mutex_t &lockedMutex, const Time &pTimeOu
 {
     struct timespec tout;
     tout.tv_nsec = (long)(pTimeOut.extractNanoseconds() + currentEpochTime.extractNanoseconds());
-    tout.tv_sec = pTimeOut.extractSeconds() + currentEpochTime.extractSeconds() + (tout.tv_nsec / 1000000000);
+    tout.tv_sec  = pTimeOut.extractSeconds() + currentEpochTime.extractSeconds() + (tout.tv_nsec / 1000000000);
     tout.tv_nsec %= 1000000000;
     int cc = pthread_cond_timedwait(&signal, &lockedMutex, &tout);
     if (cc != 0 && cc != ETIMEDOUT)
@@ -253,14 +252,13 @@ void tlsSet(tls_t key, void *value)
     }
 }
 
-inline
-uint64_t    getTicksPerSec(const uint64_t &n_secs = 1)
+inline uint64_t getTicksPerSec(const uint64_t &n_secs = 1)
 {
     // depends on core & can change over time
     const uint64_t start_tick = getTSC();
-    
+
     ::sleep(n_secs);
-    
+
     const uint64_t tickPerSec = (getTSC() - start_tick) / n_secs;
 
     return tickPerSec;
@@ -268,7 +266,7 @@ uint64_t    getTicksPerSec(const uint64_t &n_secs = 1)
 
 DateTime timeGetEpoch()
 {
-    struct timeval now;
+    struct timeval  now;
     struct timezone tz;
     gettimeofday(&now, &tz);
     return DateTime((time_t)now.tv_sec, (uint32_t)now.tv_usec / 1000);
@@ -294,4 +292,3 @@ DateTime timeGetEpoch()
  * @param type_info corresponding to symbol
  * @return Demangled symbol
  */
-

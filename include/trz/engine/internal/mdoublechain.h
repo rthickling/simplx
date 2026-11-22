@@ -24,8 +24,7 @@ class MultiDoubleChain;
 
 //---- Multi-Double-Chain ITEM ACCESSOR ----------------------------------------
 
-template <class _Item, unsigned _CHAIN_COUNT>
-struct MultiDoubleChainItemAccessor
+template <class _Item, unsigned _CHAIN_COUNT> struct MultiDoubleChainItemAccessor
 {
     inline static _Item *getItem(MultiDoubleChainLink<_Item, _CHAIN_COUNT> *link) noexcept
     {
@@ -47,10 +46,9 @@ struct MultiDoubleChainItemAccessor
 
 //---- Multi-Double-Chain LINK -------------------------------------------------
 
-template<class _Item>
-class MultiDoubleChainLink<_Item, 1u>
+template <class _Item> class MultiDoubleChainLink<_Item, 1u>
 {
-  public:
+public:
     template <unsigned _CHAIN_ID = 0u, class _ItemAccessor = MultiDoubleChainItemAccessor<_Item, 1u>>
     struct DoubleChain : public MultiDoubleChain<_Item, 1u, _CHAIN_ID, _ItemAccessor>
     {
@@ -63,7 +61,7 @@ class MultiDoubleChainLink<_Item, 1u>
 #endif
     inline MultiDoubleChainLink &operator=(const MultiDoubleChainLink &) noexcept { return *this; }
 
-  private:
+private:
     template <class, unsigned, unsigned> friend class MultiDoubleChainLinkAccessor;
     MultiDoubleChainLink *previous;
     MultiDoubleChainLink *next;
@@ -71,8 +69,7 @@ class MultiDoubleChainLink<_Item, 1u>
 
 //---- Multi-Double-Chain LINK ACCESSOR ----------------------------------------
 
-template<class _Item>
-class MultiDoubleChainLinkAccessor<_Item, 1u, 0u>
+template <class _Item> class MultiDoubleChainLinkAccessor<_Item, 1u, 0u>
 {
     template <class, unsigned, unsigned, class> friend class MultiDoubleChain;
     inline static MultiDoubleChainLink<_Item, 1u> *getPrevious(MultiDoubleChainLink<_Item, 1u> *item)
@@ -80,8 +77,8 @@ class MultiDoubleChainLinkAccessor<_Item, 1u, 0u>
         return item->previous;
     }
     inline static MultiDoubleChainLink<_Item, 1u> *getNext(MultiDoubleChainLink<_Item, 1u> *item) { return item->next; }
-    inline static void setPrevious(MultiDoubleChainLink<_Item, 1u> *item,
-                                   MultiDoubleChainLink<_Item, 1u> *const previous)
+    inline static void                             setPrevious(MultiDoubleChainLink<_Item, 1u>       *item,
+                                                               MultiDoubleChainLink<_Item, 1u> *const previous)
     {
         item->previous = previous;
     }
@@ -93,10 +90,9 @@ class MultiDoubleChainLinkAccessor<_Item, 1u, 0u>
 
 //---- Multi-Double-Chain LINK -------------------------------------------------
 
-template<class _Item>
-class MultiDoubleChainLink<_Item, 2u>
+template <class _Item> class MultiDoubleChainLink<_Item, 2u>
 {
-  public:
+public:
     template <unsigned _CHAIN_ID, class _ItemAccessor = MultiDoubleChainItemAccessor<_Item, 2u>>
     struct DoubleChain : public MultiDoubleChain<_Item, 2u, _CHAIN_ID, _ItemAccessor>
     {
@@ -108,7 +104,7 @@ class MultiDoubleChainLink<_Item, 2u>
 #endif
     inline MultiDoubleChainLink &operator=(const MultiDoubleChainLink &) noexcept { return *this; }
 
-  private:
+private:
     template <class, unsigned, unsigned> friend class MultiDoubleChainLinkAccessor;
     MultiDoubleChainLink *previous0;
     MultiDoubleChainLink *next0;
@@ -118,8 +114,7 @@ class MultiDoubleChainLink<_Item, 2u>
 
 //---- Multi-Double-Chain LINK ACCESSOR (2/0 specialization) -------------------
 
-template<class _Item>
-class MultiDoubleChainLinkAccessor<_Item, 2u, 0u>
+template <class _Item> class MultiDoubleChainLinkAccessor<_Item, 2u, 0u>
 {
     template <class, unsigned, unsigned, class> friend class MultiDoubleChain;
     inline static MultiDoubleChainLink<_Item, 2u> *getPrevious(MultiDoubleChainLink<_Item, 2u> *item)
@@ -130,7 +125,7 @@ class MultiDoubleChainLinkAccessor<_Item, 2u, 0u>
     {
         return item->next0;
     }
-    inline static void setPrevious(MultiDoubleChainLink<_Item, 2u> *item,
+    inline static void setPrevious(MultiDoubleChainLink<_Item, 2u>       *item,
                                    MultiDoubleChainLink<_Item, 2u> *const previous)
     {
         item->previous0 = previous;
@@ -143,8 +138,7 @@ class MultiDoubleChainLinkAccessor<_Item, 2u, 0u>
 
 //---- Multi-Double-Chain LINK ACCESSOR (2/1 specialization) -------------------
 
-template<class _Item>
-class MultiDoubleChainLinkAccessor<_Item, 2u, 1u>
+template <class _Item> class MultiDoubleChainLinkAccessor<_Item, 2u, 1u>
 {
     template <class, unsigned, unsigned, class> friend class MultiDoubleChain;
     inline static MultiDoubleChainLink<_Item, 2u> *getPrevious(MultiDoubleChainLink<_Item, 2u> *item)
@@ -155,7 +149,7 @@ class MultiDoubleChainLinkAccessor<_Item, 2u, 1u>
     {
         return item->next1;
     }
-    inline static void setPrevious(MultiDoubleChainLink<_Item, 2u> *item,
+    inline static void setPrevious(MultiDoubleChainLink<_Item, 2u>       *item,
                                    MultiDoubleChainLink<_Item, 2u> *const previous)
     {
         item->previous1 = previous;
@@ -168,78 +162,77 @@ class MultiDoubleChainLinkAccessor<_Item, 2u, 1u>
 
 //---- Multi-Double-Chain ------------------------------------------------------
 
-template <class _Item, unsigned _CHAIN_COUNT, unsigned _CHAIN_ID, class _ItemAccessor>
-class MultiDoubleChain
+template <class _Item, unsigned _CHAIN_COUNT, unsigned _CHAIN_ID, class _ItemAccessor> class MultiDoubleChain
 {
-  public:
-    typedef _Item value_type;
-    typedef _Item &reference;
+public:
+    typedef _Item        value_type;
+    typedef _Item       &reference;
     typedef const _Item &const_reference;
-    typedef _Item *pointer;
+    typedef _Item       *pointer;
     typedef const _Item *const_pointer;
     template <class _Chain, class _Value> class iterator_base;
     typedef iterator_base<MultiDoubleChain, _Item> iterator; //!< bidirectional, dereferences to reference
     typedef iterator_base<const MultiDoubleChain, const _Item>
-        const_iterator; //!< bidirectional, dereferences to const_reference
-    typedef std::reverse_iterator<iterator> reverse_iterator;
+                                                  const_iterator; //!< bidirectional, dereferences to const_reference
+    typedef std::reverse_iterator<iterator>       reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
     inline MultiDoubleChain() noexcept;
-    inline iterator insert(const iterator &, pointer) noexcept;
-    inline void remove(pointer) noexcept;
-    inline iterator erase(const iterator &) noexcept;
-    inline void push_front(pointer) noexcept;
-    inline void push_front(MultiDoubleChain &) noexcept;
-    inline void push_back(pointer) noexcept;
-    inline void push_back(MultiDoubleChain &) noexcept;
-    inline pointer pop_front() noexcept;
-    inline pointer pop_back() noexcept;
-    inline void swap(MultiDoubleChain &) noexcept;
-    inline bool empty() const noexcept;
-    inline iterator begin() noexcept;
-    inline const_iterator begin() const noexcept;
-    inline iterator end() noexcept;
-    inline const_iterator end() const noexcept;
-    inline reverse_iterator rbegin() noexcept;
+    inline iterator               insert(const iterator &, pointer) noexcept;
+    inline void                   remove(pointer) noexcept;
+    inline iterator               erase(const iterator &) noexcept;
+    inline void                   push_front(pointer) noexcept;
+    inline void                   push_front(MultiDoubleChain &) noexcept;
+    inline void                   push_back(pointer) noexcept;
+    inline void                   push_back(MultiDoubleChain &) noexcept;
+    inline pointer                pop_front() noexcept;
+    inline pointer                pop_back() noexcept;
+    inline void                   swap(MultiDoubleChain &) noexcept;
+    inline bool                   empty() const noexcept;
+    inline iterator               begin() noexcept;
+    inline const_iterator         begin() const noexcept;
+    inline iterator               end() noexcept;
+    inline const_iterator         end() const noexcept;
+    inline reverse_iterator       rbegin() noexcept;
     inline const_reverse_iterator rbegin() const noexcept;
-    inline reverse_iterator rend() noexcept;
+    inline reverse_iterator       rend() noexcept;
     inline const_reverse_iterator rend() const noexcept;
-    inline pointer front() noexcept;
-    inline const_pointer front() const noexcept;
-    inline pointer back() noexcept;
-    inline const_pointer back() const noexcept;
+    inline pointer                front() noexcept;
+    inline const_pointer          front() const noexcept;
+    inline pointer                back() noexcept;
+    inline const_pointer          back() const noexcept;
 
-  private:
+private:
     typedef MultiDoubleChainLinkAccessor<_Item, _CHAIN_COUNT, _CHAIN_ID> LinkAccessor;
-    MultiDoubleChainLink<_Item, _CHAIN_COUNT> *head;
-    MultiDoubleChainLink<_Item, _CHAIN_COUNT> *tail;
+    MultiDoubleChainLink<_Item, _CHAIN_COUNT>                           *head;
+    MultiDoubleChainLink<_Item, _CHAIN_COUNT>                           *tail;
 
-    MultiDoubleChain(const MultiDoubleChain &) = delete;            // illegal (can not copy, only move)
+    MultiDoubleChain(const MultiDoubleChain &)            = delete; // illegal (can not copy, only move)
     MultiDoubleChain &operator=(const MultiDoubleChain &) = delete; // illegal (can not copy, only move)
 };
 
-template<class _Item, unsigned _CHAIN_COUNT, unsigned _CHAIN_ID, class _ItemAccessor>
-template<class _Chain, class _Value>
+template <class _Item, unsigned _CHAIN_COUNT, unsigned _CHAIN_ID, class _ItemAccessor>
+template <class _Chain, class _Value>
 class MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::iterator_base
 {
-  public:
+public:
     typedef std::bidirectional_iterator_tag iterator_category;
-    typedef _Value value_type;
-    typedef ptrdiff_t difference_type;
-    typedef ptrdiff_t distance_type;
-    typedef value_type *pointer;
-    typedef value_type &reference;
+    typedef _Value                          value_type;
+    typedef ptrdiff_t                       difference_type;
+    typedef ptrdiff_t                       distance_type;
+    typedef value_type                     *pointer;
+    typedef value_type                     &reference;
 
     inline iterator_base() noexcept : chain(0), current(0) {}
     inline iterator_base(const iterator_base &other) noexcept : chain(other.chain), current(other.current) {}
     inline iterator_base &operator=(const iterator_base &other) noexcept
     {
-        chain = other.chain;
+        chain   = other.chain;
         current = other.current;
         return *this;
     }
-    inline bool operator==(const iterator_base &other) const noexcept { return current == other.current; }
-    inline bool operator!=(const iterator_base &other) const noexcept { return current != other.current; }
+    inline bool      operator==(const iterator_base &other) const noexcept { return current == other.current; }
+    inline bool      operator!=(const iterator_base &other) const noexcept { return current != other.current; }
     inline reference operator*() const noexcept
     {
         assert(current != 0);
@@ -256,7 +249,7 @@ class MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::iterator_
         current = LinkAccessor::getNext(current);
         return *this;
     }
-    inline iterator_base operator++(int)noexcept
+    inline iterator_base operator++(int) noexcept
     {
         iterator_base ret = *this;
         operator++();
@@ -275,20 +268,19 @@ class MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::iterator_
         }
         return *this;
     }
-    inline iterator_base operator--(int)noexcept
+    inline iterator_base operator--(int) noexcept
     {
         iterator_base ret = *this;
         operator--();
         return ret;
     }
 
-  private:
+private:
     friend class MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>;
-    _Chain *chain;
+    _Chain                                    *chain;
     MultiDoubleChainLink<_Item, _CHAIN_COUNT> *current;
     inline iterator_base(_Chain &pchain, MultiDoubleChainLink<_Item, _CHAIN_COUNT> *pcurrent) noexcept
-        : chain(&pchain),
-          current(pcurrent)
+        : chain(&pchain), current(pcurrent)
     {
     }
 };
@@ -334,7 +326,7 @@ void MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::remove(poi
     assert(LinkAccessor::getPrevious(itemLink) != itemLink);
     assert(LinkAccessor::getNext(itemLink) != itemLink);
     MultiDoubleChainLink<_Item, _CHAIN_COUNT> *previousItem = LinkAccessor::getPrevious(itemLink);
-    MultiDoubleChainLink<_Item, _CHAIN_COUNT> *nextItem = LinkAccessor::getNext(itemLink);
+    MultiDoubleChainLink<_Item, _CHAIN_COUNT> *nextItem     = LinkAccessor::getNext(itemLink);
     if (previousItem == 0)
     {
         assert(itemLink == head);
@@ -365,7 +357,7 @@ MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::erase(const ite
 {
     assert(i.current != 0);
     MultiDoubleChainLink<_Item, _CHAIN_COUNT> *previousItem = LinkAccessor::getPrevious(i.current);
-    MultiDoubleChainLink<_Item, _CHAIN_COUNT> *nextItem = LinkAccessor::getNext(i.current);
+    MultiDoubleChainLink<_Item, _CHAIN_COUNT> *nextItem     = LinkAccessor::getNext(i.current);
     if (previousItem == 0)
     {
         assert(i.current == head);
@@ -421,7 +413,7 @@ void MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::push_front
         assert(other.tail != 0);
         LinkAccessor::setPrevious(head, other.tail);
         LinkAccessor::setNext(other.tail, head);
-        head = other.head;
+        head       = other.head;
         other.head = other.tail = 0;
     }
     else if (head == 0)
@@ -460,7 +452,7 @@ void MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::push_back(
         assert(other.head != 0);
         LinkAccessor::setPrevious(other.head, tail);
         LinkAccessor::setNext(tail, other.head);
-        tail = other.tail;
+        tail       = other.tail;
         other.head = other.tail = 0;
     }
     else if (tail == 0)
@@ -475,7 +467,7 @@ MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::pop_front() noe
 {
     assert(head != 0);
     MultiDoubleChainLink<_Item, _CHAIN_COUNT> *ret = head;
-    head = LinkAccessor::getNext(head);
+    head                                           = LinkAccessor::getNext(head);
     if (head == 0)
     {
         tail = 0;
@@ -497,7 +489,7 @@ MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::pop_back() noex
 {
     assert(tail != 0);
     MultiDoubleChainLink<_Item, _CHAIN_COUNT> *ret = tail;
-    tail = LinkAccessor::getPrevious(tail);
+    tail                                           = LinkAccessor::getPrevious(tail);
     if (tail == 0)
     {
         head = 0;
@@ -614,4 +606,4 @@ MultiDoubleChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::back() const no
     return _ItemAccessor::getItem(tail);
 }
 
-} // namespace
+} // namespace tredzone

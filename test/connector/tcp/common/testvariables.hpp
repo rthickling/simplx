@@ -12,7 +12,7 @@
 #include <mutex>
 #include <thread>
 
-//#include <simplx.h>
+// #include <simplx.h>
 
 namespace tredzone
 {

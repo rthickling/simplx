@@ -18,8 +18,8 @@ using namespace tredzone;
 struct Test1InitData
 {
     static Mutex mutex;
-    int &data;
-    bool &destroyedFlag;
+    int         &data;
+    bool        &destroyedFlag;
     Test1InitData(const std::pair<int *, bool *> &init) : data(*init.first), destroyedFlag(*init.second) {}
     ~Test1InitData()
     {
@@ -32,7 +32,6 @@ struct Test1InitData
 Mutex Test1InitData::mutex;
 
 // typedef InitializerStartSequence<Test1InitData> Test1StartSequence;
-
 
 struct Test1StartSequence : InitializerStartSequence<Test1InitData>
 {
@@ -73,8 +72,8 @@ struct Test1Actor : Test1StartSequence::Actor
 
 void test1()
 {
-    int data = 0;
-    int onInitializeCount = 0;
+    int  data                  = 0;
+    int  onInitializeCount     = 0;
     bool initDataDestroyedFlag = false;
     {
         Test1StartSequence test1StartSequence(std::make_pair(&data, &initDataDestroyedFlag));
@@ -117,11 +116,11 @@ struct Test2Actor : Test2StartSequence::Actor
 
 void test2()
 {
-    int data = 0;
-    int onInitializeCount1 = 0;
-    int onInitializeCount2 = 0;
-    int onInitializeCount3 = 0;
-    int onInitializeCount4 = 0;
+    int  data                  = 0;
+    int  onInitializeCount1    = 0;
+    int  onInitializeCount2    = 0;
+    int  onInitializeCount3    = 0;
+    int  onInitializeCount4    = 0;
     bool initDataDestroyedFlag = false;
     {
         Test2StartSequence test2StartSequence(std::make_pair(&data, &initDataDestroyedFlag));
@@ -141,11 +140,11 @@ void test2()
 
 void test3()
 {
-    int data = 0;
-    int onInitializeCount1 = 0;
-    int onInitializeCount2 = 0;
-    int onInitializeCount3 = 0;
-    int onInitializeCount4 = 0;
+    int  data                  = 0;
+    int  onInitializeCount1    = 0;
+    int  onInitializeCount2    = 0;
+    int  onInitializeCount3    = 0;
+    int  onInitializeCount4    = 0;
     bool initDataDestroyedFlag = false;
     {
         Engine::CoreSet coreSet;

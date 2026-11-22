@@ -18,7 +18,7 @@ namespace tredzone
  */
 class RunTimeException : public std::runtime_error
 {
-  public:
+public:
     /**
      * @brief Provides a formatted string for a source code file, name and line location, as well as an optional
      * message.
@@ -71,4 +71,4 @@ std::string RunTimeException::formatSourceFileNameLine(const char *sourceFileNam
     return s.str();
 }
 
-} // namespace
+} // namespace tredzone

@@ -24,7 +24,7 @@ using NetworktTest = Network<255, 255, 255, 255>;
 
 class ServerProcessValues
 {
-    protected:
+protected:
     const uint8_t m_onNewMessageToReadExpectedVal         = 0u;
     const uint8_t m_onConnectExpectedVal                  = 1u;
     const uint8_t m_onConnectFailedExpectedVal            = 0u;
@@ -39,7 +39,7 @@ class ServerProcessValues
 
 class ServerValues
 {
-    protected:
+protected:
     const uint8_t m_onNewConnectionExpectedVal        = 1;
     const uint8_t m_onServerProcessDestroyExpectedVal = 0;
     const uint8_t m_onListenFailedExpectedVal         = 0;
@@ -52,7 +52,7 @@ class ServerProcessActor : public ServerProcessValues, public ClientTestActor<Ne
 {
     using parent = ClientTestActor<NetworktTest, 1024, 1024>;
 
-    public:
+public:
     ServerProcessActor()
         : ServerProcessValues(),
           parent(m_onNewMessageToReadExpectedVal, m_onConnectExpectedVal, m_onConnectFailedExpectedVal,
@@ -69,7 +69,7 @@ class ServerActor : public ServerValues, public ServerTestActor<NetworktTest, Se
 {
     using parent = ServerTestActor<NetworktTest, ServerProcessActor>;
 
-    public:
+public:
     ServerActor(const ServerTestActor::ServerParam &param)
         : ServerValues(),
           parent(m_onNewConnectionExpectedVal, m_onServerProcessDestroyExpectedVal, m_onListenFailedExpectedVal,

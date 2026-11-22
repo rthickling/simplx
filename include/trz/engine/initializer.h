@@ -11,7 +11,7 @@
 
 #include <iostream>
 #ifndef NDEBUG
-#include <csignal>
+#    include <csignal>
 #endif
 
 namespace tredzone
@@ -25,26 +25,25 @@ struct InitializerExceptionHandler
 
 template <class _InitData> class InitializerStartSequence : public Engine::StartSequence
 {
-  public:
+public:
     class Callback;
     struct Actor;
     template <class _Init>
     InitializerStartSequence(const _Init &, const Engine::CoreSet & = Engine::FullCoreSet(),
-                                  InitializerExceptionHandler * = 0,
-                                  int = (0));
+                             InitializerExceptionHandler * = 0, int = (0));
 
 #ifndef NDEBUG
     static sig_atomic_t debugGetCoreInitializerSingletonCount() { return debugCoreInitializerSingletonCount(0); }
 #endif
 
-  private:
+private:
     struct CoreInitializer;
     struct CoreInitializerSingleton;
     struct InitData
     {
-        _InitData data;
-        ::tredzone::Actor::ActorId coreInitializerSingletonActorId[ ::tredzone::Actor::MAX_NODE_COUNT];
-        size_t coreInitializerSingletonCount;
+        _InitData                  data;
+        ::tredzone::Actor::ActorId coreInitializerSingletonActorId[::tredzone::Actor::MAX_NODE_COUNT];
+        size_t                     coreInitializerSingletonCount;
         template <class _Init> inline InitData(const _Init &pinit) : data(pinit), coreInitializerSingletonCount(0) {}
         inline void addCoreInitializerSingleton(const ::tredzone::Actor::ActorId &actorId) noexcept
         {
@@ -86,9 +85,9 @@ template <class _InitData> class InitializerStartSequence : public Engine::Start
         }
     };
     typedef CacheLineAlignedObject<InitData> CacheAlignedInitData;
-    std::unique_ptr<CacheAlignedInitData> initDataAutoPtr;
-    CacheAlignedInitData *initData;
-    InitializerExceptionHandler *exceptionHandler;
+    std::unique_ptr<CacheAlignedInitData>    initDataAutoPtr;
+    CacheAlignedInitData                    *initData;
+    InitializerExceptionHandler             *exceptionHandler;
 
 #ifndef NDEBUG
     static sig_atomic_t debugCoreInitializerSingletonCount(int inc)
@@ -111,10 +110,9 @@ template <class _InitData> class InitializerStartSequence : public Engine::Start
 #endif
 };
 
-template <class _InitData>
-class InitializerStartSequence<_InitData>::Callback : private MultiDoubleChainLink<Callback>
+template <class _InitData> class InitializerStartSequence<_InitData>::Callback : private MultiDoubleChainLink<Callback>
 {
-  public:
+public:
     inline Callback(::tredzone::Actor &);
     virtual ~Callback() noexcept
     {
@@ -125,7 +123,7 @@ class InitializerStartSequence<_InitData>::Callback : private MultiDoubleChainLi
     }
     inline bool isInitialized() const noexcept { return withinCallbackChain == 0; }
 
-  protected:
+protected:
     virtual void onInitialize(_InitData &)
     {
         withinCallbackChain->remove(this);
@@ -133,7 +131,7 @@ class InitializerStartSequence<_InitData>::Callback : private MultiDoubleChainLi
         coreInitializerSingleton.reset();
     }
 
-  private:
+private:
     friend class InitializerStartSequence;
     struct Chain : Callback::template DoubleChain<0u, Chain>
     {
@@ -156,34 +154,32 @@ class InitializerStartSequence<_InitData>::Callback : private MultiDoubleChainLi
     };
 
     ::tredzone::Actor::ActorReference<CoreInitializerSingleton> coreInitializerSingleton;
-    Chain *withinCallbackChain;
+    Chain                                                      *withinCallbackChain;
 };
 
 template <class _InitData>
-struct InitializerStartSequence<_InitData>::Actor : ::tredzone::Actor,
-                                                         InitializerStartSequence<_InitData>::Callback
+struct InitializerStartSequence<_InitData>::Actor : ::tredzone::Actor, InitializerStartSequence<_InitData>::Callback
 {
     inline Actor() : InitializerStartSequence<_InitData>::Callback(static_cast<::tredzone::Actor &>(*this)) {}
 };
 
 template <class _InitData>
-struct InitializerStartSequence<_InitData>::CoreInitializerSingleton : ::tredzone::Actor,
-                                                                            ::tredzone::Actor::Callback
+struct InitializerStartSequence<_InitData>::CoreInitializerSingleton : ::tredzone::Actor, ::tredzone::Actor::Callback
 {
     struct HandOverEvent : ::tredzone::Actor::Event
     {
     };
 
-    CacheAlignedInitData *initData;
-    InitializerExceptionHandler *exceptionHandler;
+    CacheAlignedInitData                              *initData;
+    InitializerExceptionHandler                       *exceptionHandler;
     typename InitializerStartSequence::Callback::Chain initializeInProgressCallbackChain;
-    bool destroyFlag;
+    bool                                               destroyFlag;
 
     CoreInitializerSingleton(InitializerStartSequence *startSequence = 0) : destroyFlag(true)
     {
         if (startSequence != 0)
         {
-            initData = startSequence->initData;
+            initData         = startSequence->initData;
             exceptionHandler = startSequence->exceptionHandler;
             registerEventHandler<HandOverEvent>(*this);
             startSequence->initDataAutoPtr.release();
@@ -199,10 +195,7 @@ struct InitializerStartSequence<_InitData>::CoreInitializerSingleton : ::tredzon
 #endif
     }
 #ifndef NDEBUG
-    virtual ~CoreInitializerSingleton() noexcept
-    {
-        InitializerStartSequence::debugCoreInitializerSingletonCount(-1);
-    }
+    virtual ~CoreInitializerSingleton() noexcept { InitializerStartSequence::debugCoreInitializerSingletonCount(-1); }
 #endif
     void onEvent(const HandOverEvent &) { onCallback(); }
     void onCallback() noexcept
@@ -313,8 +306,8 @@ InitializerStartSequence<_InitData>::Callback::Callback(::tredzone::Actor &actor
 
 template <class _InitData>
 template <class _Init>
-InitializerStartSequence<_InitData>::InitializerStartSequence(
-    const _Init &pinit, const Engine::CoreSet &pcoreSet, InitializerExceptionHandler *pexceptionHandler, int)
+InitializerStartSequence<_InitData>::InitializerStartSequence(const _Init &pinit, const Engine::CoreSet &pcoreSet,
+                                                              InitializerExceptionHandler *pexceptionHandler, int)
     : Engine::StartSequence(pcoreSet, 0), initDataAutoPtr(new CacheAlignedInitData(pinit)),
       initData(initDataAutoPtr.get()), exceptionHandler(pexceptionHandler)
 {
@@ -324,4 +317,4 @@ InitializerStartSequence<_InitData>::InitializerStartSequence(
     }
 }
 
-} // namespace
+} // namespace tredzone

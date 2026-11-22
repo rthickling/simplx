@@ -9,9 +9,9 @@
 
 #include <cstring>
 #include <list>
+#include <new>
 #include <ostream>
 #include <typeinfo>
-#include <new>
 
 #include "trz/engine/internal/mforwardchain.h"
 
@@ -52,7 +52,7 @@ class PropertyNullValue;
  */
 class PropertyAbstractValue
 {
-  public:
+public:
     /**
      * @brief Destructor.
      */
@@ -76,7 +76,7 @@ class PropertyAbstractValue
      */
     inline bool operator!=(const PropertyNullValue &nullValue) const noexcept;
 
-  private:
+private:
     template <class> friend class Property;
     virtual PropertyAbstractValue *clone(const PropertyBase &) const = 0; // throw (std::bad_alloc)
 };
@@ -86,7 +86,7 @@ class PropertyAbstractValue
  */
 class PropertyNullValue : public PropertyAbstractValue
 {
-  public:
+public:
     /**
      * @brief Getter.
      * @return singleton instance.
@@ -113,7 +113,7 @@ class PropertyNullValue : public PropertyAbstractValue
      */
     inline bool operator!=(const PropertyAbstractValue &other) const noexcept { return this != &other; }
 
-  private:
+private:
     inline PropertyNullValue() noexcept {}
     /**
      * throw (std::bad_alloc)
@@ -127,10 +127,10 @@ class PropertyNullValue : public PropertyAbstractValue
  */
 template <class _Allocator, class _Value> class PropertyValue : public PropertyAbstractValue
 {
-  private:
+private:
     const Property<_Allocator> &property;
 
-  public:
+public:
     _Value value; ///< Wrapped value.
 
     /**
@@ -157,14 +157,13 @@ template <class _Allocator, class _Value> class PropertyValue : public PropertyA
      */
     virtual std::ostream &toOStream(std::ostream &os) const { return os << std::boolalpha << value; }
 
-  private:
+private:
     friend class Property<_Allocator>;
     virtual PropertyAbstractValue *clone(const PropertyBase &) const; // throw (std::bad_alloc)
-    void *operator new(size_t);                                       // throw (std::bad_alloc)
+    void                          *operator new(size_t);              // throw (std::bad_alloc)
     inline void *operator new(std::size_t size, void *ptr) noexcept { return ::operator new(size, ptr); }
-    inline void operator delete(
-        PropertyValue*, std::destroying_delete_t) noexcept;
-    inline void operator delete(void *, void *)noexcept;
+    inline void  operator delete(PropertyValue *, std::destroying_delete_t) noexcept;
+    inline void  operator delete(void *, void *) noexcept;
 };
 
 /**
@@ -175,11 +174,11 @@ class PropertyValue<_Allocator,
                     std::basic_string<char, std::char_traits<char>, typename _Allocator::template rebind<char>::other>>
     : public PropertyAbstractValue
 {
-  public:
+public:
     typedef std::basic_string<char, std::char_traits<char>,
                               typename _Allocator::template rebind<char>::other>
-        string_type;   ///< Alias to std::string using generic template type _Allocator.
-    string_type value; ///< Wrapped string-value.
+                string_type; ///< Alias to std::string using generic template type _Allocator.
+    string_type value;       ///< Wrapped string-value.
 
     /**
      * @brief Default constructor.
@@ -212,13 +211,13 @@ class PropertyValue<_Allocator,
      */
     virtual std::ostream &toOStream(std::ostream &os) const { return os << '\"' << value << '\"'; }
 
-  private:
+private:
     friend class Property<_Allocator>;
     virtual PropertyAbstractValue *clone(const PropertyBase &) const; // throw (std::bad_alloc)
-    void *operator new(size_t);                                       // throw (std::bad_alloc)
-    inline void *operator new(std::size_t size, void *ptr) noexcept { return ::operator new(size, ptr); }
-    inline static void operator delete(PropertyValue*, std::destroying_delete_t) noexcept;
-    inline void operator delete(void *, void *)noexcept;
+    void                          *operator new(size_t);              // throw (std::bad_alloc)
+    inline void       *operator new(std::size_t size, void *ptr) noexcept { return ::operator new(size, ptr); }
+    inline static void operator delete(PropertyValue *, std::destroying_delete_t) noexcept;
+    inline void        operator delete(void *, void *) noexcept;
 };
 
 /**
@@ -228,11 +227,11 @@ class PropertyValue<_Allocator,
  */
 template <class _Allocator> class Property : public PropertyBase
 {
-  public:
+public:
     typedef _Allocator allocator_type;
     typedef std::basic_string<char, std::char_traits<char>,
                               typename _Allocator::template rebind<char>::other>
-        string_type; ///< Alias to std::string using generic template type _Allocator.
+                                  string_type; ///< Alias to std::string using generic template type _Allocator.
     typedef PropertyAbstractValue AbstractValue;
     class Collection;
 
@@ -369,9 +368,9 @@ template <class _Allocator> class Property : public PropertyBase
      */
     inline std::ostream &toOStream(std::ostream &) const;
 
-  private:
+private:
     allocator_type allocator;
-    char *name;
+    char          *name;
     AbstractValue *value;
 
     inline char *newName(const char *); // throw (std::bad_alloc)
@@ -386,7 +385,7 @@ template <class _Allocator> class Property : public PropertyBase
 template <class _Allocator>
 class Property<_Allocator>::Collection : private MultiForwardChainLink<Collection>, public Property<_Allocator>
 {
-  private:
+private:
     struct Chain : Collection::template ForwardChain<0u, Chain>
     {
         inline static Collection *getItem(MultiForwardChainLink<Collection> *link) noexcept
@@ -407,11 +406,11 @@ class Property<_Allocator>::Collection : private MultiForwardChainLink<Collectio
         }
     };
 
-  public:
+public:
     typedef typename Property<_Allocator>::allocator_type allocator_type;
-    typedef size_t size_type;
-    typedef typename Chain::iterator iterator;             ///< Alias to stl-compliant iterator.
-    typedef typename Chain::const_iterator const_iterator; ///< Alias to stl-compliant const iterator.
+    typedef size_t                                        size_type;
+    typedef typename Chain::iterator                      iterator;       ///< Alias to stl-compliant iterator.
+    typedef typename Chain::const_iterator                const_iterator; ///< Alias to stl-compliant const iterator.
 
     /**
      * @brief Default constructor.
@@ -536,9 +535,8 @@ class Property<_Allocator>::Collection : private MultiForwardChainLink<Collectio
      * If no entry found, returns past-end iterator.
      */
     template <class _NameStringAllocator>
-    inline const_iterator find(const_iterator,
-                               const std::basic_string<char, std::char_traits<char>, _NameStringAllocator> &) const
-        noexcept;
+    inline const_iterator
+    find(const_iterator, const std::basic_string<char, std::char_traits<char>, _NameStringAllocator> &) const noexcept;
     /**
      * @brief Inserts an entry at the containers end.
      * @note The entry is created with an empty string key and a null-value.
@@ -608,7 +606,7 @@ class Property<_Allocator>::Collection : private MultiForwardChainLink<Collectio
      */
     inline std::ostream &toOStream(std::ostream &, bool = true) const;
 
-  private:
+private:
     Chain leaves;
 };
 
@@ -625,11 +623,9 @@ PropertyAbstractValue *PropertyValue<_Allocator, _Value>::clone(const PropertyBa
 }
 
 template <class _Allocator, class _Value>
-inline void PropertyValue<_Allocator, _Value>::operator delete(
-    PropertyValue* p, std::destroying_delete_t) noexcept
+inline void PropertyValue<_Allocator, _Value>::operator delete(PropertyValue *p, std::destroying_delete_t) noexcept
 {
-    using Allocator =
-        typename _Allocator::template rebind<PropertyValue>::other;
+    using Allocator = typename _Allocator::template rebind<PropertyValue>::other;
 
     Allocator allocator{p->property.get_allocator()};
 
@@ -661,18 +657,12 @@ PropertyValue<_Allocator,
 }
 
 template <class _Allocator>
-inline void PropertyValue<
-    _Allocator,
-    std::basic_string<
-        char,
-        std::char_traits<char>,
-        typename _Allocator::template rebind<char>::other
-    >
->::operator delete(
-    PropertyValue* p, std::destroying_delete_t) noexcept
+inline void
+PropertyValue<_Allocator,
+              std::basic_string<char, std::char_traits<char>, typename _Allocator::template rebind<char>::other>>::
+operator delete(PropertyValue *p, std::destroying_delete_t) noexcept
 {
-    using Allocator =
-        typename _Allocator::template rebind<PropertyValue>::other;
+    using Allocator = typename _Allocator::template rebind<PropertyValue>::other;
 
     Allocator allocator{p->value.get_allocator()};
 
@@ -716,8 +706,8 @@ template <class _Allocator> char *Property<_Allocator>::newName(const char *pNam
 {
     if (pName != 0 && *pName != '\0')
     {
-        size_t sz = std::strlen(pName) + 1;
-        char *newName = typename allocator_type::template rebind<char>::other(allocator).allocate(sz);
+        size_t sz      = std::strlen(pName) + 1;
+        char  *newName = typename allocator_type::template rebind<char>::other(allocator).allocate(sz);
         std::memcpy(newName, pName, sz);
         return newName;
     }
@@ -733,9 +723,9 @@ char *Property<_Allocator>::newName(const std::basic_string<char, std::char_trai
 {
     if (!pName.empty())
     {
-        size_t sz = pName.size() + 1;
-        const char *cstr = pName.c_str();
-        char *newName = typename allocator_type::template rebind<char>::other(allocator).allocate(sz);
+        size_t      sz      = pName.size() + 1;
+        const char *cstr    = pName.c_str();
+        char       *newName = typename allocator_type::template rebind<char>::other(allocator).allocate(sz);
         std::memcpy(newName, cstr, sz);
         return newName;
     }
@@ -817,7 +807,7 @@ Property<_Allocator> &Property<_Allocator>::setValue(const _ValueInit &valueInit
 template <class _Allocator> Property<_Allocator> &Property<_Allocator>::setAbstractValue(const AbstractValue &pValue)
 {
     AbstractValue *oldValue = value;
-    value = pValue.clone(*this);
+    value                   = pValue.clone(*this);
     if (oldValue != 0)
     {
         delete oldValue;
@@ -876,10 +866,10 @@ Property<_Allocator> &Property<_Allocator>::setNameAndValue(const _NameStringTyp
 template <class _Allocator>
 template <class _NameStringType>
 Property<_Allocator> &Property<_Allocator>::setNameAndAbstractValue(const _NameStringType &pName,
-                                                                    const AbstractValue &pValue)
+                                                                    const AbstractValue   &pValue)
 {
     AbstractValue *oldValue = value;
-    value = pValue.clone(*this);
+    value                   = pValue.clone(*this);
     try
     {
         setName(pName);
@@ -941,8 +931,8 @@ Property<_Allocator>::Collection::Collection(const Collection &other)
 template <class _Allocator> Property<_Allocator>::Collection::~Collection() noexcept { clear(); }
 
 template <class _Allocator>
-typename Property<_Allocator>::Collection &Property<_Allocator>::Collection::
-operator=(const Property<_Allocator> &other)
+typename Property<_Allocator>::Collection &
+Property<_Allocator>::Collection::operator=(const Property<_Allocator> &other)
 {
     this->Property<_Allocator>::operator=(other);
     return *this;
@@ -951,7 +941,7 @@ operator=(const Property<_Allocator> &other)
 template <class _Allocator>
 typename Property<_Allocator>::Collection &Property<_Allocator>::Collection::operator=(const Collection &other)
 {
-    Chain newLeaves;
+    Chain                                                       newLeaves;
     typename allocator_type::template rebind<Collection>::other allocator(get_allocator());
     try
     {
@@ -1026,7 +1016,7 @@ Property<_Allocator>::Collection::find(const _NameStringType &pName) noexcept
 }
 
 template <class _Allocator>
-typename Property<_Allocator>::Collection::iterator Property<_Allocator>::Collection::find(iterator from,
+typename Property<_Allocator>::Collection::iterator Property<_Allocator>::Collection::find(iterator    from,
                                                                                            const char *pName) noexcept
 {
     iterator i = from, endi = end();
@@ -1070,8 +1060,8 @@ Property<_Allocator>::Collection::find(const_iterator from, const char *pName) c
 template <class _Allocator>
 template <class _NameStringAllocator>
 typename Property<_Allocator>::Collection::const_iterator Property<_Allocator>::Collection::find(
-    const_iterator from, const std::basic_string<char, std::char_traits<char>, _NameStringAllocator> &pName) const
-    noexcept
+    const_iterator                                                               from,
+    const std::basic_string<char, std::char_traits<char>, _NameStringAllocator> &pName) const noexcept
 {
     const_iterator i = from, endi = end();
     for (; i != endi && i->getName() != pName; ++i)
@@ -1090,7 +1080,7 @@ template <class _Allocator>
 typename Property<_Allocator>::Collection::iterator Property<_Allocator>::Collection::insert(iterator pos)
 {
     typename allocator_type::template rebind<Collection>::other allocator(get_allocator());
-    Collection *collectionBuffer = allocator.allocate(1);
+    Collection                                                 *collectionBuffer = allocator.allocate(1);
     try
     {
         return leaves.insert(pos, new (collectionBuffer) Collection(allocator));
@@ -1166,7 +1156,7 @@ template <class _Allocator>
 typename Property<_Allocator>::Collection::iterator Property<_Allocator>::Collection::erase(iterator pos) noexcept
 {
     Collection &collection = *pos;
-    iterator ret = leaves.erase(pos);
+    iterator    ret        = leaves.erase(pos);
     collection.~Collection();
     typename allocator_type::template rebind<Collection>::other(get_allocator()).deallocate(&collection, 1);
     return ret;
@@ -1216,4 +1206,4 @@ std::ostream &Property<_Allocator>::Collection::toOStream(std::ostream &os, bool
     return os;
 }
 
-} // namespace
+} // namespace tredzone

@@ -12,6 +12,6 @@
 
 namespace tredzone
 {
-    using SerialBuffer = mmapSerialBuffer;
-    
+using SerialBuffer = mmapSerialBuffer;
+
 } // namespace tredzone

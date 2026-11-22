@@ -21,16 +21,16 @@
 
 class NetworkCallsMock
 {
-  public:
-    static int                                        connectReturnValue;
-    static int                                        errnoValue;
-    static int                                        epollFdValue;
-    static int                                        epollEvent;
-    static int                                        epollWaitCount;
-    static int                                        closeReturnValue;
-    static int                                        listenReturnValue;
-    static int                                        acceptedSocket;
-    static std::function<void(int, void *, int &ret)> mockRead;
+public:
+    static int                                                      connectReturnValue;
+    static int                                                      errnoValue;
+    static int                                                      epollFdValue;
+    static int                                                      epollEvent;
+    static int                                                      epollWaitCount;
+    static int                                                      closeReturnValue;
+    static int                                                      listenReturnValue;
+    static int                                                      acceptedSocket;
+    static std::function<void(int, void *, int &ret)>               mockRead;
     static std::function<void(int, const void *, size_t, int &ret)> mockWrite;
 
     const static int Sock_stream      = 0;
@@ -40,8 +40,7 @@ class NetworkCallsMock
     const static int So_reuseaddr     = 0;
     const static int So_reuseport     = 0;
 
-    static int connect(int sockfd, const sockaddr_in *addr,
-                       socklen_t addrlen) noexcept
+    static int connect(int sockfd, const sockaddr_in *addr, socklen_t addrlen) noexcept
     {
         errno = errnoValue;
         return connectReturnValue;
@@ -52,14 +51,9 @@ class NetworkCallsMock
         return 0; // fd
     }
 
-    static int epoll_ctl(int epfd, int op, int fd,
-                         struct epoll_event *event) noexcept
-    {
-        return 0;
-    }
+    static int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event) noexcept { return 0; }
 
-    static int epoll_wait(int epfd, struct epoll_event *events, int maxevents,
-                          int timeout) noexcept
+    static int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout) noexcept
     {
         events[0].data.fd = epollFdValue;
         events[0].events  = epollEvent;
@@ -90,39 +84,28 @@ class NetworkCallsMock
         return epollFdValue; // fd
     }
 
-    static int inet_pton(int af, const char *src, void *dst) noexcept
-    {
-        return 0;
-    }
+    static int inet_pton(int af, const char *src, void *dst) noexcept { return 0; }
 
     static bool setSocketNonBlocking(int socket) noexcept { return true; }
 
-    static struct sockaddr_in setSocketAddress(int adressFamily, const char *ip,
-                                               int port) noexcept
+    static struct sockaddr_in setSocketAddress(int adressFamily, const char *ip, int port) noexcept
     {
         struct sockaddr_in serv_addr;
         return serv_addr;
     }
 
-    static int bind(int sockfd, sockaddr_in *addr, socklen_t addrlen) noexcept
-    {
-        return 0;
-    }
+    static int bind(int sockfd, sockaddr_in *addr, socklen_t addrlen) noexcept { return 0; }
 
-    static int listen(int sockfd, int backlog) noexcept
-    {
-        return listenReturnValue;
-    }
+    static int listen(int sockfd, int backlog) noexcept { return listenReturnValue; }
 
-    static int setsockopt(int sockfd, int level, int optname,
-                          const void *optval, socklen_t optlen) noexcept
+    static int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen) noexcept
     {
         return 0;
     }
 
     static int accept4(int sockfd, char *addr, int flags)
     {
-        memcpy(addr,"127.0.0.1",9);   
+        memcpy(addr, "127.0.0.1", 9);
         return acceptedSocket;
     }
 

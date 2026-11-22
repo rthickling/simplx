@@ -33,7 +33,7 @@ template <class _Network, class _HttpServerProcess> class HttpServer : public Tc
 {
     using parent = TcpServer<_Network, _HttpServerProcess>;
 
-    public:
+public:
     using fd_t = int64_t;
 
     /**
@@ -42,7 +42,7 @@ template <class _Network, class _HttpServerProcess> class HttpServer : public Tc
      */
     class Parameters
     {
-        public:
+    public:
         Parameters(const string &interface, const int port, const string rootPath = "")
             : m_interface(interface), m_port(port), m_rootPath(rootPath)
         {
@@ -67,7 +67,7 @@ template <class _Network, class _HttpServerProcess> class HttpServer : public Tc
         if (!m_rootPath)
         {
             // if none provided take [current_dir]/www
-            char *       current_dir_name = get_current_dir_name();
+            char        *current_dir_name = get_current_dir_name();
             const string tmp(current_dir_name);
             m_path = tmp + "/www";
             free(current_dir_name);
@@ -86,7 +86,7 @@ template <class _Network, class _HttpServerProcess> class HttpServer : public Tc
      */
     virtual ~HttpServer() { free(m_rootPath); }
 
-    protected:
+protected:
     /**
      * @brief registers service to start listening
      *
@@ -112,7 +112,6 @@ template <class _Network, class _HttpServerProcess> class HttpServer : public Tc
     }
 
 private:
-    
     /**
      * @brief internal callback triggered just after a new client as been accepted.
      * (overridden to pass rootPath to serverProcess)
@@ -139,7 +138,7 @@ private:
 
     const string  m_interface;
     const int64_t m_port;
-    char *        m_rootPath;
+    char         *m_rootPath;
 };
 } // namespace http
 } // namespace connector

@@ -20,10 +20,10 @@ namespace
 
 class TestEventLoop : public EngineEventLoop
 {
-  public:
+public:
     class Shared
     {
-      public:
+    public:
         inline Shared() : eventLoopCount(0), eventLoopCountMax(0) {}
         inline ~Shared()
         {
@@ -47,9 +47,9 @@ class TestEventLoop : public EngineEventLoop
             // std::cout << "--TestEventLoop, eventLoopCount=" << eventLoopCount << std::endl;
         }
 
-      private:
-        Mutex mutex;
-        int eventLoopCount;
+    private:
+        Mutex    mutex;
+        int      eventLoopCount;
         unsigned eventLoopCountMax;
     };
 
@@ -67,7 +67,7 @@ class TestEventLoop : public EngineEventLoop
         shared.decrementEventLoopThreadSafe();
     }
 
-  protected:
+protected:
     void run() noexcept override
     {
         while (isRunning())
@@ -79,14 +79,14 @@ class TestEventLoop : public EngineEventLoop
         }
     }
 
-  private:
+private:
     Shared &shared;
 };
 
 template <class _EventLoop>
 class TestEventLoopFactory : public EngineCustomEventLoopFactory, public TestAsyncExceptionHandler
 {
-  public:
+public:
     const size_t eventAllocatorPageSizeByte;
 
     inline TestEventLoopFactory() : eventAllocatorPageSizeByte(4096) {}
@@ -99,13 +99,13 @@ class TestEventLoopFactory : public EngineCustomEventLoopFactory, public TestAsy
             std::make_pair(eventAllocatorPageSizeByte, &eventLoopShared));
     }
 
-  private:
+private:
     TestEventLoop::Shared eventLoopShared;
 };
 
 template <class _EventLoopFactory> class TestStartSequence : public Engine::StartSequence
 {
-  public:
+public:
     inline TestStartSequence(_EventLoopFactory &testEventLoopFactory, size_t eventAllocatorPageSizeByte)
     {
         setExceptionHandler(testEventLoopFactory);
@@ -116,7 +116,7 @@ template <class _EventLoopFactory> class TestStartSequence : public Engine::Star
 
 void testInit()
 {
-    TestEventLoopFactory<TestEventLoop> eventLoopFactory;
+    TestEventLoopFactory<TestEventLoop>                    eventLoopFactory;
     TestStartSequence<TestEventLoopFactory<TestEventLoop>> startSequence(eventLoopFactory,
                                                                          eventLoopFactory.eventAllocatorPageSizeByte);
     startSequence.addActor<Actor>(testCore(0));
@@ -127,10 +127,10 @@ class TestLocalEventLoop;
 
 class TestLocalEventActorBase : public Actor
 {
-  public:
+public:
     struct TestEvent : Event, MultiForwardChainLink<TestEvent>
     {
-        const unsigned count;
+        const unsigned                   count;
         mutable TestLocalEventActorBase *actor;
         inline TestEvent(unsigned pcount) noexcept : count(pcount), actor(0) {}
     };
@@ -140,15 +140,15 @@ class TestLocalEventActorBase : public Actor
         : eventCountMax(eventBatchSize * 10), eventCount(0), eventCountToBeReceivedNext(0)
     {
     }
-    inline void onEvent(const TestEvent &);
+    inline void  onEvent(const TestEvent &);
     virtual void eventLoopOnEvent(TestEvent &) noexcept = 0;
 
-  protected:
+protected:
     friend class TestLocalEventLoop;
 
     const unsigned eventCountMax;
-    unsigned eventCount;
-    unsigned eventCountToBeReceivedNext;
+    unsigned       eventCount;
+    unsigned       eventCountToBeReceivedNext;
 
     virtual void onDestroyRequest() noexcept
     {
@@ -167,7 +167,7 @@ class TestLocalEventActorBase : public Actor
 
 class TestLocalEventLoop : public TestEventLoop
 {
-  public:
+public:
     inline TestLocalEventLoop(const std::pair<size_t, Shared *> &init)
         : TestEventLoop(init)
 #ifndef NDEBUG
@@ -178,7 +178,7 @@ class TestLocalEventLoop : public TestEventLoop
     }
     virtual ~TestLocalEventLoop() noexcept { EXPECT_TRUE(testEventChain.empty()); }
     inline size_t getEventFillerSize() const noexcept { return eventAllocatorPageSizeByte / 10; }
-    inline void addTestEvent(TestLocalEventActorBase::TestEvent &event) noexcept { testEventChain.push_back(&event); }
+    inline void   addTestEvent(TestLocalEventActorBase::TestEvent &event) noexcept { testEventChain.push_back(&event); }
 #ifndef NDEBUG
     inline void debugSynchronizeCount()
     {
@@ -193,7 +193,7 @@ class TestLocalEventLoop : public TestEventLoop
     }
 #endif
 
-  protected:
+protected:
     TestLocalEventActorBase::TestEventChain testEventChain;
 
     virtual void run() noexcept
@@ -226,7 +226,7 @@ class TestLocalEventLoop : public TestEventLoop
         }
     }
 
-  private:
+private:
 #ifndef NDEBUG
     unsigned debugLastSynchronizeCount;
 #endif
@@ -234,7 +234,7 @@ class TestLocalEventLoop : public TestEventLoop
 
 class TestLocalEventActor : public TestLocalEventActorBase
 {
-  public:
+public:
     inline TestLocalEventActor(unsigned eventBatchSize);
     virtual void eventLoopOnEvent(TestEvent &) noexcept;
 };
@@ -281,7 +281,7 @@ void testLocalEvent()
     for (unsigned i = 1; i <= 100; ++i)
     {
         // std::cout << "testLocalEvent(), i=" << i << std::endl;
-        TestEventLoopFactory<TestLocalEventLoop> eventLoopFactory;
+        TestEventLoopFactory<TestLocalEventLoop>                    eventLoopFactory;
         TestStartSequence<TestEventLoopFactory<TestLocalEventLoop>> startSequence(
             eventLoopFactory, eventLoopFactory.eventAllocatorPageSizeByte);
         startSequence.addActor<TestLocalEventActor>(testCore(0), i);
@@ -303,13 +303,13 @@ struct TestPingPongEventActor : TestLocalEventActorBase
 
 class TestPingEventActor : public TestPingPongEventActor
 {
-  public:
+public:
     struct Init
     {
-        unsigned eventBatchSize;
+        unsigned       eventBatchSize;
         const ActorId &pongActorId;
-        inline Init(unsigned peventBatchSize, const ActorId &ppongActorId) noexcept : eventBatchSize(peventBatchSize),
-                                                                                      pongActorId(ppongActorId)
+        inline Init(unsigned peventBatchSize, const ActorId &ppongActorId) noexcept
+            : eventBatchSize(peventBatchSize), pongActorId(ppongActorId)
         {
         }
     };
@@ -329,13 +329,13 @@ class TestPingEventActor : public TestPingPongEventActor
 
 class TestPongEventActor : public TestPingPongEventActor
 {
-  public:
+public:
     struct Init
     {
         unsigned eventBatchSize;
         ActorId &pongActorId;
-        inline Init(unsigned peventBatchSize, ActorId &ppongActorId) noexcept : eventBatchSize(peventBatchSize),
-                                                                                pongActorId(ppongActorId)
+        inline Init(unsigned peventBatchSize, ActorId &ppongActorId) noexcept
+            : eventBatchSize(peventBatchSize), pongActorId(ppongActorId)
         {
         }
     };
@@ -352,8 +352,8 @@ void testCoreToCoreEvent()
     for (unsigned i = 1; i <= 100; ++i)
     {
         // std::cout << "testCoreToCoreEvent(), i=" << i << std::endl;
-        Actor::ActorId pongActorId;
-        TestEventLoopFactory<TestLocalEventLoop> eventLoopFactory;
+        Actor::ActorId                                              pongActorId;
+        TestEventLoopFactory<TestLocalEventLoop>                    eventLoopFactory;
         TestStartSequence<TestEventLoopFactory<TestLocalEventLoop>> startSequence(
             eventLoopFactory, eventLoopFactory.eventAllocatorPageSizeByte);
         startSequence.addActor<TestPongEventActor>(testCore(0), TestPongEventActor::Init(i, pongActorId));
@@ -364,7 +364,7 @@ void testCoreToCoreEvent()
 
 class TestReturnToSenderEventLoop : public EngineEventLoop
 {
-  public:
+public:
     struct Counters
     {
         unsigned onReturnEventCount;
@@ -432,7 +432,7 @@ class TestReturnToSenderEventLoop : public EngineEventLoop
         SenderActor(const ActorId *receiverActorId) : doneFlag(_undeliveredEventCount == 0)
         {
             registerUndeliveredEventHandler<UndeliveredEvent>(*this);
-            Event::Pipe pipe(*this, *receiverActorId);
+            Event::Pipe   pipe(*this, *receiverActorId);
             _PushOperator push(pipe, _deliveredEventCount, _undeliveredEventCount);
         }
         void onUndeliveredEvent(const UndeliveredEvent &)
@@ -466,7 +466,7 @@ class TestReturnToSenderEventLoop : public EngineEventLoop
     }
     static Counters getCounters(Actor::CoreId coreId)
     {
-        Mutex::Lock lock(staticMutex);
+        Mutex::Lock                lock(staticMutex);
         CoreIdCoutersMap::iterator i = staticCoreIdCoutersMap.find(coreId);
         return i == staticCoreIdCoutersMap.end() ? Counters() : i->second;
     }
@@ -476,7 +476,7 @@ class TestReturnToSenderEventLoop : public EngineEventLoop
         staticCoreIdCoutersMap.clear();
     }
 
-  protected:
+protected:
     virtual void run() noexcept
     {
         while (isRunning())
@@ -496,16 +496,16 @@ class TestReturnToSenderEventLoop : public EngineEventLoop
         }
     }
 
-  private:
-    static Mutex staticMutex;
-    typedef std::map<Actor::CoreId, Counters> CoreIdCoutersMap;
-    static CoreIdCoutersMap staticCoreIdCoutersMap;
+private:
+    static Mutex                                staticMutex;
+    typedef std::map<Actor::CoreId, Counters>   CoreIdCoutersMap;
+    static CoreIdCoutersMap                     staticCoreIdCoutersMap;
     typedef std::list<const UndeliveredEvent *> EventList;
-    EventList eventList;
-    Counters counters;
+    EventList                                   eventList;
+    Counters                                    counters;
 };
 
-Mutex TestReturnToSenderEventLoop::staticMutex;
+Mutex                                         TestReturnToSenderEventLoop::staticMutex;
 TestReturnToSenderEventLoop::CoreIdCoutersMap TestReturnToSenderEventLoop::staticCoreIdCoutersMap;
 
 struct TestReturnToSenderEventLoopFactory : EngineCustomEventLoopFactory, TestAsyncExceptionHandler
@@ -589,12 +589,12 @@ struct TestReturnToSenderInterlaced2PushOperator
 template <class _PushOperator, unsigned _deliveredEventCount, unsigned _undeliveredEventCount>
 void testReturnToSender(bool sameCoreFlag)
 {
-    static const Actor::CoreId FIRST_CORE_ID = testCore(0);
+    static const Actor::CoreId FIRST_CORE_ID  = testCore(0);
     static const Actor::CoreId SECOND_CORE_ID = testCore(1);
 
     TestReturnToSenderEventLoop::clearCounters();
     TestReturnToSenderEventLoopFactory eventLoopFactory;
-    Actor::ActorId receiverActorId;
+    Actor::ActorId                     receiverActorId;
     {
         TestStartSequence<TestReturnToSenderEventLoopFactory> startSequence(eventLoopFactory, 4096);
         startSequence.addActor<TestReturnToSenderEventLoop::ReceiverActor>(FIRST_CORE_ID, &receiverActorId);
@@ -681,7 +681,7 @@ void testReturnToSender()
     testReturnToSender<3u, 4u>();
 }
 
-} // namespace anonymous
+} // namespace
 
 TEST(AsyncEventLoop, init) { testInit(); }
 TEST(AsyncEventLoop, localEvent) { testLocalEvent(); }

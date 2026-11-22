@@ -47,7 +47,8 @@ template <class _TNetwork, class _TServerProcess> class ServerTestBase : public 
     uint8_t m_onListenStoppedExpected        = 0;
 
     using parent = TcpServer<_TNetwork, _TServerProcess>;
-    public:
+
+public:
     ServerTestBase(uint8_t onNewConnectionExpected, uint8_t onServerProcessDestroyExpected,
                    uint8_t onListenFailedExpected, uint8_t onListenSucceedExpected, uint8_t onAcceptFailedExpected,
                    uint8_t onListenStopped)
@@ -70,7 +71,7 @@ template <class _TNetwork, class _TServerProcess> class ServerTestBase : public 
         ASSERT_EQ(m_onListenStoppedExpected, m_onListenStopped);
     }
 
-    protected:
+protected:
     void onServerProcessDestroy(const Actor::ActorId &serverProcessActorId) noexcept override final
     {
 #if VERBOSE_TEST > 0

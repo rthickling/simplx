@@ -24,12 +24,10 @@ namespace tredzone
 template <typename _Char, class _Allocator, size_t _BufferSizeIncrement = TREDZONE_DEFAULT_STREAM_BUFFER_INCREMENT_SIZE>
 class StreamBuffer : public std::basic_streambuf<_Char>
 {
-  public:
+public:
     /** @brief Constructor */
-    inline StreamBuffer(const _Allocator &pallocator) noexcept : allocator(pallocator),
-                                                                 buffer(defaultBuffer),
-                                                                 bufferSize(_BufferSizeIncrement),
-                                                                 bufferOffset(0)
+    inline StreamBuffer(const _Allocator &pallocator) noexcept
+        : allocator(pallocator), buffer(defaultBuffer), bufferSize(_BufferSizeIncrement), bufferOffset(0)
     {
     }
     /** @brief Destructor */
@@ -43,12 +41,12 @@ class StreamBuffer : public std::basic_streambuf<_Char>
     /** @brief Get allocator */
     inline const _Allocator &get_allocator() const noexcept { return allocator; }
 
-  protected:
+protected:
     _Allocator allocator;
-    char defaultBuffer[_BufferSizeIncrement];
-    _Char *buffer;
-    size_t bufferSize;
-    size_t bufferOffset;
+    char       defaultBuffer[_BufferSizeIncrement];
+    _Char     *buffer;
+    size_t     bufferSize;
+    size_t     bufferOffset;
 
     /**
      * @brief Writes characters from the array pointed to by s into the controlled output sequence, until either n
@@ -104,7 +102,7 @@ class StreamBuffer : public std::basic_streambuf<_Char>
             {
                 allocator.deallocate(buffer, bufferSize * sizeof(_Char));
             }
-            buffer = newBuffer;
+            buffer     = newBuffer;
             bufferSize = newBufferSize;
         }
     }
@@ -183,4 +181,4 @@ struct OutputStringStream<char, _Allocator, _BufferSizeIncrement>
     }
 };
 
-} // namespace
+} // namespace tredzone

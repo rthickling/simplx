@@ -20,7 +20,7 @@ namespace tredzone
 
 template <class _NodesHandle> class Parallel
 {
-  public:
+public:
     typedef typename _NodesHandle::NodeId NodeId;
     typedef typename _NodesHandle::Shared Shared;
     struct NodeInUseException;
@@ -29,11 +29,11 @@ template <class _NodesHandle> class Parallel
     ~Parallel();
     inline size_t size() const { return (size_t)nodesHandle.size; }
 
-  protected:
+protected:
     _NodesHandle nodesHandle;
 
-  private:
-    typedef typename _NodesHandle::NodeHandle NodeHandle;
+private:
+    typedef typename _NodesHandle::NodeHandle         NodeHandle;
     typedef typename _NodesHandle::ReaderSharedHandle ReaderSharedHandle;
     typedef typename _NodesHandle::WriterSharedHandle WriterSharedHandle;
 
@@ -45,27 +45,26 @@ template <class _NodesHandle> struct Parallel<_NodesHandle>::NodeInUseException 
     virtual const char *what() const noexcept { return "tredzone::Parallel::NodeInUseException"; }
 };
 
-template <class _NodesHandle>
-class Parallel<_NodesHandle>::Node
+template <class _NodesHandle> class Parallel<_NodesHandle>::Node
 {
-  public:
+public:
     typedef std::bitset<_NodesHandle::MAX_SIZE> WriteSignalBitSet;
 
     const NodeId id; // starts at 0
 
     inline Node(Parallel &, NodeId); // throw (NodeInUseException)
     inline ~Node();
-    inline void synchronize();
-    inline void synchronizePreBarrier();
-    inline void synchronizePostBarrier();
+    inline void    synchronize();
+    inline void    synchronizePreBarrier();
+    inline void    synchronizePostBarrier();
     inline Shared &getReferenceToWriterShared(NodeId);
-    inline void setWriteSignal(NodeId, bool flag = true);
-    inline size_t getNodeCount() const noexcept;
+    inline void    setWriteSignal(NodeId, bool flag = true);
+    inline size_t  getNodeCount() const noexcept;
 
-  protected:
+protected:
     NodeHandle &nodeHandle;
 
-  private:
+private:
     enum ReaderCASEnum
     {
         READER_CAS_IDLE = 0,
@@ -120,10 +119,10 @@ class Parallel<_NodesHandle>::Node
     };
     struct ForEachSynchronizeReadOperator
     {
-        Node &node;
+        Node  &node;
         NodeId nodes[_NodesHandle::MAX_SIZE];
-        int nodesCount;
-        bool checkWriteFailed;
+        int    nodesCount;
+        bool   checkWriteFailed;
         inline ForEachSynchronizeReadOperator(Node &pnode) : node(pnode), nodesCount(-1), checkWriteFailed(false) {}
         inline void operator()(ReaderSharedHandle &sharedHandle, NodeId writerNodeId)
         {
@@ -140,7 +139,7 @@ class Parallel<_NodesHandle>::Node
         }
         inline void reset()
         {
-            nodesCount = -1;
+            nodesCount       = -1;
             checkWriteFailed = false;
         }
     };
@@ -174,7 +173,7 @@ class Parallel<_NodesHandle>::Node
     struct SynchronizeWriteOperator
     {
         NodeId nodes[_NodesHandle::MAX_SIZE];
-        int nodesCount;
+        int    nodesCount;
         inline SynchronizeWriteOperator() {}
         inline SynchronizeWriteOperator(Node &node) { reset(node); }
         inline void reset(Node &node)
@@ -185,7 +184,7 @@ class Parallel<_NodesHandle>::Node
                 node.writeSignal[node.id] = false; // Local writes need to be processed separately, reset false at each
                                                    // iteration as it may change during write or writeFailed
                 typename WriteSignalBitSet::reference iwriteSignal = node.writeSignal[i];
-                WriterSharedHandle *sharedHandle;
+                WriterSharedHandle                   *sharedHandle;
                 if (iwriteSignal &&
                     !(sharedHandle = &node.nodeHandle.getWriterSharedHandle((NodeId)i))->getIsWriteLocked())
                 {
@@ -195,7 +194,7 @@ class Parallel<_NodesHandle>::Node
                     {
                         if (sharedHandle->write())
                         {
-                            nodes[++nodesCount] = (NodeId)i;
+                            nodes[++nodesCount]   = (NodeId)i;
                             node.writeActivity[i] = true;
                         }
                     }
@@ -207,12 +206,12 @@ class Parallel<_NodesHandle>::Node
             }
         }
     };
-    _NodesHandle &nodesHandle;
-    const size_t nodesHandleSize;
-    WriteSignalBitSet writeSignal;
-    WriteSignalBitSet writeActivity;
+    _NodesHandle                  &nodesHandle;
+    const size_t                   nodesHandleSize;
+    WriteSignalBitSet              writeSignal;
+    WriteSignalBitSet              writeActivity;
     ForEachSynchronizeReadOperator readOperator;
-    SynchronizeWriteOperator writeOperator;
+    SynchronizeWriteOperator       writeOperator;
 };
 
 template <class _NodesHandle>
@@ -345,4 +344,4 @@ template <class _NodesHandle> size_t Parallel<_NodesHandle>::Node::getNodeCount(
     return nodesHandleSize;
 }
 
-} // namespace
+} // namespace tredzone

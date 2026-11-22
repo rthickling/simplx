@@ -8,12 +8,13 @@
 #include <memory>
 #include <thread>
 
-namespace xthreadbus {
+namespace xthreadbus
+{
 struct nocopy
 {
-    nocopy()                = default;
-    nocopy(nocopy const &)  = delete;
-    nocopy(nocopy const &&) = delete;
+    nocopy()                          = default;
+    nocopy(nocopy const &)            = delete;
+    nocopy(nocopy const &&)           = delete;
     nocopy &operator=(nocopy const &) = delete;
 };
 
@@ -27,7 +28,7 @@ template <typename T> class ringbuffer : public nocopy
     char                       padding1[padding_size]; /* force read_index and write_index to different cache lines */
     std::atomic<size_t>        read_index_;
 
-    protected:
+protected:
     ringbuffer(void) : write_index_(0), read_index_(0) {}
 
     static size_t next_index(size_t arg, size_t const max_size)
@@ -175,13 +176,13 @@ template <typename T> class ringbuffer : public nocopy
         return *(internal_buffer + read_index);
     }
 
-    public:
+public:
     bool empty(void)
     {
         return empty(write_index_.load(std::memory_order_relaxed), read_index_.load(std::memory_order_relaxed));
     }
 
-    private:
+private:
     bool empty(size_t write_index, size_t read_index) { return write_index == read_index; }
 };
 
@@ -193,7 +194,7 @@ template <typename T, std::size_t _MaxSize> class ringbuffer : public internal::
     constexpr static size_t max_size = _MaxSize + 1;
     std::array<T, max_size> array_;
 
-    public:
+public:
     inline bool enqueue(T const &t) noexcept { return internal::ringbuffer<T>::enqueue(t, array_.data(), max_size); }
 
     inline bool dequeue(T *ret) noexcept { return dequeue(ret, 1) == 1; }
@@ -219,11 +220,11 @@ template <typename T, std::size_t _MaxSize> class ringbuffer : public internal::
 
 template <typename T> class ringbuffer<T, 0> : public internal::ringbuffer<T>
 {
-    typedef std::size_t size_t;
-    const size_t        max_size_;
-    std::unique_ptr<T[]>  array_;
+    typedef std::size_t  size_t;
+    const size_t         max_size_;
+    std::unique_ptr<T[]> array_;
 
-    public:
+public:
     //! Constructs a ringbuffer for max_size elements
     explicit ringbuffer(size_t const max_size) : max_size_(max_size + 1), array_(std::make_unique<T[]>(max_size + 1)) {}
 

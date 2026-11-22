@@ -2,10 +2,12 @@
 
 #include <cstdint>
 
-namespace tredzone::detail {
+namespace tredzone::detail
+{
 
-struct EventPageCounts {
-    std::uint64_t fresh = 0;
+struct EventPageCounts
+{
+    std::uint64_t fresh  = 0;
     std::uint64_t reused = 0;
 };
 

@@ -78,10 +78,9 @@ int main(int argc, char **argv)
         cout << "exception ERROR (?)" << endl;
         exit(-1);
     }
-    
+
     cout << "Press enter to exit...";
     cin.get();
 
     return res;
 }
-

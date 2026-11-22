@@ -22,7 +22,7 @@ class ValidatorActor : public Actor
         CLIENT
     };
 
-    public:
+public:
     ValidatorActor(uint64_t timeout) : m_runCallback(*this, timeout)
     {
         registerEventHandler<ServerSideSuccessEvent>(*this);
@@ -55,7 +55,7 @@ class ValidatorActor : public Actor
         endTest();
     }
 
-    private:
+private:
     bool validateTest(const VALIDATION_SIDE validation_side)
     {
         if (VALIDATION_SIDE::SERVER == validation_side)
@@ -68,7 +68,7 @@ class ValidatorActor : public Actor
 
     class RunCallback : public Callback
     {
-        public:
+    public:
         ValidatorActor &myactor;
         RunCallback(ValidatorActor &actor, const uint64_t timeout)
             : myactor(actor), m_timeout(::std::chrono::milliseconds(timeout)),

@@ -36,7 +36,6 @@ struct TestEventLoop : tredzone::EngineCustomEventLoopFactory::EventLoopAutoPoin
     TestEventLoop(tredzone::AsyncNode &asyncNode) : EventLoopAutoPointerNew(asyncNode) {}
 };
 
-
 class TestInitActor : public tredzone::Actor
 {
 public:
@@ -76,10 +75,10 @@ private:
 static void testInit()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
-    tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
+    tredzone::AsyncNodeManager             nodeManager(1024, TestCoreSet());
     tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
-        TestInitActor &handler1 = node.newActor<TestInitActor>(0);
+        TestInitActor           &handler1   = node.newActor<TestInitActor>(0);
         tredzone::Actor::ActorId handler1Id = handler1.getActorId();
         ASSERT_EQ(handler1Id.getCoreIndex(), node.id);
         ASSERT_EQ(1u, handler1Id.getNodeActorId());
@@ -109,16 +108,16 @@ struct TestInitRegisterEventHandler : tredzone::Actor
         void onUndeliveredEvent(const event_type &) {}
     };
 
-    TestEventHandler<0> testEventHandler0;
-    TestEventHandler<1> testEventHandler1;
-    TestEventHandler<2> testEventHandler2;
-    TestEventHandler<3> testEventHandler3;
-    TestEventHandler<4> testEventHandler4;
-    TestEventHandler<5> testEventHandler5;
-    TestEventHandler<6> testEventHandler6;
-    TestEventHandler<7> testEventHandler7;
-    TestEventHandler<8> testEventHandler8;
-    TestEventHandler<9> testEventHandler9;
+    TestEventHandler<0>  testEventHandler0;
+    TestEventHandler<1>  testEventHandler1;
+    TestEventHandler<2>  testEventHandler2;
+    TestEventHandler<3>  testEventHandler3;
+    TestEventHandler<4>  testEventHandler4;
+    TestEventHandler<5>  testEventHandler5;
+    TestEventHandler<6>  testEventHandler6;
+    TestEventHandler<7>  testEventHandler7;
+    TestEventHandler<8>  testEventHandler8;
+    TestEventHandler<9>  testEventHandler9;
     TestEventHandler<10> testEventHandler10;
     TestEventHandler<11> testEventHandler11;
     TestEventHandler<12> testEventHandler12;
@@ -330,7 +329,7 @@ struct TestInitRegisterEventHandler : tredzone::Actor
 void testInitRegisterEventHandler()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
-    tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
+    tredzone::AsyncNodeManager             nodeManager(1024, TestCoreSet());
     tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     node.newActor<TestInitRegisterEventHandler>();
     TestEventLoop testEventLoop(node);
@@ -338,7 +337,7 @@ void testInitRegisterEventHandler()
 
 class TestUniNodeEvent : public TestInitActor
 {
-  public:
+public:
     struct Exception : std::exception
     {
     };
@@ -405,9 +404,9 @@ class TestUniNodeEvent : public TestInitActor
         ASSERT_EQ(event.getSourceActorId(), event.getDestinationActorId());
     }
 
-  private:
-    unsigned onEventCount;
-    unsigned onUndeliveredEventCount;
+private:
+    unsigned     onEventCount;
+    unsigned     onUndeliveredEventCount;
     Event::Batch eventBatch;
 
     virtual void onDestroyRequest() noexcept
@@ -423,10 +422,10 @@ class TestUniNodeEvent : public TestInitActor
 void testUniNodeEvent()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
-    tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
+    tredzone::AsyncNodeManager             nodeManager(1024, TestCoreSet());
     tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
-        TestUniNodeEvent &handler = node.newActor<TestUniNodeEvent>(0);
+        TestUniNodeEvent            &handler = node.newActor<TestUniNodeEvent>(0);
         tredzone::Actor::Event::Pipe eventPipe(handler, handler);
 
         ASSERT_THROW(eventPipe.push<TestUniNodeEvent::Event3>(), TestUniNodeEvent::Exception);
@@ -442,7 +441,7 @@ void testUniNodeEvent()
 
 class TestMultiNodeEvent : public TestInitActor
 {
-  public:
+public:
     struct HFEvent : Event
     {
         static void nameToOStream(std::ostream &os, const Event &) { os << "TestMultiNodeEvent::HFEvent"; }
@@ -473,7 +472,7 @@ class TestMultiNodeEvent : public TestInitActor
     unsigned getLFEventCount() { return lfCallback.eventCount; }
     unsigned getUndeliveredEventCount() { return undeliveredCallback.eventCount; }
 
-  private:
+private:
     template <class _Event> struct HFRegistration
     {
         typedef _Event event_type;
@@ -504,10 +503,10 @@ class TestMultiNodeEvent : public TestInitActor
     template <class _Registration> struct Callback
     {
         typedef typename _Registration::event_type event_type;
-        typedef _Registration registration_type;
+        typedef _Registration                      registration_type;
         Callback(TestMultiNodeEvent &phandler) : handler(phandler), eventCount(0) {}
         TestMultiNodeEvent &handler;
-        unsigned eventCount;
+        unsigned            eventCount;
     };
     struct HFCallback : Callback<HFRegistration<HFEvent>>
     {
@@ -560,15 +559,15 @@ class TestMultiNodeEvent : public TestInitActor
         }
     };
 
-    RegisteredCallback<HFCallback> hfCallback;
-    RegisteredCallback<LFCallback> lfCallback;
+    RegisteredCallback<HFCallback>          hfCallback;
+    RegisteredCallback<LFCallback>          lfCallback;
     RegisteredCallback<UndeliveredCallback> undeliveredCallback;
 };
 
 void testMultinodeEvent()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
-    tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
+    tredzone::AsyncNodeManager             nodeManager(1024, TestCoreSet());
     tredzone::AsyncNode node1(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     tredzone::AsyncNode node2(tredzone::AsyncNode::Init(nodeManager, testCore(1), customEventLoopFactory));
     {
@@ -615,7 +614,7 @@ void testMultinodeEvent()
 
 class TestActorReference : public TestInitActor
 {
-  public:
+public:
     TestActorReference(bool *pdestroyedFlag) : destroyedFlag(*pdestroyedFlag) { EXPECT_FALSE(destroyedFlag); }
     virtual ~TestActorReference() noexcept
     {
@@ -624,19 +623,19 @@ class TestActorReference : public TestInitActor
     }
     bool getDestroyedFlag() const { return destroyedFlag; }
 
-  private:
+private:
     bool &destroyedFlag;
 };
 
 static void testActorReference()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
-    tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
+    tredzone::AsyncNodeManager             nodeManager(1024, TestCoreSet());
     tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
         bool destroyedFlag = false;
         {
-            TestInitActor &handler1 = node.newActor<TestInitActor>(0);
+            TestInitActor                                      &handler1 = node.newActor<TestInitActor>(0);
             tredzone::Actor::ActorReference<TestActorReference> handler2 =
                 handler1.newReferencedActor<TestActorReference>(&destroyedFlag);
             ASSERT_FALSE(handler2->getDestroyedFlag());
@@ -661,31 +660,37 @@ struct ReferenceStaticTestInitActor : tredzone::Actor
     tredzone::Actor::ActorReference<TestInitActor> ref;
     ReferenceStaticTestInitActor(int) : ref(newReferencedSingletonActor<TestInitActor>(0)) {}
 };
-}
+} // namespace TestStaticActorReference
 
 // test circular reference
 
 void testStaticActorCircularReference()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
-    tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
+    tredzone::AsyncNodeManager             nodeManager(1024, TestCoreSet());
     tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
         node.newActor<tredzone::Actor>();
 
-        ASSERT_THROW(node.newActor<TestStaticActorReference::SelfReferenceActor>(0), tredzone::Actor::CircularReferenceException);
+        ASSERT_THROW(node.newActor<TestStaticActorReference::SelfReferenceActor>(0),
+                     tredzone::Actor::CircularReferenceException);
 
-        TestInitActor &handler = node.newActor<TestInitActor>(0);
-        tredzone::Actor::ActorReference<TestInitActor> staticActor = handler.newReferencedSingletonActor<TestInitActor>(0);
-        tredzone::Actor::ActorReference<TestInitActor> staticActor2 = handler.newReferencedSingletonActor<TestInitActor>(0);
+        TestInitActor                                 &handler = node.newActor<TestInitActor>(0);
+        tredzone::Actor::ActorReference<TestInitActor> staticActor =
+            handler.newReferencedSingletonActor<TestInitActor>(0);
+        tredzone::Actor::ActorReference<TestInitActor> staticActor2 =
+            handler.newReferencedSingletonActor<TestInitActor>(0);
         ASSERT_NE(&handler, &*staticActor);
         ASSERT_EQ(&*staticActor, &*staticActor2);
 
         tredzone::Actor::ActorReference<TestInitActor> handler2 = staticActor->newReferencedActor<TestInitActor>(0);
-        
-        ASSERT_THROW(handler2->newReferencedSingletonActor<TestInitActor>(0), tredzone::Actor::CircularReferenceException);
-        ASSERT_THROW(handler2->newReferencedActor<TestStaticActorReference::ReferenceStaticTestInitActor>(0), tredzone::Actor::CircularReferenceException);
-        ASSERT_THROW(handler2->newReferencedSingletonActor<TestStaticActorReference::ReferenceStaticTestInitActor>(0), tredzone::Actor::CircularReferenceException);
+
+        ASSERT_THROW(handler2->newReferencedSingletonActor<TestInitActor>(0),
+                     tredzone::Actor::CircularReferenceException);
+        ASSERT_THROW(handler2->newReferencedActor<TestStaticActorReference::ReferenceStaticTestInitActor>(0),
+                     tredzone::Actor::CircularReferenceException);
+        ASSERT_THROW(handler2->newReferencedSingletonActor<TestStaticActorReference::ReferenceStaticTestInitActor>(0),
+                     tredzone::Actor::CircularReferenceException);
 
         handler2->newUnreferencedActor<TestStaticActorReference::ReferenceStaticTestInitActor>(0);
     }
@@ -694,16 +699,15 @@ void testStaticActorCircularReference()
 
 struct TestOnEventException : tredzone::AsyncExceptionHandler
 {
-    unsigned counter;
-    std::string asyncActorClassName;
-    const char *onXXX_FunctionName;
+    unsigned                      counter;
+    std::string                   asyncActorClassName;
+    const char                   *onXXX_FunctionName;
     const tredzone::Actor::Event *event;
-    const char *whatException;
+    const char                   *whatException;
     TestOnEventException() : counter(0), onXXX_FunctionName(0), event(0), whatException(0) {}
-    
-    void onEventException(tredzone::Actor *, const std::type_info &asyncActorTypeInfo,
-                                  const char *onXXX_FunctionName, const tredzone::Actor::Event &event,
-                                  const char *whatException) noexcept override
+
+    void onEventException(tredzone::Actor *, const std::type_info &asyncActorTypeInfo, const char *onXXX_FunctionName,
+                          const tredzone::Actor::Event &event, const char *whatException) noexcept override
     {
         std::cout << "TestOnEventException::onEventException(), "
                   << (asyncActorClassName = tredzone::cppDemangledTypeInfoName(asyncActorTypeInfo))
@@ -750,8 +754,8 @@ struct TestOnEventExceptionActor : TestInitActor
 void testOnEventException()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
-    TestOnEventException testOnEventException;
-    tredzone::AsyncNodeManager nodeManager(testOnEventException, 1024, TestCoreSet());
+    TestOnEventException                   testOnEventException;
+    tredzone::AsyncNodeManager             nodeManager(testOnEventException, 1024, TestCoreSet());
     tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
         TestOnEventExceptionActor &handler = node.newActor<TestOnEventExceptionActor>(0);
@@ -786,10 +790,9 @@ void testOnEventException()
 
         tredzone::AsyncNode node2(tredzone::AsyncNode::Init(nodeManager, testCore(1), customEventLoopFactory));
         {
-            TestOnEventExceptionActor &handler2 = node2.newActor<TestOnEventExceptionActor>(0);
+            TestOnEventExceptionActor                      &handler2 = node2.newActor<TestOnEventExceptionActor>(0);
             TestOnEventExceptionActor::ReturnToSenderEvent &event =
-                tredzone::Actor::Event::Pipe(handler, handler2)
-                    .push<TestOnEventExceptionActor::ReturnToSenderEvent>();
+                tredzone::Actor::Event::Pipe(handler, handler2).push<TestOnEventExceptionActor::ReturnToSenderEvent>();
             node.synchronize();
             node2.synchronize();
             node.synchronize();
@@ -808,7 +811,7 @@ void testOnEventException()
 
 class TestNoDestinationPipe : public TestInitActor
 {
-  public:
+public:
     TestNoDestinationPipe(unsigned *pcounter) : counter(*pcounter)
     {
         registerUndeliveredEventHandler<Event>(*this);
@@ -817,17 +820,17 @@ class TestNoDestinationPipe : public TestInitActor
 
     void onUndeliveredEvent(const Event &) { ++counter; }
 
-  private:
+private:
     unsigned &counter;
 };
 
 void testNoDestinationPipe()
 {
-	unsigned counter = 0;
+    unsigned counter = 0;
     _TREDZONE_TEST_EXIT_EXCEPTION_CATCH_BEGIN_
 
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
-    tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
+    tredzone::AsyncNodeManager             nodeManager(1024, TestCoreSet());
     tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(1), customEventLoopFactory));
     {
         node.newActor<TestNoDestinationPipe>(&counter);
@@ -844,6 +847,9 @@ TEST(Async, initRegisterEventHandler) { testInitRegisterEventHandler(); }
 TEST(Async, uniNodeEvent) { testUniNodeEvent(); }
 TEST(Async, multinodeEvent) { testMultinodeEvent(); }
 TEST(Async, actorReference) { testActorReference(); }
-TEST(Async, DISABLED_staticActorReference) { testStaticActorCircularReference(); }      // disabled because release doesn't check circular references
+TEST(Async, DISABLED_staticActorReference)
+{
+    testStaticActorCircularReference();
+} // disabled because release doesn't check circular references
 TEST(Async, onEventException) { testOnEventException(); }
 TEST(Async, noDestinationPipe) { testNoDestinationPipe(); }

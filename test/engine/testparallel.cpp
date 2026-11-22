@@ -15,10 +15,10 @@
 // anonymous namespace to prevent link error due to multiple functions with same name
 namespace
 {
-    
+
 struct TestNodesHandler
 {
-    static const int MAX_SIZE = 10;
+    static const int         MAX_SIZE = 10;
     static TestNodesHandler *instance;
 
     typedef unsigned char NodeId;
@@ -27,7 +27,7 @@ struct TestNodesHandler
     {
         int value;
         Shared() : value(0) {}
-        bool operator==(const Shared &other) const { return value == other.value; }
+        bool    operator==(const Shared &other) const { return value == other.value; }
         Shared &operator=(int pvalue)
         {
             value = pvalue;
@@ -43,11 +43,11 @@ struct TestNodesHandler
             READER_CAS_ON,
             READER_CAS_OFF
         };
-        bool isWriteLocked;
-        bool isReaderActive;
+        bool         isWriteLocked;
+        bool         isReaderActive;
         sig_atomic_t readerCAS;
-        bool isWriterActive;
-        Shared shared;
+        bool         isWriterActive;
+        Shared       shared;
         SharedHandleData()
             : isWriteLocked(false), isReaderActive(false), readerCAS(READER_CAS_IDLE), isWriterActive(false)
         {
@@ -56,9 +56,9 @@ struct TestNodesHandler
 
     struct SharedHandleControlData : SharedHandleData
     {
-        bool readCallToggle;
-        bool writeCallToggle;
-        bool writeFailedCallToggle;
+        bool   readCallToggle;
+        bool   writeCallToggle;
+        bool   writeFailedCallToggle;
         Shared readValue;
         SharedHandleControlData() : readCallToggle(false), writeCallToggle(false), writeFailedCallToggle(false) {}
     };
@@ -66,7 +66,7 @@ struct TestNodesHandler
     struct SharedHandle : public SharedHandleData
     {
         SharedHandleControlData controlData;
-        bool read()
+        bool                    read()
         {
             EXPECT_TRUE(controlData.readCallToggle);
             EXPECT_EQ(controlData.readValue, shared);
@@ -95,14 +95,14 @@ struct TestNodesHandler
             ASSERT_TRUE(!controlData.writeCallToggle);
             ASSERT_TRUE(!controlData.writeFailedCallToggle);
         }
-        bool getIsWriterActive() { return isWriterActive; }
-        void setIsWriterActive(bool pisWriterActive) { isWriterActive = pisWriterActive; }
-        bool getIsReaderActive() { return isReaderActive; }
-        void setIsReaderActive(bool pisReaderActive) { isReaderActive = pisReaderActive; }
+        bool          getIsWriterActive() { return isWriterActive; }
+        void          setIsWriterActive(bool pisWriterActive) { isWriterActive = pisWriterActive; }
+        bool          getIsReaderActive() { return isReaderActive; }
+        void          setIsReaderActive(bool pisReaderActive) { isReaderActive = pisReaderActive; }
         sig_atomic_t &getReferenceToReaderCAS() { return readerCAS; }
-        bool getIsWriteLocked() { return isWriteLocked; }
-        void setIsWriteLocked(bool pisWriteLocked) { isWriteLocked = pisWriteLocked; }
-        Shared &getReferenceToShared() { return shared; }
+        bool          getIsWriteLocked() { return isWriteLocked; }
+        void          setIsWriteLocked(bool pisWriteLocked) { isWriteLocked = pisWriteLocked; }
+        Shared       &getReferenceToShared() { return shared; }
     };
 
     typedef SharedHandle ReaderSharedHandle;
@@ -127,8 +127,8 @@ struct TestNodesHandler
     struct NodeHandle : NodeHandleData
     {
         TestNodesHandler &testNodesHandler;
-        const NodeId id;
-        NodeHandleData controlData;
+        const NodeId      id;
+        NodeHandleData    controlData;
         NodeHandle(TestNodesHandler &ptestNodesHandler, NodeId pid) : testNodesHandler(ptestNodesHandler), id(pid)
         {
             EXPECT_TRUE(id < testNodesHandler.size);
@@ -240,9 +240,9 @@ struct TestNodesHandler
         return sharedHandle[writerNodeId * MAX_SIZE + readerNodeId];
     }
 
-    const size_t size;
+    const size_t   size;
     NodeHandleList nodeHandleList;
-    SharedHandle sharedHandle[MAX_SIZE * MAX_SIZE];
+    SharedHandle   sharedHandle[MAX_SIZE * MAX_SIZE];
 };
 
 TestNodesHandler *TestNodesHandler::instance = 0;
@@ -365,15 +365,15 @@ void testRead(TestParallelNode &writerNode, TestParallelNode &readerNode, int va
     writerNode.getReferenceToWriterShared(readerNode.id).value = value;
     writerNode.setWriteSignal(readerNode.id, true);
     TestNodesHandler::instance->getSharedHandle(writerNode.id, readerNode.id).controlData.writeCallToggle = true;
-    TestNodesHandler::instance->getSharedHandle(writerNode.id, readerNode.id).controlData.isWriteLocked = true;
+    TestNodesHandler::instance->getSharedHandle(writerNode.id, readerNode.id).controlData.isWriteLocked   = true;
 
     writerNode.synchronize();
 
     TestNodesHandler::instance->control();
 
-    TestNodesHandler::instance->getSharedHandle(writerNode.id, readerNode.id).controlData.readValue = value;
+    TestNodesHandler::instance->getSharedHandle(writerNode.id, readerNode.id).controlData.readValue      = value;
     TestNodesHandler::instance->getSharedHandle(writerNode.id, readerNode.id).controlData.readCallToggle = true;
-    TestNodesHandler::instance->getSharedHandle(writerNode.id, readerNode.id).controlData.isWriteLocked = false;
+    TestNodesHandler::instance->getSharedHandle(writerNode.id, readerNode.id).controlData.isWriteLocked  = false;
 
     readerNode.synchronize();
 
@@ -448,7 +448,7 @@ void testWriteFailed(TestParallel &testParallel)
             testNodeA.getReferenceToWriterShared(testNodeB.id).value = 22;
             testNodeA.setWriteSignal(testNodeB.id, true);
             TestNodesHandler::instance->getSharedHandle(testNodeA.id, testNodeB.id).controlData.writeCallToggle = true;
-            TestNodesHandler::instance->getSharedHandle(testNodeA.id, testNodeB.id).controlData.isWriteLocked = true;
+            TestNodesHandler::instance->getSharedHandle(testNodeA.id, testNodeB.id).controlData.isWriteLocked   = true;
 
             testNodeA.synchronize();
 
@@ -460,7 +460,7 @@ void testWriteFailed(TestParallel &testParallel)
             true;
 #endif
         TestNodesHandler::instance->getSharedHandle(0, 1).controlData.writeFailedCallToggle = true;
-        TestNodesHandler::instance->getSharedHandle(0, 1).controlData.isWriteLocked = false;
+        TestNodesHandler::instance->getSharedHandle(0, 1).controlData.isWriteLocked         = false;
 
         testNodeA.synchronize();
 
@@ -493,7 +493,7 @@ void testAll()
     testRead(testParallel);
     testWriteFailed(testParallel);
 }
-}
+} // namespace
 
 TEST(Parallel, init) { testInit(); }
 TEST(Parallel, write) { testWrite(); }

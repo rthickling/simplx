@@ -25,10 +25,10 @@ class ServerTestActor : public ServerTestBase<_TNetwork, _TServerProcess>
 {
     using parent = ServerTestBase<_TNetwork, _TServerProcess>;
 
-    public:
+public:
     class ServerParam : public IServer<_TNetwork>::ListenParam
     {
-        public:
+    public:
         size_t m_messageHeaderSize;
     };
 
@@ -58,21 +58,21 @@ class ServerTestActor : public ServerTestBase<_TNetwork, _TServerProcess>
 
     virtual void startTest() noexcept {}
 
-    private:
+private:
     /**
      * @brief callback to let all networks actors start before start it
      *
      */
     class TestStarter : public Actor::Callback
     {
-        public:
+    public:
         ServerTestActor &myactor;
         TestStarter(ServerTestActor &actor) : myactor(actor) { myactor.registerCallback(*this); }
 
         void onCallback(void) { myactor.startTest(); }
     };
 
-    private:
+private:
     Actor::Event::Pipe m_pipe;
     TestStarter        m_testStarter;
 };

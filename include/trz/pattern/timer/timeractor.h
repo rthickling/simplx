@@ -16,83 +16,73 @@ namespace timer
 {
 
 //---- Timer Actor -------------------------------------------------------------
-    
-class TimerActor: public Actor, private Actor::Callback
+
+class TimerActor : public Actor, private Actor::Callback
 {
 public:
-	TimerActor();	// throws (std::bad_alloc, ShutdownException)
-    
-protected:
+    TimerActor(); // throws (std::bad_alloc, ShutdownException)
 
-    inline
-    void onCallback(const DateTime& utcTime) noexcept
-    {   
+protected:
+    inline void onCallback(const DateTime &utcTime) noexcept
+    {
         // protected for unit testing override [PL bs]
-		eventHandler.onCallback(utcTime);
-	}
+        eventHandler.onCallback(utcTime);
+    }
 
 private:
+    friend class ::tredzone::Actor;
 
-	friend class ::tredzone::Actor;
-
-	struct EventHandler
+    struct EventHandler
     {
-		struct Client: ::tredzone::MultiDoubleChainLink<Client>, Actor::Callback
+        struct Client : ::tredzone::MultiDoubleChainLink<Client>, Actor::Callback
         {
-			TimerActor* timerActor;
-			ActorId actorId;
-			Time startTime;
-			Time duration;
-			bool inProgressFlag;
+            TimerActor *timerActor;
+            ActorId     actorId;
+            Time        startTime;
+            Time        duration;
+            bool        inProgressFlag;
 
-			inline
-            Client() noexcept :
-				timerActor(0), inProgressFlag(false)
+            inline Client() noexcept : timerActor(0), inProgressFlag(false) {}
+            inline void pushTimeOut() noexcept
             {
-			}
-			inline
-            void pushTimeOut() noexcept
-            {
-				try
+                try
                 {
-					Event::Pipe(*timerActor, actorId).push<TimeOutEvent>(timerActor->eventHandler.currentUtcDateTime);
-				} catch (std::bad_alloc&)
+                    Event::Pipe(*timerActor, actorId).push<TimeOutEvent>(timerActor->eventHandler.currentUtcDateTime);
+                }
+                catch (std::bad_alloc &)
                 {
-					timerActor->registerCallback(*this);
-				}
-			}
+                    timerActor->registerCallback(*this);
+                }
+            }
 
-			inline void onCallback() noexcept {
-				pushTimeOut();
-			}
-		};
+            inline void onCallback() noexcept { pushTimeOut(); }
+        };
 
-		typedef ::tredzone::MultiDoubleChainLink<Client>::DoubleChain<> ClientChain;
-		TimerActor& timerActor;
-		Client client[MAX_NODE_COUNT];
-		ClientChain inProgressClientChain;
-		DateTime currentUtcDateTime;
+        typedef ::tredzone::MultiDoubleChainLink<Client>::DoubleChain<> ClientChain;
+        TimerActor                                                     &timerActor;
+        Client                                                          client[MAX_NODE_COUNT];
+        ClientChain                                                     inProgressClientChain;
+        DateTime                                                        currentUtcDateTime;
 
-		inline EventHandler(TimerActor& ptimerActor) noexcept :
-				timerActor(ptimerActor)
+        inline EventHandler(TimerActor &ptimerActor) noexcept : timerActor(ptimerActor)
         {
-			for(int i = 0; i < MAX_NODE_COUNT; ++i)
+            for (int i = 0; i < MAX_NODE_COUNT; ++i)
             {
-				client[i].timerActor = &timerActor;
-			}
-		}
-		void onEvent(const GetEvent&);
-		void onCallback(const DateTime&) noexcept;
-	};
+                client[i].timerActor = &timerActor;
+            }
+        }
+        void onEvent(const GetEvent &);
+        void onCallback(const DateTime &) noexcept;
+    };
 
-	EventHandler eventHandler;
+    EventHandler eventHandler;
 
-	virtual void onCallback() noexcept; // override to use testing custom utc time, by enclosing call to protected onCallback(custom utc time).
+    virtual void onCallback() noexcept; // override to use testing custom utc time, by enclosing call to protected
+                                        // onCallback(custom utc time).
 };
 
 using TimerService = TimerActor;
 
-} // namespace
+} // namespace timer
 
-} // namespace
-
+} // namespace tredzone

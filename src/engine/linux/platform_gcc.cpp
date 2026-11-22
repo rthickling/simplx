@@ -5,24 +5,22 @@
  * Please see accompanying LICENSE file for licensing terms.
  */
 
-#include <iostream>
+#include <array>
 #include <cassert>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <vector>
 #include <iomanip>
-#include <cstdio>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <array>
+#include <vector>
 
-
-#include <sched.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
+#include <sched.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 /*
 
@@ -46,14 +44,14 @@ vector<string> tredzone::debugBacktrace(const uint8_t stackTraceSize) noexcept
 {
     // void *buffer[stackTraceSize];						// variable length array is VERBOTEN!
     vector<void *> buffer(stackTraceSize, nullptr);
-    char **trace;
+    char         **trace;
     vector<string> ret;
 
     try
     {
         int32_t returnedStackTraceSize = backtrace(&buffer[0], stackTraceSize);
         assert(returnedStackTraceSize != 0);
-        
+
         trace = backtrace_symbols(&buffer[0], returnedStackTraceSize);
         assert(trace != 0);
 
@@ -62,13 +60,13 @@ vector<string> tredzone::debugBacktrace(const uint8_t stackTraceSize) noexcept
         {
             ret.push_back(demangleFromSymbolName(trace[j]));
         }
-        
+
         free(trace);
     }
     catch (...)
     {
     }
-    
+
     return ret;
 }
 
@@ -78,8 +76,8 @@ vector<string> tredzone::debugBacktrace(const uint8_t stackTraceSize) noexcept
 string tredzone::demangleFromSymbolName(char *symbolName) noexcept
 {
     // allocate string which will be filled with the demangled function name
-    size_t funcnamesize = 256;
-    char *funcname = (char *)alloca(funcnamesize);
+    size_t       funcnamesize = 256;
+    char        *funcname     = (char *)alloca(funcnamesize);
     stringstream ss;
 
     try
@@ -107,14 +105,14 @@ string tredzone::demangleFromSymbolName(char *symbolName) noexcept
 
         if (begin_name && begin_offset && end_offset && begin_name < begin_offset)
         {
-            *begin_name++ = '\0';
+            *begin_name++   = '\0';
             *begin_offset++ = '\0';
-            *end_offset = '\0';
+            *end_offset     = '\0';
 
             // mangled name is now in [begin_name, begin_offset) and caller
             // offset in [begin_offset, end_offset). now apply __cxa_demangle():
 
-            int status;
+            int   status;
             char *ret = abi::__cxa_demangle(begin_name, funcname, &funcnamesize, &status);
             if (status == 0)
             {
@@ -144,37 +142,33 @@ string tredzone::demangleFromSymbolName(char *symbolName) noexcept
 
 // RELEASE BUILD and/or clang dummies
 
-vector<string> tredzone::debugBacktrace(const uint8_t) noexcept
-{
-    return {""};
-}
+vector<string> tredzone::debugBacktrace(const uint8_t) noexcept { return {""}; }
 
 #endif
 
-
 string tredzone::cppDemangledTypeInfoName(const type_info &typeInfo)
 {
-    int status = 0;
+    int   status        = 0;
     char *demangledName = abi::__cxa_demangle(typeInfo.name(), 0, 0, &status);
     if (!demangledName)
-    {   // couldn't resolve
+    { // couldn't resolve
         return typeInfo.name();
     }
     try
     {
         string ret(demangledName);
-        
+
         free(demangledName);
-        
-        const string  stripped = "tredzone::";
-        
+
+        const string stripped = "tredzone::";
+
         size_t ind;
-        
+
         while (ind = ret.find(stripped), ind != string::npos)
         {
             ret.replace(ind, stripped.length(), "");
         }
-        
+
         return ret;
     }
     catch (...)
@@ -215,7 +209,7 @@ tredzone::cpuset_type tredzone::cpuGetUsableSet()
     }
 
     const size_t configured = cpuGetConfiguredCount();
-    cpuset_type usable;
+    cpuset_type  usable;
     for (size_t i = 0; i < configured && i < CPU_SETSIZE && i < usable.size(); ++i)
     {
         if (!CPU_ISSET((int)i, &allowed))
@@ -228,8 +222,8 @@ tredzone::cpuset_type tredzone::cpuGetUsableSet()
         std::snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%zu/online", i);
         if (FILE *f = std::fopen(path, "r"))
         {
-            char flag = '0';
-            const size_t n = std::fread(&flag, 1, 1, f);
+            char         flag = '0';
+            const size_t n    = std::fread(&flag, 1, 1, f);
             std::fclose(f);
             if (n != 1 || flag != '1')
             {
@@ -241,7 +235,6 @@ tredzone::cpuset_type tredzone::cpuGetUsableSet()
     }
     return usable;
 }
-
 
 tredzone::thread_t tredzone::threadCreate(void (*fn)(void *), void *param, size_t stackSizeBytes)
 {
@@ -306,7 +299,7 @@ void tredzone::threadSetAffinity(unsigned cpuIndex)
 
 void tredzone::threadSetAffinity(const cpuset_type &pcpuset)
 {
-    int cc;
+    int       cc;
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     for (size_t i = 0; i < pcpuset.size(); ++i)
@@ -328,7 +321,7 @@ void tredzone::threadSetAffinity(const cpuset_type &pcpuset)
 
 tredzone::cpuset_type tredzone::threadGetAffinity(void)
 {
-    int cc;
+    int       cc;
     cpu_set_t cpuset;
     if ((cc = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset)) != 0)
     {
@@ -351,7 +344,7 @@ tredzone::cpuset_type tredzone::threadGetAffinity(void)
 
 void tredzone::threadSetRealTime(bool rt, const ThreadRealTimeParam &param)
 {
-    int cc;
+    int                cc;
     struct sched_param schedParam;
     memset(&schedParam, 0, sizeof(schedParam));
     if (rt)
@@ -384,9 +377,9 @@ void tredzone::threadSetRealTime(bool rt, const ThreadRealTimeParam &param)
 
 void tredzone::threadSleep(const Time &delay)
 {
-    const Time t = (delay != Time() ? delay : Time::Millisecond(1));
+    const Time      t   = (delay != Time() ? delay : Time::Millisecond(1));
     struct timespec req = {t.extractSeconds(), (long)t.extractNanoseconds()};
-    int cc;
+    int             cc;
     if ((cc = clock_nanosleep(CLOCK_MONOTONIC, 0, &req, 0)) != 0 && cc != EINTR)
     {
         throw RunTimeException(__FILE__, __LINE__, systemErrorToString(cc));
@@ -413,13 +406,13 @@ void tredzone::tlsDestroy(tls_t key)
 
 //---- Mutex CLASS (not primitive) DTOR ----------------------------------------
 
-    tredzone::Mutex::~Mutex() noexcept
+tredzone::Mutex::~Mutex() noexcept
 {
 #ifndef NDEBUG
     TREDZONE_TRY
     assert(!debugIsLocked());
     mutexDestroy(handle); // throw(tredzone::RunTimeException)
-    
+
     TREDZONE_CATCH_AND_EXIT_FAILURE_WITH_CERR_MESSAGE
 #endif
 }

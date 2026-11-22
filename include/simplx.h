@@ -5,7 +5,6 @@
  * Please see accompanying LICENSE file for licensing terms.
  */
 
-
 #include "trz/engine/actor.h"
 #include "trz/engine/engine.h"
 #include "trz/engine/engineversion.h"
@@ -14,16 +13,16 @@
 
 // internal
 #include "trz/engine/internal/cacheline.h"
+#include "trz/engine/internal/intrinsics.h"
+#include "trz/engine/internal/macro.h"
 #include "trz/engine/internal/mdoublechain.h"
 #include "trz/engine/internal/mforwardchain.h"
-#include "trz/engine/internal/serialbufferchain.h"
 #include "trz/engine/internal/property.h"
 #include "trz/engine/internal/rtexception.h"
+#include "trz/engine/internal/serialbufferchain.h"
 #include "trz/engine/internal/stringstream.h"
 #include "trz/engine/internal/thread.h"
 #include "trz/engine/internal/time.h"
-#include "trz/engine/internal/intrinsics.h"
-#include "trz/engine/internal/macro.h"
 
 /*
 #include "trz/engine/internal/dlldecoration.h"
@@ -32,5 +31,5 @@
 */
 
 #if TREDZONE_E2E
-    #include "trz/e2e/e2e.h"
+#    include "trz/e2e/e2e.h"
 #endif

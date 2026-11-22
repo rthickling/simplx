@@ -19,7 +19,7 @@ namespace e2econnector
 // forward-declarations
 
 using connection_distance_type = uint8_t;
-using engine_id_type = uint64_t;
+using engine_id_type           = uint64_t;
 
 #pragma pack(push)
 #pragma pack(1)
@@ -28,15 +28,14 @@ using engine_id_type = uint64_t;
  */
 struct RouteEntryBase
 {
-    Actor::ActorId::RouteId     routeId;
-    bool                        isSharedMemory;
-    connection_distance_type    serialConnectionDistance;
+    Actor::ActorId::RouteId  routeId;
+    bool                     isSharedMemory;
+    connection_distance_type serialConnectionDistance;
 };
 
 struct RouteEntry : public RouteEntryBase
 {
 public:
-
     RouteEntry *nextRouteEntry;
     /**
      * @brief Get the number of routes for a given RouteEntry
@@ -54,8 +53,7 @@ public:
 };
 
 #pragma pack(pop)
-    
+
 } // namespace e2econnector
 
 } // namespace tredzone
-

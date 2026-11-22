@@ -44,7 +44,7 @@ template <class _Item, unsigned _CHAIN_COUNT> struct MultiForwardChainItemAccess
 
 template <class _Item> class MultiForwardChainLink<_Item, 1u>
 {
-  public:
+public:
     template <unsigned _CHAIN_ID = 0u, class _ItemAccessor = MultiForwardChainItemAccessor<_Item, 1u>>
     struct ForwardChain : public MultiForwardChain<_Item, 1u, _CHAIN_ID, _ItemAccessor>
     {
@@ -56,7 +56,7 @@ template <class _Item> class MultiForwardChainLink<_Item, 1u>
 #endif
     inline MultiForwardChainLink &operator=(const MultiForwardChainLink &) noexcept { return *this; }
 
-  private:
+private:
     template <class, unsigned, unsigned> friend class MultiForwardChainLinkAccessor;
     MultiForwardChainLink *next;
 };
@@ -76,7 +76,7 @@ template <class _Item> class MultiForwardChainLinkAccessor<_Item, 1u, 0u>
 
 template <class _Item> class MultiForwardChainLink<_Item, 2u>
 {
-  public:
+public:
     template <unsigned _CHAIN_ID, class _ItemAccessor = MultiForwardChainItemAccessor<_Item, 2u>>
     struct ForwardChain : public MultiForwardChain<_Item, 2u, _CHAIN_ID, _ItemAccessor>
     {
@@ -87,7 +87,7 @@ template <class _Item> class MultiForwardChainLink<_Item, 2u>
     MultiForwardChainLink(const MultiForwardChainLink &) : next0(this), next1(this) {}
 #endif
 
-  private:
+private:
     template <class, unsigned, unsigned> friend class MultiForwardChainLinkAccessor;
     MultiForwardChainLink *next0;
     MultiForwardChainLink *next1;
@@ -121,39 +121,39 @@ template <class _Item> class MultiForwardChainLinkAccessor<_Item, 2u, 1u>
 
 template <class _Item, unsigned _CHAIN_COUNT, unsigned _CHAIN_ID, class _ItemAccessor> class MultiForwardChain
 {
-  public:
-    typedef _Item value_type;
-    typedef _Item &reference;
+public:
+    typedef _Item        value_type;
+    typedef _Item       &reference;
     typedef const _Item &const_reference;
-    typedef _Item *pointer;
+    typedef _Item       *pointer;
     typedef const _Item *const_pointer;
     template <class _Value> class iterator_base;
-    typedef iterator_base<_Item> iterator;             //!< forward, dereferences to reference
+    typedef iterator_base<_Item>       iterator;       //!< forward, dereferences to reference
     typedef iterator_base<const _Item> const_iterator; //!< forward, dereferences to const_reference
 
     inline MultiForwardChain() noexcept;
-    inline iterator insert(const iterator &, pointer) noexcept;
-    inline iterator erase(const iterator &) noexcept;
-    inline void push_front(pointer) noexcept;
-    inline void push_front(MultiForwardChain &) noexcept;
-    inline void push_back(pointer) noexcept;
-    inline void push_back(MultiForwardChain &) noexcept;
-    inline pointer pop_front() noexcept;
-    inline void swap(MultiForwardChain &) noexcept;
-    inline bool empty() const noexcept;
-    inline iterator begin() noexcept;
+    inline iterator       insert(const iterator &, pointer) noexcept;
+    inline iterator       erase(const iterator &) noexcept;
+    inline void           push_front(pointer) noexcept;
+    inline void           push_front(MultiForwardChain &) noexcept;
+    inline void           push_back(pointer) noexcept;
+    inline void           push_back(MultiForwardChain &) noexcept;
+    inline pointer        pop_front() noexcept;
+    inline void           swap(MultiForwardChain &) noexcept;
+    inline bool           empty() const noexcept;
+    inline iterator       begin() noexcept;
     inline const_iterator begin() const noexcept;
-    inline iterator end() noexcept;
+    inline iterator       end() noexcept;
     inline const_iterator end() const noexcept;
-    inline pointer front() noexcept;
-    inline const_pointer front() const noexcept;
-    inline pointer back() noexcept;
-    inline const_pointer back() const noexcept;
+    inline pointer        front() noexcept;
+    inline const_pointer  front() const noexcept;
+    inline pointer        back() noexcept;
+    inline const_pointer  back() const noexcept;
 
-  private:
+private:
     typedef MultiForwardChainLinkAccessor<_Item, _CHAIN_COUNT, _CHAIN_ID> LinkAccessor;
-    MultiForwardChainLink<_Item, _CHAIN_COUNT> *head;
-    MultiForwardChainLink<_Item, _CHAIN_COUNT> *tail;
+    MultiForwardChainLink<_Item, _CHAIN_COUNT>                           *head;
+    MultiForwardChainLink<_Item, _CHAIN_COUNT>                           *tail;
 
     MultiForwardChain(const MultiForwardChain &);            // illegal (can not copy, only move)
     MultiForwardChain &operator=(const MultiForwardChain &); // illegal (can not copy, only move)
@@ -163,24 +163,24 @@ template <class _Item, unsigned _CHAIN_COUNT, unsigned _CHAIN_ID, class _ItemAcc
 template <class _Value>
 class MultiForwardChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::iterator_base
 {
-  public:
+public:
     typedef std::forward_iterator_tag iterator_category;
-    typedef _Value value_type;
-    typedef ptrdiff_t difference_type;
-    typedef ptrdiff_t distance_type;
-    typedef value_type *pointer;
-    typedef value_type &reference;
+    typedef _Value                    value_type;
+    typedef ptrdiff_t                 difference_type;
+    typedef ptrdiff_t                 distance_type;
+    typedef value_type               *pointer;
+    typedef value_type               &reference;
 
     inline iterator_base() noexcept : previous(0), current(0) {}
     inline iterator_base(const iterator_base &other) noexcept : previous(other.previous), current(other.current) {}
     inline iterator_base &operator=(const iterator_base &other) noexcept
     {
         previous = other.previous;
-        current = other.current;
+        current  = other.current;
         return *this;
     }
-    inline bool operator==(const iterator_base &other) const noexcept { return current == other.current; }
-    inline bool operator!=(const iterator_base &other) const noexcept { return current != other.current; }
+    inline bool      operator==(const iterator_base &other) const noexcept { return current == other.current; }
+    inline bool      operator!=(const iterator_base &other) const noexcept { return current != other.current; }
     inline reference operator*() const noexcept
     {
         assert(current != 0);
@@ -195,23 +195,23 @@ class MultiForwardChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::iterator
     {
         assert(current != 0);
         previous = current;
-        current = LinkAccessor::getNext(current);
+        current  = LinkAccessor::getNext(current);
         return *this;
     }
-    inline iterator_base operator++(int)noexcept
+    inline iterator_base operator++(int) noexcept
     {
         iterator_base ret = *this;
         operator++();
         return ret;
     }
 
-  private:
+private:
     friend class MultiForwardChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>;
     MultiForwardChainLink<_Item, _CHAIN_COUNT> *previous;
     MultiForwardChainLink<_Item, _CHAIN_COUNT> *current;
     inline iterator_base(MultiForwardChainLink<_Item, _CHAIN_COUNT> *pcurrent,
-                         MultiForwardChainLink<_Item, _CHAIN_COUNT> *pprevious) noexcept : previous(pprevious),
-                                                                                           current(pcurrent)
+                         MultiForwardChainLink<_Item, _CHAIN_COUNT> *pprevious) noexcept
+        : previous(pprevious), current(pcurrent)
     {
     }
 };
@@ -302,7 +302,7 @@ void MultiForwardChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::push_fron
     else
     {
         LinkAccessor::setNext(other.tail, head);
-        head = other.head;
+        head       = other.head;
         other.head = 0;
     }
 }
@@ -339,7 +339,7 @@ void MultiForwardChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::push_back
     else
     {
         LinkAccessor::setNext(tail, other.head);
-        tail = other.tail;
+        tail       = other.tail;
         other.head = 0;
     }
 }
@@ -445,4 +445,4 @@ MultiForwardChain<_Item, _CHAIN_COUNT, _CHAIN_ID, _ItemAccessor>::back() const n
     return _ItemAccessor::getItem(tail);
 }
 
-} // namespace
+} // namespace tredzone

@@ -9,11 +9,10 @@
 
 #include <cassert>
 
-#include "trz/engine/platform.h"
 #include "trz/engine/internal/macro.h"
+#include "trz/engine/platform.h"
 
 #include "trz/engine/internal/parallel/parallel_xplat.h"
-
 
 namespace tredzone
 {
@@ -30,7 +29,7 @@ template <class T> class ThreadLocalStorage<T *>;
  */
 class Signal
 {
-  public:
+public:
     /** @brief Constructor */
     inline Signal(Mutex &);
     /** @brief Destructor */
@@ -44,10 +43,10 @@ class Signal
     /** @brief Notify waiting thread */
     inline void notify();
 
-  private:
-    Mutex &mutex;
+private:
+    Mutex   &mutex;
     signal_t handle;
-    Signal &operator=(const Signal &);
+    Signal  &operator=(const Signal &);
 };
 
 /**
@@ -55,16 +54,16 @@ class Signal
  */
 class TREDZONE_DLL Thread
 {
-  private:
-    bool isRunningFlag;
-    thread_t threadId;
+private:
+    bool               isRunningFlag;
+    thread_t           threadId;
     inline static void callback(void *);
-    Thread &operator=(const Thread &);
+    Thread            &operator=(const Thread &);
 
-  protected:
+protected:
     virtual void onRun() = 0;
 
-  public:
+public:
     /** @brief Constructor */
     inline Thread();
     /** @brief Destructor */
@@ -98,19 +97,12 @@ template <class T> class ThreadLocalStorage;
 /**
  * @brief ThreadLocalStorage (TLS) class
  */
-template <class T>
-class ThreadLocalStorage<T *>
+template <class T> class ThreadLocalStorage<T *>
 {
 public:
+    inline ThreadLocalStorage() : tlsKey(tlsCreate()) {}
 
-    inline ThreadLocalStorage() : tlsKey(tlsCreate())
-    {
-    }
-    
-    inline ~ThreadLocalStorage() noexcept
-    {
-        tlsDestroy(tlsKey);
-    }
+    inline ~ThreadLocalStorage() noexcept { tlsDestroy(tlsKey); }
     /**
      * @brief Get the TLS value
      * @return TLS value
@@ -128,7 +120,6 @@ public:
     inline void set(T *p) { tlsSet(tlsKey, const_cast<void *>(static_cast<const void *>(p))); }
 
 private:
-
     tls_t tlsKey;
 };
 
@@ -199,26 +190,18 @@ bool Thread::isRunning() const noexcept
 
 #ifdef NDEBUG
 // Release
-    Mutex::Mutex() noexcept
-        : handle(mutexCreate(MUTEX_T::NON_RECURSIVE))
-    {
-    }
+Mutex::Mutex() noexcept : handle(mutexCreate(MUTEX_T::NON_RECURSIVE)) {}
 
-void Mutex::lock()
-{
-    mutexLock(handle);
-}
+void Mutex::lock() { mutexLock(handle); }
 
-void Mutex::unlock()
-{
-    mutexUnlock(handle);
-}
+void Mutex::unlock() { mutexUnlock(handle); }
 #else
 
 // Debug build
 
-    Mutex::Mutex() noexcept
-        : handle(mutexCreate(MUTEX_T::RECURSIVE)), debugLocked(false), debugLockingThread(ThreadId::current()), m_TriggerCount(0)
+Mutex::Mutex() noexcept
+    : handle(mutexCreate(MUTEX_T::RECURSIVE)), debugLocked(false), debugLockingThread(ThreadId::current()),
+      m_TriggerCount(0)
 {
 }
 
@@ -255,22 +238,11 @@ bool Mutex::debugIsLocked() noexcept
 }
 #endif
 
-template <class _Mutex>
-Lock<_Mutex>::Lock(_Mutex &pMutex) noexcept
-    : mutex(pMutex)
-{
-    mutex.lock();
-}
+template <class _Mutex> Lock<_Mutex>::Lock(_Mutex &pMutex) noexcept : mutex(pMutex) { mutex.lock(); }
 
-template <class _Mutex> Lock<_Mutex>::~Lock() noexcept
-{
-    mutex.unlock();
-}
+template <class _Mutex> Lock<_Mutex>::~Lock() noexcept { mutex.unlock(); }
 
-Signal::Signal(Mutex &pMutex)
-    : mutex(pMutex), handle(mutexSignalCreate())
-{
-}
+Signal::Signal(Mutex &pMutex) : mutex(pMutex), handle(mutexSignalCreate()) {}
 
 Signal::~Signal() { mutexSignalDestroy(handle); }
 
@@ -282,7 +254,7 @@ void Signal::wait()
 #endif
     mutexSignalWait(handle, mutex.handle);
 #ifndef NDEBUG
-    mutex.debugLocked = true;
+    mutex.debugLocked        = true;
     mutex.debugLockingThread = ThreadId::current();
 #endif
 }
@@ -295,7 +267,7 @@ void Signal::wait(const Time &delay)
 #endif
     mutexSignalWait(handle, mutex.handle, delay);
 #ifndef NDEBUG
-    mutex.debugLocked = true;
+    mutex.debugLocked        = true;
     mutex.debugLockingThread = ThreadId::current();
 #endif
 }
@@ -308,18 +280,14 @@ void Signal::wait(const Time &delay, const Time &currentEpochTime)
 #endif
     mutexSignalWait(handle, mutex.handle, delay, currentEpochTime);
 #ifndef NDEBUG
-    mutex.debugLocked = true;
+    mutex.debugLocked        = true;
     mutex.debugLockingThread = ThreadId::current();
 #endif
 }
 
-void Signal::notify()
-{
-    mutexSignalNotify(handle);
-}
+void Signal::notify() { mutexSignalNotify(handle); }
 
-} // namespace
-
+} // namespace tredzone
 
 namespace tredzone
 {
@@ -551,5 +519,5 @@ namespace tredzone
  * @param TLS key
  * @param Value to set
  */
- 
-} // namespace
+
+} // namespace tredzone

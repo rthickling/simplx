@@ -1,8 +1,8 @@
 #include "trz/pattern/bus/ringbuffer.hpp"
 
+#include "gtest/gtest.h"
 #include <array>
 #include <cstddef>
-#include "gtest/gtest.h"
 
 namespace
 {
@@ -33,7 +33,7 @@ template <class Queue> void checkSingleElementOperations(Queue &queue)
 template <class Queue> void checkBulkOperations(Queue &queue)
 {
     const std::array<int, 5> input{{1, 2, 3, 4, 5}};
-    std::array<int, 4> output{};
+    std::array<int, 4>       output{};
 
     EXPECT_EQ(std::size_t{0}, queue.dequeue(output.data(), output.size()));
     EXPECT_EQ(std::size_t{0}, queue.enqueue(input.data(), input.size()));
@@ -45,8 +45,8 @@ template <class Queue> void checkBulkOperations(Queue &queue)
     EXPECT_EQ(2, output[1]);
     ASSERT_EQ(std::size_t{1}, queue.enqueue(input.data() + 4, 1));
 
-    bool callbackCalled = false;
-    const auto consume = [&](const int *values, std::size_t count)
+    bool       callbackCalled = false;
+    const auto consume        = [&](const int *values, std::size_t count)
     {
         callbackCalled = true;
         ASSERT_EQ(std::size_t{3}, count);

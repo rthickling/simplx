@@ -21,7 +21,7 @@ namespace ConnectionSuccess
 {
 class ClientValue
 {
-    protected:
+protected:
     const uint8_t m_onNewMessageToReadExpectedVal         = 0u;
     const uint8_t m_onConnectExpectedVal                  = 1u;
     const uint8_t m_onConnectFailedExpectedVal            = 0u;
@@ -40,7 +40,7 @@ class ClientActor : public ClientValue, public ClientTestActor<NetworktTest, 102
 {
     using parent = ClientTestActor<NetworktTest, 1024, 1024>;
 
-    public:
+public:
     ClientActor(const IClient::ConnectParam &param)
         : ClientValue(), parent(m_onNewMessageToReadExpectedVal, m_onConnectExpectedVal, m_onConnectFailedExpectedVal,
                                 m_onConnectTimedOutExpectedVal, m_onConnectionLostExpectedVal,

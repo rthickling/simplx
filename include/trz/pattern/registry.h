@@ -4,14 +4,14 @@
  * @copyright 2013-2019 Tredzone (www.tredzone.com). All rights reserved.
  * Please see accompanying LICENSE file for licensing terms.
  */
- 
+
 #pragma once
 
 // Q: may leak event string if is too large? [PL]
 
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <string>
 #include <utility>
 
 #include "simplx.h"
@@ -21,10 +21,10 @@
 namespace tredzone
 {
 // import into namespace
+using std::make_pair;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
-using std::make_pair;
 using tredzone::EngineToEngineConnectorEventFactory;
 
 //---- Register key/id pair event ----------------------------------------------
@@ -32,14 +32,12 @@ using tredzone::EngineToEngineConnectorEventFactory;
 struct RegisterEvent : public Actor::Event
 {
 public:
-    RegisterEvent(const string &key, const Actor::ActorId &id)
-        : m_Key(key), m_Id(id)
-    {
-    }
-    
+    RegisterEvent(const string &key, const Actor::ActorId &id) : m_Key(key), m_Id(id) {}
+
     /*
     static
-    bool isE2ECapable(const char*& absoluteEventId, e2econnector::EventE2ESerializeFunction& serializeFn, e2econnector::EventE2EDeserializeFunction& deserializeFn)
+    bool isE2ECapable(const char*& absoluteEventId, e2econnector::EventE2ESerializeFunction& serializeFn,
+    e2econnector::EventE2EDeserializeFunction& deserializeFn)
     {
         absoluteEventId = "RegisterEvent";
 
@@ -67,8 +65,8 @@ public:
 #pragma pack(push)
 #pragma pack(1)
 
-    const string            m_Key;
-    const Actor::ActorId    m_Id;
+    const string         m_Key;
+    const Actor::ActorId m_Id;
 
 #pragma pack(pop)
 };
@@ -78,12 +76,9 @@ public:
 struct ActorIdSnapshotRequestEvent : public Actor::Event
 {
 public:
-    ActorIdSnapshotRequestEvent(const string &key)
-        : m_Key(key)
-    {
-    }
+    ActorIdSnapshotRequestEvent(const string &key) : m_Key(key) {}
 
-    const string    m_Key;
+    const string m_Key;
 };
 
 //---- Actor Id Subscription Request event -------------------------------------
@@ -91,10 +86,7 @@ public:
 struct ActorIdSubscribeRequestEvent : public Actor::Event
 {
 public:
-    ActorIdSubscribeRequestEvent(const string &key)
-        : m_Key(key)
-    {
-    }
+    ActorIdSubscribeRequestEvent(const string &key) : m_Key(key) {}
 
     const string m_Key;
 };
@@ -104,13 +96,10 @@ public:
 struct ActorIdResponseEvent : public Actor::Event
 {
 public:
-    ActorIdResponseEvent(const string &key, const Actor::ActorId &id)
-        : m_Key(key), m_Id(id)
-    {
-    }
+    ActorIdResponseEvent(const string &key, const Actor::ActorId &id) : m_Key(key), m_Id(id) {}
 
-    const string            m_Key;
-    const Actor::ActorId    m_Id;
+    const string         m_Key;
+    const Actor::ActorId m_Id;
 };
 
 //---- Not Registered Actor event (REALLY NEEDED?) -----------------------------
@@ -118,12 +107,8 @@ public:
 struct NotRegisteredActorEvent : public Actor::Event
 {
 public:
+    NotRegisteredActorEvent(const string &key) : m_Key(key) {}
 
-    NotRegisteredActorEvent(const string &key)
-        : m_Key(key)
-    {
-    }
-    
     const string m_Key;
 };
 
@@ -132,7 +117,6 @@ public:
 class Registry : public Actor
 {
 public:
-
     struct Tag
     {
         static const char *name() noexcept { return "Registry"; }
@@ -150,7 +134,7 @@ public:
     void onEvent(const RegisterEvent &e)
     {
         m_RegisteredActors.emplace(make_pair(e.m_Key, e.m_Id));
-        
+
         // notify all subscribers
         auto subscriber_set = m_Subscribers.at(e.m_Key);
         for (auto subId : subscriber_set)
@@ -161,10 +145,7 @@ public:
     }
 
     // snapshot request
-    void onEvent(const ActorIdSnapshotRequestEvent &e)
-    {
-        processSnapshot(e.m_Key, e.getSourceActorId());
-    }
+    void onEvent(const ActorIdSnapshotRequestEvent &e) { processSnapshot(e.m_Key, e.getSourceActorId()); }
 
     // subscribe request
     void onEvent(const ActorIdSubscribeRequestEvent &e)
@@ -174,22 +155,21 @@ public:
     }
 
 private:
-
     // add subscriber
     void addSubscriber(const ActorId &subscriber, const string &key)
     {
         // a key can have multiple subscribers
         // assert(!m_Subscribers.count(key));
-        
+
         m_Subscribers[key].insert(subscriber);
     }
 
     // remove susbcriber
     void removeSubscriber(const ActorId &subscriber_id, const string &key)
     {
-        assert(m_Subscribers.count(key));                       // key exists?
-        assert(m_Subscribers.at(key).count(subscriber_id));     // subscriber exists
-        
+        assert(m_Subscribers.count(key));                   // key exists?
+        assert(m_Subscribers.at(key).count(subscriber_id)); // subscriber exists
+
         m_Subscribers.at(key).erase(subscriber_id);
     }
 
@@ -204,13 +184,13 @@ private:
             pipe.push<NotRegisteredActorEvent>(key);
         }
         else
-        {   // found
+        { // found
             pipe.push<ActorIdResponseEvent>(key, it_id->second);
         }
     }
 
-    unordered_map<string, ActorId>                  m_RegisteredActors;
-    unordered_map<string, unordered_set<ActorId>>   m_Subscribers;
+    unordered_map<string, ActorId>                m_RegisteredActors;
+    unordered_map<string, unordered_set<ActorId>> m_Subscribers;
 };
 
 //---- Registry callback -------------------------------------------------------
@@ -218,14 +198,12 @@ private:
 class RegistryCallback
 {
 public:
-
     virtual void onRegistryActorIdResponseSuccess(const string &key, const Actor::ActorId &id)
-    {   (void)key;
+    {
+        (void)key;
         (void)id;
     };
-    virtual void onRegistryActorIdResponseFailure(const string &key)
-    {   (void)key;
-    };
+    virtual void onRegistryActorIdResponseFailure(const string &key) { (void)key; };
 };
 
 //---- Registry PROXY ----------------------------------------------------------
@@ -233,8 +211,7 @@ public:
 class RegistryProxy
 {
 public:
-    RegistryProxy(Actor &source, RegistryCallback &callback)
-        : m_Pipe(source), m_Callback(callback)
+    RegistryProxy(Actor &source, RegistryCallback &callback) : m_Pipe(source), m_Callback(callback)
     {
         const Actor::ActorId id = source.getEngine().getServiceIndex().getServiceActorId<Registry::Tag>();
         // check service exists
@@ -245,20 +222,11 @@ public:
         source.registerEventHandler<NotRegisteredActorEvent>(*this);
     }
 
-    void registerName(const string &key)
-    {
-        m_Pipe.push<RegisterEvent>(key, m_Pipe.getSourceActorId());
-    }
+    void registerName(const string &key) { m_Pipe.push<RegisterEvent>(key, m_Pipe.getSourceActorId()); }
 
-    void requestRegistry(const string &key)
-    {
-        m_Pipe.push<ActorIdSnapshotRequestEvent>(key);
-    }
+    void requestRegistry(const string &key) { m_Pipe.push<ActorIdSnapshotRequestEvent>(key); }
 
-    void subscribeRegistry(const string &key)
-    {
-        m_Pipe.push<ActorIdSubscribeRequestEvent>(key);
-    }
+    void subscribeRegistry(const string &key) { m_Pipe.push<ActorIdSubscribeRequestEvent>(key); }
 
     void unsubscribe(const string &key)
     {
@@ -266,20 +234,13 @@ public:
         (void)key;
     }
 
-    void onEvent(const NotRegisteredActorEvent &e)
-    {
-        m_Callback.onRegistryActorIdResponseFailure(e.m_Key);
-    }
+    void onEvent(const NotRegisteredActorEvent &e) { m_Callback.onRegistryActorIdResponseFailure(e.m_Key); }
 
-    void onEvent(const ActorIdResponseEvent &e)
-    {
-        m_Callback.onRegistryActorIdResponseSuccess(e.m_Key, e.m_Id);
-    }
+    void onEvent(const ActorIdResponseEvent &e) { m_Callback.onRegistryActorIdResponseSuccess(e.m_Key, e.m_Id); }
 
 private:
-
-    Actor::Event::Pipe  m_Pipe;
-    RegistryCallback    &m_Callback;
+    Actor::Event::Pipe m_Pipe;
+    RegistryCallback  &m_Callback;
 };
 
 } // namespace tredzone

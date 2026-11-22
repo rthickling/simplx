@@ -12,7 +12,7 @@
 #include "trz/engine/platform.h"
 
 #if defined(__SSE2__)
-#include <emmintrin.h>
+#    include <emmintrin.h>
 #endif
 
 namespace tredzone
@@ -70,4 +70,4 @@ template <typename T> inline unsigned lowestBit(const T &pv) noexcept
     return ret;
 }
 
-} // namespace
+} // namespace tredzone

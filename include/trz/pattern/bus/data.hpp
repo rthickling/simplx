@@ -1,15 +1,15 @@
 
 #pragma once
 
-
-namespace xthreadbus {
+namespace xthreadbus
+{
 /**
  * @brief base data type
- * 
+ *
  */
 class Data
 {
-    public:
+public:
     virtual ~Data() = default;
 };
 

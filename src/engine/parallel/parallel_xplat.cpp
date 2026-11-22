@@ -19,14 +19,15 @@ namespace tredzone
 
 mutex_t mutexCreate(const MUTEX_T typ)
 {
-    int cc;
+    int                 cc;
     pthread_mutexattr_t attr;
-    
+
     if ((cc = pthread_mutexattr_init(&attr)) != 0)
     {
         throw RunTimeException(__FILE__, __LINE__, systemErrorToString(cc));
     }
-    if ((cc = pthread_mutexattr_settype(&attr, (typ == MUTEX_T::RECURSIVE) ? PTHREAD_MUTEX_RECURSIVE_NP : PTHREAD_MUTEX_FAST_NP)) != 0)
+    if ((cc = pthread_mutexattr_settype(&attr, (typ == MUTEX_T::RECURSIVE) ? PTHREAD_MUTEX_RECURSIVE_NP
+                                                                           : PTHREAD_MUTEX_FAST_NP)) != 0)
     {
         throw RunTimeException(__FILE__, __LINE__, systemErrorToString(cc));
     }
@@ -41,19 +42,22 @@ mutex_t mutexCreate(const MUTEX_T typ)
 void mutexDestroy(mutex_t &handle)
 {
     const int cc = pthread_mutex_destroy(&handle);
-    if (cc)     throw RunTimeException(__FILE__, __LINE__, systemErrorToString(cc));
+    if (cc)
+        throw RunTimeException(__FILE__, __LINE__, systemErrorToString(cc));
 }
 
 void mutexLock(mutex_t &handle)
 {
     const int cc = pthread_mutex_lock(&handle);
-    if (cc)     throw RunTimeException(__FILE__, __LINE__, systemErrorToString(cc));
+    if (cc)
+        throw RunTimeException(__FILE__, __LINE__, systemErrorToString(cc));
 }
 
 void mutexUnlock(mutex_t &handle)
 {
     const int cc = pthread_mutex_unlock(&handle);
-    if (cc)     throw RunTimeException(__FILE__, __LINE__, systemErrorToString(cc));
+    if (cc)
+        throw RunTimeException(__FILE__, __LINE__, systemErrorToString(cc));
 }
 
 } // namespace tredzone

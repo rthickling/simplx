@@ -23,9 +23,9 @@ static const int CACHE_LINE_SIZE = TREDZONE_CACHE_LINE_SIZE; // architecture dep
 
 class CacheLineAlignedBuffer
 {
-  public:
-    CacheLineAlignedBuffer(const CacheLineAlignedBuffer&) = delete;
-    CacheLineAlignedBuffer& operator=(const CacheLineAlignedBuffer&) = delete;
+public:
+    CacheLineAlignedBuffer(const CacheLineAlignedBuffer &)            = delete;
+    CacheLineAlignedBuffer &operator=(const CacheLineAlignedBuffer &) = delete;
     /**
      * throw (std::bad_alloc)
      */
@@ -39,7 +39,7 @@ class CacheLineAlignedBuffer
     inline ~CacheLineAlignedBuffer() noexcept { delete[] ptr; }
     template <class T> inline T cast() noexcept { return reinterpret_cast<T>(alignedPtr); }
     template <class T> inline T cast() const noexcept { return reinterpret_cast<T>(alignedPtr); }
-    inline static size_t cacheLineAlignedSize(size_t sz) noexcept
+    inline static size_t        cacheLineAlignedSize(size_t sz) noexcept
     {
         return (CACHE_LINE_SIZE * ((sz + CACHE_LINE_SIZE - 1) / CACHE_LINE_SIZE)) + CACHE_LINE_SIZE - 1;
     }
@@ -48,16 +48,16 @@ class CacheLineAlignedBuffer
         return static_cast<char *>(ptr) + (CACHE_LINE_SIZE - ((uintptr_t)ptr % CACHE_LINE_SIZE)) % CACHE_LINE_SIZE;
     }
 
-  private:
+private:
     char *ptr;
     char *alignedPtr;
 };
 
 template <typename T> class CacheLineAlignedArray
 {
-  public:
-    CacheLineAlignedArray(const CacheLineAlignedArray&) = delete;
-    CacheLineAlignedArray& operator=(const CacheLineAlignedArray&) = delete;
+public:
+    CacheLineAlignedArray(const CacheLineAlignedArray &)            = delete;
+    CacheLineAlignedArray &operator=(const CacheLineAlignedArray &) = delete;
 
     inline explicit CacheLineAlignedArray(size_t n)
         : // throw (std::bad_alloc, ...)
@@ -76,7 +76,7 @@ template <typename T> class CacheLineAlignedArray
         }
     }
     template <class _Init>
-    inline explicit CacheLineAlignedArray(size_t n,
+    inline explicit CacheLineAlignedArray(size_t       n,
                                           const _Init &init)
         : // throw (std::bad_alloc, ...)
           ptr(new char[n * ALIGNED_T_SZ + CACHE_LINE_SIZE - 1]),
@@ -113,17 +113,17 @@ template <typename T> class CacheLineAlignedArray
     }
     inline size_t size() const noexcept { return sz; }
 
-  private:
+private:
     static const int ALIGNED_T_SZ = CACHE_LINE_SIZE * (((int)sizeof(T) + CACHE_LINE_SIZE - 1) / CACHE_LINE_SIZE);
-    char *ptr;
-    char *alignedPtr;
-    const uint32_t sz;
+    char            *ptr;
+    char            *alignedPtr;
+    const uint32_t   sz;
 };
 
 template <typename T> struct CacheLineAlignedObject : private CacheLineAlignedBuffer
 {
-    CacheLineAlignedObject(const CacheLineAlignedObject&) = delete;
-    CacheLineAlignedObject& operator=(const CacheLineAlignedObject&) = delete;
+    CacheLineAlignedObject(const CacheLineAlignedObject &)            = delete;
+    CacheLineAlignedObject &operator=(const CacheLineAlignedObject &) = delete;
     inline CacheLineAlignedObject()
         : // throw (std::bad_alloc, ...)
           CacheLineAlignedBuffer(sizeof(T))
@@ -138,17 +138,17 @@ template <typename T> struct CacheLineAlignedObject : private CacheLineAlignedBu
         new (cast<T *>()) T(init);
     }
     inline ~CacheLineAlignedObject() { cast<T *>()->~T(); }
-    inline T &operator*() noexcept { return *cast<T *>(); }
+    inline T       &operator*() noexcept { return *cast<T *>(); }
     inline const T &operator*() const noexcept { return *cast<const T *>(); }
-    inline T *operator->() noexcept { return cast<T *>(); }
+    inline T       *operator->() noexcept { return cast<T *>(); }
     inline const T *operator->() const noexcept { return cast<const T *>(); }
 };
 
 class CacheLineAlignedBufferContainer
 {
-  public:
-    CacheLineAlignedBufferContainer(const CacheLineAlignedBufferContainer&) = delete;
-    CacheLineAlignedBufferContainer& operator=(const CacheLineAlignedBufferContainer&) = delete;
+public:
+    CacheLineAlignedBufferContainer(const CacheLineAlignedBufferContainer &)            = delete;
+    CacheLineAlignedBufferContainer &operator=(const CacheLineAlignedBufferContainer &) = delete;
     inline CacheLineAlignedBufferContainer() noexcept : head(0) { assert((unsigned)CACHE_LINE_SIZE >= sizeof(void *)); }
     inline ~CacheLineAlignedBufferContainer() noexcept
     {
@@ -170,23 +170,23 @@ class CacheLineAlignedBufferContainer
             throw std::bad_alloc();
         }
         *static_cast<void **>(CacheLineAlignedBuffer::cacheLineAlignedPointer(p)) = head;
-        head = p;
+        head                                                                      = p;
         return static_cast<char *>(CacheLineAlignedBuffer::cacheLineAlignedPointer(p)) + CACHE_LINE_SIZE;
     }
 
-  private:
+private:
     void *head;
 };
 
 template <class _Allocator> class CacheLineAlignedAllocator
 {
-  public:
-    typedef typename _Allocator::value_type value_type;
-    typedef typename _Allocator::size_type size_type;
+public:
+    typedef typename _Allocator::value_type      value_type;
+    typedef typename _Allocator::size_type       size_type;
     typedef typename _Allocator::difference_type difference_type;
-    typedef typename _Allocator::pointer pointer;
-    typedef typename _Allocator::const_pointer const_pointer;
-    typedef typename _Allocator::reference reference;
+    typedef typename _Allocator::pointer         pointer;
+    typedef typename _Allocator::const_pointer   const_pointer;
+    typedef typename _Allocator::reference       reference;
     typedef typename _Allocator::const_reference const_reference;
 
     template <class U> struct rebind
@@ -201,14 +201,14 @@ template <class _Allocator> class CacheLineAlignedAllocator
         : allocator(other.allocator)
     {
     }
-    inline pointer address(reference r) const { return &r; }
+    inline pointer       address(reference r) const { return &r; }
     inline const_pointer address(const_reference r) const { return &r; }
     /**
      * throw (std::bad_alloc)
      */
     inline pointer allocate(size_type n, const void * = 0)
     {
-        char *p = allocator.allocate(n * sizeof(value_type) + sizeof(void *) + CACHE_LINE_SIZE - 1);
+        char   *p   = allocator.allocate(n * sizeof(value_type) + sizeof(void *) + CACHE_LINE_SIZE - 1);
         pointer ret = static_cast<pointer>(CacheLineAlignedBuffer::cacheLineAlignedPointer(p + sizeof(void *)));
         assert((uintptr_t)ret - (uintptr_t)p <= sizeof(void *) + CACHE_LINE_SIZE - 1);
         *(static_cast<char **>((void *)ret) - 1) = p;
@@ -220,11 +220,11 @@ template <class _Allocator> class CacheLineAlignedAllocator
                              n * sizeof(value_type) + sizeof(void *) + CACHE_LINE_SIZE - 1);
     }
     template <class _Init> inline void construct(pointer p, const _Init &init) { new (p) value_type(init); }
-    inline void destroy(pointer p) { p->~value_type(); }
-    inline size_type max_size() const noexcept { return allocator.max_size(); }
+    inline void                        destroy(pointer p) { p->~value_type(); }
+    inline size_type                   max_size() const noexcept { return allocator.max_size(); }
 
-  private:
+private:
     typename _Allocator::template rebind<char>::other allocator;
 };
 
-} // namespace
+} // namespace tredzone

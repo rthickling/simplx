@@ -13,7 +13,6 @@
 
 #include "simplx.h"
 
-#include <exception>
 #include <iostream>
 
 namespace tredzone
@@ -39,47 +38,47 @@ template <typename _TClient, size_t _Capacity> class Receiver
         NEWMESSAGE
     };
 
-    public:
+public:
     /**
      * @brief Construct a new Receiver object
-     * 
-     * @param client 
+     *
+     * @param client
      */
     Receiver(_TClient &client) noexcept(false) : m_client(client), m_buffer() {}
 
     /**
      * @brief Destroy the Receiver object
-     * 
+     *
      */
     ~Receiver() {}
 
     /**
      * @brief Get the Buffer Content Size
-     * 
-     * @return size_t 
+     *
+     * @return size_t
      */
     size_t getBufferContentSize(void) const noexcept { return m_buffer.size(); }
 
     /**
      * @brief empty the buffer
-     * 
+     *
      */
     void clearBuffer(void) noexcept { m_buffer.clear(); }
 
     /**
      * @brief process incoming data when the buffer is not empty
      * complete the buffer with the missing part of the data (according to size read in header)
-     * 
+     *
      * @param data the incoming data to add
      * @param size the size of the incoming data
      */
     void doCompleteMsg(const uint8_t *data, size_t size) noexcept
     {
         // buffer does not contains a complete minimum header
-        if (m_buffer.size() < m_messageHeaderMinimumSize) 
+        if (m_buffer.size() < m_messageHeaderMinimumSize)
         {
             // incoming part can complete the minimum header
-            if ((size + m_buffer.size()) > m_messageHeaderMinimumSize) 
+            if ((size + m_buffer.size()) > m_messageHeaderMinimumSize)
             {
                 // complete the minimum header then process the rest of the data
                 const size_t quantityDataToCompleteHeader = m_messageHeaderMinimumSize - m_buffer.size();
@@ -88,18 +87,18 @@ template <typename _TClient, size_t _Capacity> class Receiver
                 size -= quantityDataToCompleteHeader;
             }
             // incoming part can NOT complete the minimum header
-            else 
+            else
             {
                 // add the incoming part to the buffer then ends there
-                m_buffer.writeData(data, size); 
+                m_buffer.writeData(data, size);
                 return;
             }
         }
-        //get from the minimum header the size of the current header
+        // get from the minimum header the size of the current header
         size_t currentHeaderSize = m_client.getHeaderSize(get<0>(m_buffer.readData()));
 
         // buffer does not contains the complete current header
-        if (m_buffer.size() < currentHeaderSize) 
+        if (m_buffer.size() < currentHeaderSize)
         {
             const size_t quantityDataToCompleteHeader = currentHeaderSize - m_buffer.size();
 
@@ -128,9 +127,9 @@ template <typename _TClient, size_t _Capacity> class Receiver
         if (msgSize > m_buffer.max_size())
         {
             // process all content to onOverflowDataReceived
-            const uint8_t *dataToDrop = get<0>(m_buffer.readData());
-            size_t dataSizeToDrop = m_buffer.size();
-            size_t remainingData = dropData(dataToDrop/*by ref*/, dataSizeToDrop/*by ref*/);
+            const uint8_t *dataToDrop     = get<0>(m_buffer.readData());
+            size_t         dataSizeToDrop = m_buffer.size();
+            size_t         remainingData  = dropData(dataToDrop /*by ref*/, dataSizeToDrop /*by ref*/);
             assert(remainingData == 0);
             (void)remainingData;
             m_overflowSize = msgSize - m_buffer.size();
@@ -153,7 +152,7 @@ template <typename _TClient, size_t _Capacity> class Receiver
             const size_t   initialSize = m_buffer.size();
             size_t         bufferSize  = m_buffer.size();
             const uint8_t *bufferMsg   = get<0>(m_buffer.readData());
-            processData(bufferMsg, bufferSize/*by ref*/, ORIGIN_T::BUFFER);
+            processData(bufferMsg, bufferSize /*by ref*/, ORIGIN_T::BUFFER);
             m_buffer.shiftBuffer(initialSize - bufferSize);
             return;
         }
@@ -164,7 +163,7 @@ template <typename _TClient, size_t _Capacity> class Receiver
         data += sizeToComplete;
         size -= sizeToComplete;
 
-        // processing buffer 
+        // processing buffer
         size_t         bufferSize = m_buffer.size();
         const uint8_t *bufferMsg  = std::get<0>(m_buffer.readData());
         setOtherCompleteMessageFlag(data, size);
@@ -172,31 +171,31 @@ template <typename _TClient, size_t _Capacity> class Receiver
         m_buffer.clear();
 
         // processing the rest of the incoming data
-        processData(data, size/*by ref*/, ORIGIN_T::NEWMESSAGE);
+        processData(data, size /*by ref*/, ORIGIN_T::NEWMESSAGE);
     }
 
     /**
      * @brief process incoming data when buffer is empty
-     * 
+     *
      * @param data the incomming data
-     * @param size the size 
-     * @param origin 
+     * @param size the size
+     * @param origin
      */
     void processData(const uint8_t *data, size_t &size, const ORIGIN_T origin) noexcept
     {
         // the incoming data are part of data bloc too big for the buffer
-        if (m_overflowSize > 0 && !dropData(data/*by ref*/, size/*by ref*/)) 
-            // after sending all the overflowing data bloc no incoming data is left 
+        if (m_overflowSize > 0 && !dropData(data /*by ref*/, size /*by ref*/))
+            // after sending all the overflowing data bloc no incoming data is left
             return;
 
         // the incoming data is smaller than the minimum header size
         if (size < m_messageHeaderMinimumSize)
         {
-            // add data to buffer 
+            // add data to buffer
             m_buffer.writeData(data, size);
             return;
         }
-        // process all message in data 
+        // process all message in data
         while (size >= m_messageHeaderMinimumSize)
         {
             size_t currentHeaderSize = m_client.getHeaderSize(data);
@@ -233,7 +232,7 @@ template <typename _TClient, size_t _Capacity> class Receiver
             {
                 // process content to onOverflowDataReceived
                 m_overflowSize = msgSize - min((int64_t)size, (int64_t)msgSize);
-                processData(data, size/*by ref*/, origin);
+                processData(data, size /*by ref*/, origin);
                 return;
             }
 
@@ -261,8 +260,9 @@ template <typename _TClient, size_t _Capacity> class Receiver
 
     /**
      * @brief Set a Flag to true if an other message is available after treating current message
-     * the flag is set before calling the client callback therefor in onDataReceived client can check if it is the last message of the incomings data
-     * 
+     * the flag is set before calling the client callback therefor in onDataReceived client can check if it is the last
+     * message of the incomings data
+     *
      * @param data the data left in incoming data
      * @param size the size of the data left in incoming data
      */
@@ -293,17 +293,16 @@ template <typename _TClient, size_t _Capacity> class Receiver
     }
 
     /**
-     * @brief Get flag is Other Complete Message 
-     * 
+     * @brief Get flag is Other Complete Message
+     *
      * @return true yes
      * @return false no
      */
     bool isOtherCompleteMessage() const { return m_otherCompleteMessageFlag; }
 
-
     /**
-     * @brief send data without buffering it due to buffer max size to small 
-     * 
+     * @brief send data without buffering it due to buffer max size to small
+     *
      * @param data to send
      * @param dataSize size of data to send
      * @return true remaining data to process
@@ -323,22 +322,22 @@ template <typename _TClient, size_t _Capacity> class Receiver
 
     /**
      * @brief Get if there Is Previous Incomplete Msg object
-     * 
+     *
      * @return true yes
      * @return false no
      */
     bool isPreviousIncompleteMsg(void) noexcept { return !m_buffer.isEmpty(); }
 
     /**
-     * @brief Set the minimum Header Size 
-     * 
-     * @param messageHeaderSize the new minimum header size 
+     * @brief Set the minimum Header Size
+     *
+     * @param messageHeaderSize the new minimum header size
      */
     void setHeaderSize(size_t messageHeaderSize) { m_messageHeaderMinimumSize = messageHeaderSize; }
 
     /**
      * @brief callback called when new data just been received from the client socket
-     * 
+     *
      * @param data the data received
      * @param dataSize the size of data received
      */
@@ -361,8 +360,8 @@ template <typename _TClient, size_t _Capacity> class Receiver
             processData(data, dataSize, ORIGIN_T::NEWMESSAGE);
     }
 
-    private:
-    _TClient &                m_client;
+private:
+    _TClient                 &m_client;
     CircularBuffer<_Capacity> m_buffer;
     size_t                    m_overflowSize             = 0;
     size_t                    m_messageHeaderMinimumSize = 0;

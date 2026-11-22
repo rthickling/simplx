@@ -14,8 +14,8 @@ using namespace std;
 extern "C"
 {
     int TREDZONE_SDK_COMPATIBILITY_VERSION = tredzone::Engine::SDK_COMPATIBILITY_VERSION;
-    int TREDZONE_SDK_PATCH_VERSION = tredzone::Engine::SDK_PATCH_VERSION;
-    int TREDZONE_SDK_COMPILER_ID = TREDZONE_COMPILER_ID;
+    int TREDZONE_SDK_PATCH_VERSION         = tredzone::Engine::SDK_PATCH_VERSION;
+    int TREDZONE_SDK_COMPILER_ID           = TREDZONE_COMPILER_ID;
 }
 
 namespace tredzone
@@ -28,13 +28,11 @@ EngineCustomEventLoopFactory::EventLoopAutoPointer EngineCustomEventLoopFactory:
     return EventLoopAutoPointer::newEventLoop<DefaultEventLoop>();
 }
 
-EngineEventLoop::EngineEventLoop() noexcept : asyncNode(0),
-                                                        interruptFlag(0),
-                                                        isBeingDestroyedFlag(false)
+EngineEventLoop::EngineEventLoop() noexcept
+    : asyncNode(0), interruptFlag(0), isBeingDestroyedFlag(false)
 #ifndef NDEBUG
-                                                            ,
-                                                        debugPreRunCalledFlag(false),
-                                                        debugSynchronizeCount(0)
+      ,
+      debugPreRunCalledFlag(false), debugSynchronizeCount(0)
 #endif
 {
 }
@@ -180,7 +178,7 @@ bool EngineEventLoop::isRunning() noexcept
     else if (asyncNode->nodeHandle.stopFlag || asyncNode->nodeHandle.shutdownFlag)
     {
         asyncNode->nodeHandle.interruptFlag = true;
-        isBeingDestroyedFlag = true;
+        isBeingDestroyedFlag                = true;
         asyncNode->destroyAsyncActors();
     }
     return true;
@@ -218,24 +216,24 @@ void EngineCustomEventLoopFactory::DefaultEventLoop::run() noexcept
 class Engine::CoreActor : public Actor
 {
 public:
-    
     struct Init
     {
-        Engine &asyncEngine;
+        Engine      &asyncEngine;
         const CoreId coreId;
-        const bool isRedZoneFlag;
+        const bool   isRedZoneFlag;
         inline Init(Engine &pasyncEngine, CoreId pcoreId, bool pisRedZoneFlag) noexcept
             : asyncEngine(pasyncEngine), coreId(pcoreId), isRedZoneFlag(pisRedZoneFlag)
         {
         }
     };
-    
+
     // ctor
     CoreActor(const Init &init)
         : stopFlag(asyncNode->nodeHandle.stopFlag), m_ShutdownFlag(asyncNode->nodeHandle.shutdownFlag),
           regularActorsCoreCount(*init.asyncEngine.regularActorsCoreCount), regularActorsCoreCountFlag(false),
           serviceSingletonActor(newReferencedSingletonActor<ServiceSingletonActor>()),
-          customCoreActor(init.asyncEngine.customCoreActorFactory.newCustomCoreActor(init.asyncEngine, init.coreId, init.isRedZoneFlag, *this)),
+          customCoreActor(init.asyncEngine.customCoreActorFactory.newCustomCoreActor(init.asyncEngine, init.coreId,
+                                                                                     init.isRedZoneFlag, *this)),
           m_NodeActorCountListener(*this), loopForRegularActorsCoreCountZeroCallback(*this)
     {
         asyncNode->subscribeNodeActorCountListener(m_NodeActorCountListener);
@@ -243,47 +241,40 @@ public:
         serviceSingletonActor->isServiceDestroyTimeFlag = false;
         atomicAddAndFetch(&regularActorsCoreCount, 1);
     }
-    
+
     // dtor
-    virtual ~CoreActor() noexcept
-    {
-        m_NodeActorCountListener.unsubscribe();
-    }
+    virtual ~CoreActor() noexcept { m_NodeActorCountListener.unsubscribe(); }
 
 private:
-    
     // loop-back until core has no more regular actors
     struct LoopForRegularActorsCoreCountZeroCallback : Callback
     {
         CoreActor &coreActor;
 
-        inline LoopForRegularActorsCoreCountZeroCallback(CoreActor &pcoreActor) noexcept
-            : coreActor(pcoreActor)
-        {
-        }
-        
+        inline LoopForRegularActorsCoreCountZeroCallback(CoreActor &pcoreActor) noexcept : coreActor(pcoreActor) {}
+
         inline void onCallback() noexcept
         {
             // [LOIC] coreActor.regularActorsCoreCount
-            
+
             // does core have any vanilla actors?
             if (coreActor.regularActorsCoreCount == 0)
-            {   // no, destroy service
+            { // no, destroy service
                 coreActor.serviceSingletonActor->destroyServiceActors();
             }
             else
-            {   // yes, try again at next loop
+            { // yes, try again at next loop
                 coreActor.registerCallback(*this);
             }
         }
     };
-    
-    class NodeActorCountListener: public AsyncNodeBase::NodeActorCountListener
+
+    class NodeActorCountListener : public AsyncNodeBase::NodeActorCountListener
     {
     public:
         CoreActor &coreActor;
         NodeActorCountListener(CoreActor &pcoreActor) noexcept : coreActor(pcoreActor) {}
-        
+
         void onNodeActorCountDiff(const size_t oldCount, const size_t newCount) noexcept override
         {
             // [LOIC] oldCount, newCount
@@ -294,25 +285,25 @@ private:
         }
     };
 
-    bool &stopFlag;
-    const bool &m_ShutdownFlag;                                                     // ref affects unit tests! [PL]
-    unsigned &regularActorsCoreCount;
-    bool regularActorsCoreCountFlag;
-    ActorReference<ServiceSingletonActor> serviceSingletonActor;
-    ActorReference<Actor> customCoreActor;
-    NodeActorCountListener m_NodeActorCountListener;
+    bool                                     &stopFlag;
+    const bool                               &m_ShutdownFlag; // ref affects unit tests! [PL]
+    unsigned                                 &regularActorsCoreCount;
+    bool                                      regularActorsCoreCountFlag;
+    ActorReference<ServiceSingletonActor>     serviceSingletonActor;
+    ActorReference<Actor>                     customCoreActor;
+    NodeActorCountListener                    m_NodeActorCountListener;
     LoopForRegularActorsCoreCountZeroCallback loopForRegularActorsCoreCountZeroCallback;
 
     static const Actor::ActorReferenceBase *findFirstActorReference(const Actor &referencingActor,
-                                                                         const Actor &referencedActor) noexcept
+                                                                    const Actor &referencedActor) noexcept
     {
         if (&referencingActor == &referencedActor)
         {
             return 0;
         }
         const Actor::ActorReferenceBase *ret = 0;
-        for (Actor::ReferenceToChain::const_iterator i = referencingActor.m_ReferenceToChain.begin(),
-                                                          endi = referencingActor.m_ReferenceToChain.end();
+        for (Actor::ReferenceToChain::const_iterator i    = referencingActor.m_ReferenceToChain.begin(),
+                                                     endi = referencingActor.m_ReferenceToChain.end();
              ret == 0 && i != endi; ++i)
         {
             const Actor &actor = *i->getReferencedActor();
@@ -327,11 +318,12 @@ private:
         }
         return ret;
     }
-    
-    const Actor::ActorReferenceBase*    findFirstActorReferenceWithinCoreAndServiceReferencedActors(const Actor &referencedActor) const noexcept;
+
+    const Actor::ActorReferenceBase        *
+    findFirstActorReferenceWithinCoreAndServiceReferencedActors(const Actor &referencedActor) const noexcept;
     size_t countReferencedActors(const Actor &referencingActor) const noexcept;
-    bool onlyCoreAndServiceReferencedActorsLeft() const noexcept;
-    
+    bool   onlyCoreAndServiceReferencedActorsLeft() const noexcept;
+
     // coreactor destroy request
     virtual void onDestroyRequest() noexcept
     {
@@ -345,7 +337,7 @@ private:
                     regularActorsCoreCountFlag = true;
                     atomicSubAndFetch(&regularActorsCoreCount, 1);
                 }
-                
+
                 // accept destroy request
                 Actor::onDestroyRequest();
             }
@@ -353,7 +345,7 @@ private:
             {
                 regularActorsCoreCountFlag = true;
                 atomicSubAndFetch(&regularActorsCoreCount, 1);
-                
+
                 // try at next event loop
                 registerCallback(loopForRegularActorsCoreCountZeroCallback);
             }
@@ -385,14 +377,12 @@ Engine::Engine(const StartSequence &startSequence)
                       : new AsyncNodeManager(*startSequence.getAsyncExceptionHandler(),
                                              startSequence.getEventAllocatorPageSizeByte(),
                                              startSequence.getCoreSet())),
-      customCoreActorFactory(
-          startSequence.getEngineCustomCoreActorFactory() == 0
-              ? *defaultCoreActorFactory
-              : (defaultCoreActorFactory.reset(), *startSequence.getEngineCustomCoreActorFactory())),
-      customEventLoopFactory(
-          startSequence.getEngineCustomEventLoopFactory() == 0
-              ? *defaultEventLoopFactory
-              : (defaultEventLoopFactory.reset(), *startSequence.getEngineCustomEventLoopFactory()))
+      customCoreActorFactory(startSequence.getEngineCustomCoreActorFactory() == 0
+                                 ? *defaultCoreActorFactory
+                                 : (defaultCoreActorFactory.reset(), *startSequence.getEngineCustomCoreActorFactory())),
+      customEventLoopFactory(startSequence.getEngineCustomEventLoopFactory() == 0
+                                 ? *defaultEventLoopFactory
+                                 : (defaultEventLoopFactory.reset(), *startSequence.getEngineCustomEventLoopFactory()))
 {
     try
     {
@@ -421,20 +411,18 @@ Engine::Engine(const StartSequence &startSequence)
     }
 }
 
-    Engine::~Engine() noexcept
-{
-    finish();
-}
+Engine::~Engine() noexcept { finish(); }
 
 std::string Engine::getVersion()
 {
     std::stringstream ss;
-    ss << "Tredzone C++ Simplx framework" << (int)TREDZONE_ENGINE_VERSION_MAJOR << "." << (int)TREDZONE_ENGINE_VERSION_MINOR;
+    ss << "Tredzone C++ Simplx framework" << (int)TREDZONE_ENGINE_VERSION_MAJOR << "."
+       << (int)TREDZONE_ENGINE_VERSION_MINOR;
     if (TREDZONE_ENGINE_VERSION_PATCH != 0)
     {
         ss << '.' << (int)TREDZONE_ENGINE_VERSION_PATCH;
     }
-    ss << " " 
+    ss << " "
 #ifndef NDEBUG
        << "debug "
 #else
@@ -453,7 +441,7 @@ std::string Engine::getVersion()
        << "COMPILER=" << (int)TREDZONE_COMPILER_ID
 #endif
        << ' ';
-    
+
     ss << sizeof(void *) * 8 << "-bit" << std::ends;
     return ss.str();
 }
@@ -462,10 +450,10 @@ void Engine::finish() noexcept
 {
     nodeManager->shutdown();
     atomicSubAndFetch(&*regularActorsCoreCount, 1);
-    
+
     // crashes certain operations inactor destructors
     // nodeManager.reset();
-    
+
     // dtor fix alex shrubb
     delete nodeManager.get();
     memoryBarrier();
@@ -485,8 +473,9 @@ void Engine::debugActivateMemoryLeakBacktrace() noexcept
 #endif
 
 struct Engine_start_NodeThread
-{ // has to be declared out of Engine::start() to be used as a template parameter of Engine::start::NodeThreadList (GCC compliance)
-    const Actor::CoreId coreId;
+{ // has to be declared out of Engine::start() to be used as a template parameter of Engine::start::NodeThreadList (GCC
+  // compliance)
+    const Actor::CoreId                coreId;
     std::unique_ptr<AsyncNode::Thread> thread;
     CacheLineAlignedObject<AsyncNode> *node;
     Engine_start_NodeThread(const Engine_start_NodeThread &other) : coreId(other.coreId), node(0) {}
@@ -515,13 +504,13 @@ void Engine::start(const StartSequence &startSequence)
         }
     };
 
-    NodeThreadList nodeThreadList;
+    NodeThreadList                              nodeThreadList;
     StartSequence::StarterChain::const_iterator ilastService = startSequence.starterChain.end();
-    for (StartSequence::StarterChain::const_iterator i = startSequence.starterChain.begin(),
+    for (StartSequence::StarterChain::const_iterator i    = startSequence.starterChain.begin(),
                                                      endi = startSequence.starterChain.end();
          i != endi; ++i)
     {
-        CoreId coreId = i->coreId;
+        CoreId                   coreId      = i->coreId;
         NodeThreadList::iterator inodeThread = nodeThreadList.find(coreId);
         if (inodeThread == nodeThreadList.end())
         {
@@ -549,11 +538,11 @@ void Engine::start(const StartSequence &startSequence)
         }
     }
     Actor::ActorId previousServiceDestroyActorId;
-    for (StartSequence::StarterChain::const_iterator i = startSequence.starterChain.begin(),
+    for (StartSequence::StarterChain::const_iterator i    = startSequence.starterChain.begin(),
                                                      endi = startSequence.starterChain.end();
          i != endi; ++i)
     {
-        CoreId coreId = i->coreId;
+        CoreId                   coreId      = i->coreId;
         NodeThreadList::iterator inodeThread = nodeThreadList.find(coreId);
         assert(inodeThread != nodeThreadList.end());
         assert(inodeThread->coreId == coreId);
@@ -584,8 +573,7 @@ void Engine::start(const StartSequence &startSequence)
         try
         {
             threadSetAffinity(i->coreId);
-            (*i->node)->newActor<CoreActor>(
-                CoreActor::Init(*this, i->coreId, startSequence.isRedZoneCore(i->coreId)));
+            (*i->node)->newActor<CoreActor>(CoreActor::Init(*this, i->coreId, startSequence.isRedZoneCore(i->coreId)));
         }
         catch (...)
         {
@@ -605,9 +593,9 @@ void Engine::threadStartHook(void *engine)
 Actor::ActorId Engine::newCore(CoreId coreId, bool isRedZone, NewCoreStarter &newCoreStarter)
 {
     AsyncNode::Thread thread(coreId, isRedZone, redZoneParam, threadStackSizeByte, threadStartHook, this, 0);
-    Actor::ActorId ret;
-    CacheLineAlignedObject<AsyncNode> *node = 0;
-    cpuset_type savedThreadAffinity = threadGetAffinity();
+    Actor::ActorId    ret;
+    CacheLineAlignedObject<AsyncNode> *node                = 0;
+    cpuset_type                        savedThreadAffinity = threadGetAffinity();
     try
     {
         threadSetAffinity(coreId);
@@ -632,10 +620,7 @@ Actor::ActorId Engine::newCore(CoreId coreId, bool isRedZone, NewCoreStarter &ne
     return ret;
 }
 
-    Engine::CoreSet::CoreSet() noexcept
-        : coreCount(0)
-    {
-    }
+Engine::CoreSet::CoreSet() noexcept : coreCount(0) {}
 
 void Engine::CoreSet::set(CoreId coreId)
 {
@@ -676,10 +661,10 @@ Engine::CoreId Engine::CoreSet::at(NodeId nodeId) const
     return cores[nodeId];
 }
 
-    Engine::FullCoreSet::FullCoreSet()
+Engine::FullCoreSet::FullCoreSet()
 {
     const cpuset_type usable = cpuGetUsableSet();
-    size_t n = 0;
+    size_t            n      = 0;
     for (size_t i = 0; i < usable.size(); ++i)
     {
         if (!usable[i])
@@ -698,17 +683,17 @@ Engine::CoreId Engine::CoreSet::at(NodeId nodeId) const
 /**
  * throw (std::bad_alloc)
  */
-    Engine::StartSequence::StartSequence(const CoreSet &pcoreSet, int)
-        : coreSet(pcoreSet), asyncNodeAllocator(new AsyncNodeAllocator), asyncExceptionHandler(0),
-        engineCustomCoreActorFactory(0), engineCustomEventLoopFactory(0),
-        eventAllocatorPageSizeByte(DEFAULT_EVENT_ALLOCATOR_PAGE_SIZE), threadStackSizeByte(0)
+Engine::StartSequence::StartSequence(const CoreSet &pcoreSet, int)
+    : coreSet(pcoreSet), asyncNodeAllocator(new AsyncNodeAllocator), asyncExceptionHandler(0),
+      engineCustomCoreActorFactory(0), engineCustomEventLoopFactory(0),
+      eventAllocatorPageSizeByte(DEFAULT_EVENT_ALLOCATOR_PAGE_SIZE), threadStackSizeByte(0)
 {
     std::stringstream s;
     s << (uint64_t)getPID() << '-' << getTSC() << std::ends;
     engineSuffix = s.str();
 }
 
-    Engine::StartSequence::~StartSequence() noexcept
+Engine::StartSequence::~StartSequence() noexcept
 {
     while (!starterChain.empty())
     {
@@ -809,21 +794,23 @@ Engine::CoreSet Engine::StartSequence::getCoreSet() const
     return ret;
 }
 
-void Engine::StartSequence::setEngineName(const char *pengineName) { engineName = pengineName; }
+void        Engine::StartSequence::setEngineName(const char *pengineName) { engineName = pengineName; }
 const char *Engine::StartSequence::getEngineName() const noexcept { return engineName.c_str(); }
 
-void Engine::StartSequence::setEngineSuffix(const char *pengineSuffix) { engineSuffix = pengineSuffix; }
+void        Engine::StartSequence::setEngineSuffix(const char *pengineSuffix) { engineSuffix = pengineSuffix; }
 const char *Engine::StartSequence::getEngineSuffix() const noexcept { return engineSuffix.c_str(); }
 
 //---- Find 1st Actor Reference within Core and Service Referenced Actors ------
 
-const Actor::ActorReferenceBase*    Engine::CoreActor::findFirstActorReferenceWithinCoreAndServiceReferencedActors(const Actor &referencedActor) const noexcept
+const Actor::ActorReferenceBase *Engine::CoreActor::findFirstActorReferenceWithinCoreAndServiceReferencedActors(
+    const Actor &referencedActor) const noexcept
 {
     assert(referencedActor.m_ReferenceFromCount > 1);
-    
-    const Actor::ActorReferenceBase *ret = (this->m_ReferenceFromCount == 0 ? findFirstActorReference(*this, referencedActor) : 0);
+
+    const Actor::ActorReferenceBase *ret =
+        (this->m_ReferenceFromCount == 0 ? findFirstActorReference(*this, referencedActor) : 0);
     for (ServiceSingletonActor::ServiceActorList::const_iterator
-             i = serviceSingletonActor->getServiceActorList().begin(),
+             i    = serviceSingletonActor->getServiceActorList().begin(),
              endi = serviceSingletonActor->getServiceActorList().end();
          ret == 0 && i != endi; ++i)
     {
@@ -839,51 +826,53 @@ size_t Engine::CoreActor::countReferencedActors(const Actor &referencingActor) c
 {
     size_t ret = 0;
 
-    for (Actor::ReferenceToChain::const_iterator it = referencingActor.m_ReferenceToChain.begin(),
-                                                      endit = referencingActor.m_ReferenceToChain.end();
+    for (Actor::ReferenceToChain::const_iterator it    = referencingActor.m_ReferenceToChain.begin(),
+                                                 endit = referencingActor.m_ReferenceToChain.end();
          it != endit; ++it)
     {
         const Actor &actor = *it->getReferencedActor();
         assert(actor.m_ReferenceFromCount >= 1);
-        
+
         // if NOT root reference, count recursively
-        if (actor.m_ReferenceFromCount == 1 || findFirstActorReferenceWithinCoreAndServiceReferencedActors(actor) == &*it)
+        if (actor.m_ReferenceFromCount == 1 ||
+            findFirstActorReferenceWithinCoreAndServiceReferencedActors(actor) == &*it)
         {
-            ret += 1 + countReferencedActors(actor);            // RECURSE!
+            ret += 1 + countReferencedActors(actor); // RECURSE!
         }
     }
-    
+
     return ret;
 }
 
 //---- CoreActor::only Core and ServiceReferenced Actors Left ? ----------------
-    
+
 bool Engine::CoreActor::onlyCoreAndServiceReferencedActorsLeft() const noexcept
 {
-    const size_t    n_total_actors = asyncNode->getActorCount();
-    
-    #ifdef DTOR_DEBUG
-        const size_t    n_total_actors2 = asyncNode->getRefMapper().getNumActors();
-        // assert(n_total_actors == n_total_actors2);
-    
-        cout << "n_total_actors = " << n_total_actors << " vs " << n_total_actors2 << endl;
-    #endif
-    
+    const size_t n_total_actors = asyncNode->getActorCount();
+
+#ifdef DTOR_DEBUG
+    const size_t n_total_actors2 = asyncNode->getRefMapper().getNumActors();
+    // assert(n_total_actors == n_total_actors2);
+
+    cout << "n_total_actors = " << n_total_actors << " vs " << n_total_actors2 << endl;
+#endif
+
     asyncNode->getRefMapper().dumpAllActors();
-    
+
     // count references to this core actor (self)
     size_t count = (this->m_ReferenceFromCount == 0 ? 1 + countReferencedActors(*this) : 0);
-    
+
     // count service actors * 2
-    for (ServiceSingletonActor::ServiceActorList::const_iterator it = serviceSingletonActor->getServiceActorList().begin(),
-                                                            endit = serviceSingletonActor->getServiceActorList().end();
-                                                            it != endit; ++it)
+    for (ServiceSingletonActor::ServiceActorList::const_iterator
+             it    = serviceSingletonActor->getServiceActorList().begin(),
+             endit = serviceSingletonActor->getServiceActorList().end();
+         it != endit; ++it)
     {
         // if is ROOT reference, count TO references
         count += ((*it)->m_ReferenceFromCount == 0 ? 1 + countReferencedActors(**it) : 0);
     }
-    
+
     return count == n_total_actors;
 }
-    
+
 } // namespace tredzone

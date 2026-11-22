@@ -9,8 +9,8 @@
 #pragma once
 
 #include "simplx.h"
-#include "trz/connector/tcpconnector.hpp"
 #include "trz/connector/http/server/server.hpp"
+#include "trz/connector/tcpconnector.hpp"
 #include "trz/pattern/timer.h"
 
 #include <fstream>
@@ -24,39 +24,40 @@ namespace connector
 namespace http
 {
 
-using ::std::size_t;
 using ::std::ifstream;
 using ::std::ostringstream;
+using ::std::size_t;
 using ::std::string;
 using ::std::vector;
 
 /**
  * @brief communication class handling new http connection
- * 
+ *
  * @tparam _Network network actor managing connection and communication to network (low level)
- * @tparam _SendBufferSize 
- * @tparam _ReceiveBufferSize 
+ * @tparam _SendBufferSize
+ * @tparam _ReceiveBufferSize
  * @tparam _KeepAlive if false, server process will self-terminate after response
  * @tparam _MaxHeaderSize limit of header (in byte units)
  */
-template <class _Network, size_t _SendBufferSize, size_t _ReceiveBufferSize, bool _KeepAlive, size_t _MaxHeaderSize = 4096>
+template <class _Network, size_t _SendBufferSize, size_t _ReceiveBufferSize, bool _KeepAlive,
+          size_t _MaxHeaderSize = 4096>
 class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBufferSize>
 {
     using parent = TcpClient<_Network, _SendBufferSize, _ReceiveBufferSize>;
 
-    public:
+public:
     class Parameters
     {
-        public:
+    public:
         Parameters(const string &rootPath) : m_rootPath(rootPath) {}
 
         const string m_rootPath;
     };
 
     /**
-     * @brief Instantiate new Http Server Process 
-     * 
-     * @param param 
+     * @brief Instantiate new Http Server Process
+     *
+     * @param param
      */
     HttpServerProcess(const Parameters &param)
         : m_selfDestructAfterResponseCallback(*this), m_rootPath(param.m_rootPath)
@@ -64,16 +65,16 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
     }
 
     /**
-     * @brief Destroy Http Server Process 
-     * 
+     * @brief Destroy Http Server Process
+     *
      */
     ~HttpServerProcess() {}
 
     /**
      * @brief Get Path requested by client
-     * 
+     *
      * @param httpHeader header of http request
-     * @return string 
+     * @return string
      */
     string getPath(const string &httpHeader)
     {
@@ -93,7 +94,7 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
 
     /**
      * @brief return list of split parent directories from path header
-     * 
+     *
      * @param full path in header
      * @return vector<string> of partial path
      */
@@ -113,18 +114,18 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
         return nodes;
     }
 
-    protected:    
+protected:
     /**
      * @brief callback triggered when client receive new data.
      * as this is a HTTP client process, check end of http header
-     * 
+     *
      * @param data received
      * @param dataSize data size
      */
     void onDataReceived(const uint8_t *data, size_t dataSize) noexcept override
     {
         if (m_state < 4)
-        {   
+        {
             // state machine validating a complete http header
             for (uint64_t i = 0; i < dataSize; ++i)
             {
@@ -167,8 +168,8 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
             }
             m_httpHeader.write((const char *)data, dataSize);
 
-            // cancel parsing of abnormal http header request 
-            if (m_httpHeader.tellp() > static_cast<ssize_t>(_MaxHeaderSize)) 
+            // cancel parsing of abnormal http header request
+            if (m_httpHeader.tellp() > static_cast<ssize_t>(_MaxHeaderSize))
             {
                 parent::send("HTTP/1.1 500 Internal Server Error\r\n\r\n");
                 parent::send("Request header too large");
@@ -196,7 +197,7 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
 
     /**
      * @brief distpatch request by type
-     * 
+     *
      * @param request http request header
      * @param body http request body
      */
@@ -216,7 +217,7 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
 
     /**
      * @brief callback triggered upon GET request
-     * 
+     *
      * @param request http request header
      * @param body http request body
      */
@@ -228,7 +229,7 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
 
     /**
      * @brief callback triggered upon POST request
-     * 
+     *
      * @param request http request header
      * @param body http request body
      */
@@ -240,7 +241,7 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
 
     /**
      * @brief callback triggered upon PUT request
-     * 
+     *
      * @param request http request header
      * @param body http request body
      */
@@ -252,10 +253,10 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
 
     /**
      * @brief callback triggered upon DELETE request
-     * 
+     *
      * @param request http request header
      * @param body http request body
-    */
+     */
     virtual void onDeleteRequest(const string &header, const string &body)
     {
         (void)header;
@@ -264,10 +265,10 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
 
     /**
      * @brief callback triggered upon PATCH request
-     * 
+     *
      * @param request http request header
      * @param body http request body
-    */
+     */
     virtual void onPatchRequest(const string &header, const string &body)
     {
         (void)header;
@@ -275,9 +276,9 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
     }
 
     /**
-     * @brief send response header 
-     * 
-     * @param statusCode the status code 
+     * @brief send response header
+     *
+     * @param statusCode the status code
      * @param contentType type of content in payload
      * @param length size of the payload
      */
@@ -294,15 +295,15 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
     }
 
     /**
-     * @brief send document present in root folder as response  
-     * 
-     * @param documentPath 
+     * @brief send document present in root folder as response
+     *
+     * @param documentPath
      */
     void sendDocument(const string &documentPath)
     {
         // get real full path from document path
         std::string realPath = m_rootPath + documentPath;
-        char *tmp = canonicalize_file_name(realPath.c_str());
+        char       *tmp      = canonicalize_file_name(realPath.c_str());
         if (!tmp)
         {
             // document not found
@@ -318,7 +319,7 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
             free(tmp);
         }
 
-        // confirm root path is part of documment real path 
+        // confirm root path is part of documment real path
         if (realPath.compare(0, m_rootPath.length(), m_rootPath))
         {
             // if not (meaning path contains too much /..) reject the request for security
@@ -338,7 +339,7 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
             return;
         }
 
-        // calculate file content size  
+        // calculate file content size
         f.seekg(0, std::ios::end);
         size_t len = f.tellg();
 
@@ -361,17 +362,19 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
         // send buffer
         try
         {
-            if (documentPath.find(".css") != std::string::npos) {
+            if (documentPath.find(".css") != std::string::npos)
+            {
                 sendHeader(200, "text/css", len);
             }
-            else {
-                sendHeader(200, "text/html", len); 
+            else
+            {
+                sendHeader(200, "text/html", len);
             }
             parent::send(buff, len);
         }
         catch (...)
         {
-            // close connection on failure 
+            // close connection on failure
             parent::registerCallback(m_selfDestructAfterResponseCallback);
             clearBuffer();
         }
@@ -379,7 +382,7 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
 
     /**
      * @brief clear request buffer
-     * 
+     *
      */
     void clearBuffer()
     {
@@ -391,12 +394,12 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
     }
 
     /**
-     * @brief actorCallback to destroy client after response is sent 
-     * 
+     * @brief actorCallback to destroy client after response is sent
+     *
      */
     class SelfDestructAfterResponseCallback : public Actor::Callback
     {
-        public:
+    public:
         HttpServerProcess &m_actor;
         SelfDestructAfterResponseCallback(HttpServerProcess &actor) : m_actor(actor) {}
 
@@ -419,7 +422,7 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
         parent::registerCallback(m_selfDestructAfterResponseCallback);
         parent::m_sender.clearBuffer();
     }
-    
+
     const string m_rootPath;
 
     ostringstream m_httpHeader;
@@ -427,8 +430,6 @@ class HttpServerProcess : public TcpClient<_Network, _SendBufferSize, _ReceiveBu
     int64_t       m_state            = 0;
     bool          m_responseSentFlag = false;
     int           m_bodyLengthToGet  = -1;
-
-    
 };
 } // namespace http
 } // namespace connector

@@ -14,14 +14,14 @@
  * @brief break to debugger upon fatal exception
  */
 #ifndef TRZ_DEBUG_BREAK
-    // wasn't user-defined
-    #ifndef NDEBUG
-        // debug
-        #define TRZ_DEBUG_BREAK() assert(!true) // break to debugger
-    #else
-        // release
-        #define TRZ_DEBUG_BREAK()
-    #endif
+// wasn't user-defined
+#    ifndef NDEBUG
+// debug
+#        define TRZ_DEBUG_BREAK() assert(!true) // break to debugger
+#    else
+// release
+#        define TRZ_DEBUG_BREAK()
+#    endif
 #endif
 
 /**
@@ -54,4 +54,3 @@
  * @brief Convert a define to string
  */
 #define TREDZONE_STRING(x) #x
-

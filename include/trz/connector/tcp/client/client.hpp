@@ -43,7 +43,7 @@ using ::std::chrono::steady_clock;
 using fd_t = int64_t;
 
 /**
- * @brief class communicating with network 
+ * @brief class communicating with network
  *
  * @tparam _TNetwork network actor managing network low-level connection and communication
  * @tparam _SendBufferSize
@@ -54,7 +54,7 @@ class TcpClient : public Actor, public IClient<_TNetwork>
 {
     using typename IClient<_TNetwork>::ConnectParam;
 
-    public:
+public:
     /**
      * @brief client destruction request
      *
@@ -105,7 +105,7 @@ class TcpClient : public Actor, public IClient<_TNetwork>
     }
 
     /**
-     * @brief Set client socket 
+     * @brief Set client socket
      * used when client is spawned by server
      *
      * @param fd socket
@@ -279,7 +279,7 @@ class TcpClient : public Actor, public IClient<_TNetwork>
         return directSend(&data, 1, blocking, retry);
     }
 
-    /**     
+    /**
      * @brief synchronously send data to network layer,
      * parameters type conversion method
      *
@@ -409,7 +409,7 @@ class TcpClient : public Actor, public IClient<_TNetwork>
     friend Receiver<TcpClient, _ReceiveBufferSize>;
     friend _TNetwork;
 
-    protected:
+protected:
     /**
      * @brief callback triggered when auto-read flag is false and new message is received
      *
@@ -449,7 +449,7 @@ class TcpClient : public Actor, public IClient<_TNetwork>
     virtual void onConnectFailed(void) noexcept override {}
 
     /**
-     * @brief callback triggered after connection timeout reached 
+     * @brief callback triggered after connection timeout reached
      *
      */
     virtual void onConnectTimedOut(void) noexcept override {}
@@ -485,9 +485,9 @@ class TcpClient : public Actor, public IClient<_TNetwork>
     }
 
     /**
-     * @brief callback triggered after data is received but its size (according to header) would overflow receiver buffer. 
-     * Method will be called for each data chunk received until entire payload has been received. Hence, 
-     * buffering must be managed by client itself. 
+     * @brief callback triggered after data is received but its size (according to header) would overflow receiver
+     * buffer. Method will be called for each data chunk received until entire payload has been received. Hence,
+     * buffering must be managed by client itself.
      * Next header will be processed normally.
      *
      * @param data received (probably partial)
@@ -703,7 +703,7 @@ private:
 
     /**
      * @brief low-level callback triggered (if [AutoRead flag] is true) upon new data received
-     * send data to receiver 
+     * send data to receiver
      *
      * @param data received
      * @param dataSize size of data received
@@ -713,7 +713,7 @@ private:
         m_receiver.onDataReceived(data, dataSize);
     }
 
-    protected:
+protected:
     ConnectParam                            m_connectParam;
     ActorReference<_TNetwork>               m_network;
     Sender<_SendBufferSize>                 m_sender;
@@ -733,7 +733,7 @@ private:
     bool         m_messageToReadFlag  = false;
     mutable bool m_inConnectQueueFlag = false;
 
-    private:
+private:
     fd_t                     m_fd            = FD_DISCONNECTED;
     static constexpr int64_t FD_DISCONNECTED = -1;
 };

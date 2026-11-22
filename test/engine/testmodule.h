@@ -11,59 +11,56 @@
 
 #include "trz/engine/engine.h"
 
-class TestModule: public tredzone::Actor, private tredzone::Actor::Callback
+class TestModule : public tredzone::Actor, private tredzone::Actor::Callback
 {
 public:
-	class TestMilestone: public tredzone::MultiForwardChainLink<TestMilestone>
+    class TestMilestone : public tredzone::MultiForwardChainLink<TestMilestone>
     {
-	public:
-		TestMilestone() :
-				startedFlag(false) {
-		}
-		virtual ~TestMilestone() {
-		}
+    public:
+        TestMilestone() : startedFlag(false) {}
+        virtual ~TestMilestone() {}
 
-	private:
-		friend class TestModule;
-		bool startedFlag;
+    private:
+        friend class TestModule;
+        bool startedFlag;
 
-		virtual void start() = 0;
-		virtual bool processNext() = 0;
-	};
+        virtual void start()       = 0;
+        virtual bool processNext() = 0;
+    };
 
-	inline TestModule()
-    {
-		registerCallback(*this);
-	}
+    inline TestModule() { registerCallback(*this); }
 
 protected:
-
-	TestMilestone::ForwardChain<> testMilestoneChain;
+    TestMilestone::ForwardChain<> testMilestoneChain;
 
 private:
-	friend class tredzone::Actor;
-	virtual void onDestroyRequest() noexcept {
-		if (testMilestoneChain.empty())
+    friend class tredzone::Actor;
+    virtual void onDestroyRequest() noexcept
+    {
+        if (testMilestoneChain.empty())
         {
-			acceptDestroy();
-		}
-	}
-	void onCallback() noexcept {
-		_TREDZONE_TEST_EXIT_EXCEPTION_CATCH_BEGIN_
+            acceptDestroy();
+        }
+    }
+    void onCallback() noexcept
+    {
+        _TREDZONE_TEST_EXIT_EXCEPTION_CATCH_BEGIN_
 
-			registerCallback(*this);
-			if (!testMilestoneChain.front()->startedFlag) {
-				testMilestoneChain.front()->startedFlag = true;
-				testMilestoneChain.front()->start();
-			} else if (testMilestoneChain.front()->processNext()) {
-				delete testMilestoneChain.pop_front();
-				if (testMilestoneChain.empty())
-                {
-					requestDestroy();
-				}
-			}
+        registerCallback(*this);
+        if (!testMilestoneChain.front()->startedFlag)
+        {
+            testMilestoneChain.front()->startedFlag = true;
+            testMilestoneChain.front()->start();
+        }
+        else if (testMilestoneChain.front()->processNext())
+        {
+            delete testMilestoneChain.pop_front();
+            if (testMilestoneChain.empty())
+            {
+                requestDestroy();
+            }
+        }
 
-		_TREDZONE_TEST_EXIT_EXCEPTION_CATCH_END_
-	}
+        _TREDZONE_TEST_EXIT_EXCEPTION_CATCH_END_
+    }
 };
-

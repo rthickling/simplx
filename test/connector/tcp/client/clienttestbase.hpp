@@ -60,7 +60,7 @@ class ClientTestBase : public TcpClient<_TNetwork, _SendBufferSize, _ReceiveBuff
 
     using parent = TcpClient<_TNetwork, _SendBufferSize, _ReceiveBufferSize>;
 
-    public:
+public:
     ClientTestBase(uint8_t onNewMessageToReadExpected, uint8_t onConnectExpected, uint8_t onConnectFailedExpected,
                    uint8_t onConnectTimedOutExpected, uint8_t onConnectionLostExpected, uint8_t onDisconnectExpected,
                    uint8_t onDataReceivedExpected, uint8_t onDataSizeReceivedExpected,
@@ -89,7 +89,7 @@ class ClientTestBase : public TcpClient<_TNetwork, _SendBufferSize, _ReceiveBuff
         ASSERT_EQ(m_onOverflowDataSizeReceivedExpected, m_onOverflowDataSizeReceived);
     }
 
-    protected:
+protected:
     void onNewMessageToRead(void) noexcept override final
     {
 #if VERBOSE_TEST > 0

@@ -14,7 +14,6 @@
 
 using namespace tredzone;
 
-
 struct TestStartSequence : Engine::StartSequence
 {
     TestStartSequence(const tredzone::Engine::CoreSet &coreSet = TestCoreSet()) : Engine::StartSequence(coreSet) {}
@@ -22,22 +21,21 @@ struct TestStartSequence : Engine::StartSequence
 
 class CustomCoreTestEngine
 {
-  public:
+public:
     CustomCoreTestEngine(Engine::StartSequence &startSequence)
-        : asyncEngine((startSequence.setEngineCustomCoreActorFactory(testAsyncEngineCustomCoreActorFactory),
-                       startSequence))
+        : asyncEngine(
+              (startSequence.setEngineCustomCoreActorFactory(testAsyncEngineCustomCoreActorFactory), startSequence))
     {
         EXPECT_EQ((testAsyncEngineCustomCoreActorFactory.coreCount == 0), (startSequence.getCoreSet().size() == 0));
     }
 
-  private:
+private:
     struct TestAsyncEngineCustomCoreActorFactory : EngineCustomCoreActorFactory
     {
         volatile unsigned coreCount;
         TestAsyncEngineCustomCoreActorFactory() : coreCount(0) {}
         virtual ~TestAsyncEngineCustomCoreActorFactory() noexcept { EXPECT_EQ(0u, coreCount); }
-        virtual Actor::ActorReference<Actor> newCustomCoreActor(Engine &, Actor::CoreId, bool,
-                                                                          Actor &parent)
+        virtual Actor::ActorReference<Actor> newCustomCoreActor(Engine &, Actor::CoreId, bool, Actor &parent)
         {
             return parent.newReferencedActor<TestCoreActor>(&coreCount);
         }
@@ -58,7 +56,7 @@ class CustomCoreTestEngine
     };
 
     TestAsyncEngineCustomCoreActorFactory testAsyncEngineCustomCoreActorFactory;
-    Engine asyncEngine;
+    Engine                                asyncEngine;
 };
 
 struct TestModule : Actor
@@ -74,13 +72,12 @@ struct TestModule : Actor
     }
 };
 
-template <class _AsyncEngine>
-void testInit()
+template <class _AsyncEngine> void testInit()
 {
     {
-        Engine::CoreSet coreSet;
+        Engine::CoreSet   coreSet;
         TestStartSequence startSequence(coreSet);
-        _AsyncEngine engine(startSequence);
+        _AsyncEngine      engine(startSequence);
     }
     {
         TestStartSequence startSequence;
@@ -89,8 +86,7 @@ void testInit()
     }
 }
 
-static
-void testInit()
+static void testInit()
 {
     ::testInit<Engine>();
     ::testInit<CustomCoreTestEngine>();
@@ -141,7 +137,7 @@ void testAllocator()
         }
     }
 
-    TestStartSequence startSequence;
+    TestStartSequence      startSequence;
     Actor::Allocator<char> allocator(startSequence.getAllocator());
     for (size_t i = 1; i < 100000; ++i)
     {
@@ -156,19 +152,18 @@ void testAllocator()
 
 class TestBasicService : public Actor
 {
-  public:
-    template<int>
-    struct TestService : Service
+public:
+    template <int> struct TestService : Service
     {
     };
 
     struct Shared
     {
-        bool service1DestroyedFlag;
-        bool service2DestroyedFlag;
-        bool service3DestroyedFlag;
-        bool service4DestroyedFlag;
-        bool service5DestroyedFlag;
+        bool                                service1DestroyedFlag;
+        bool                                service2DestroyedFlag;
+        bool                                service3DestroyedFlag;
+        bool                                service4DestroyedFlag;
+        bool                                service5DestroyedFlag;
         static ThreadLocalStorage<Shared *> tls;
 
         Shared()
@@ -268,7 +263,7 @@ class TestBasicService : public Actor
         requestDestroy();
     }
 
-  protected:
+protected:
     virtual void onDestroyRequest() noexcept
     {
         ASSERT_TRUE(shared.service5DestroyedFlag);
@@ -280,7 +275,7 @@ class TestBasicService : public Actor
         Actor::onDestroyRequest();
     }
 
-  private:
+private:
     Shared &shared;
 };
 
@@ -289,16 +284,19 @@ ThreadLocalStorage<TestBasicService::Shared *> TestBasicService::Shared::tls;
 void testBasicService()
 {
     TestBasicService::Shared shared;
-    TestStartSequence startSequence;
+    TestStartSequence        startSequence;
     startSequence.addServiceActor<TestBasicService::TestService<1>, TestBasicService>(testCore(0), &shared);
     startSequence.addServiceActor<TestBasicService::TestService<2>, TestBasicService::Service2Actor>(testCore(0));
 
-    ASSERT_THROW((startSequence.addServiceActor<TestBasicService::TestService<2>, TestBasicService::Service3Actor>(testCore(0))),
-                 Engine::StartSequence::DuplicateServiceException);
+    ASSERT_THROW(
+        (startSequence.addServiceActor<TestBasicService::TestService<2>, TestBasicService::Service3Actor>(testCore(0))),
+        Engine::StartSequence::DuplicateServiceException);
 
     startSequence.addServiceActor<TestBasicService::TestService<3>, TestBasicService::Service3Actor>(testCore(0));
-    startSequence.addServiceActor<Engine::StartSequence::AnonymousService, TestBasicService::Service4Actor>(testCore(0));
-    startSequence.addServiceActor<Engine::StartSequence::AnonymousService, TestBasicService::Service5Actor>(testCore(0));
+    startSequence.addServiceActor<Engine::StartSequence::AnonymousService, TestBasicService::Service4Actor>(
+        testCore(0));
+    startSequence.addServiceActor<Engine::StartSequence::AnonymousService, TestBasicService::Service5Actor>(
+        testCore(0));
     startSequence.addActor<TestBasicService::NonServiceActor>(testCore(0), &shared);
     ASSERT_FALSE(shared.service1DestroyedFlag);
     ASSERT_FALSE(shared.service2DestroyedFlag);
@@ -337,10 +335,10 @@ struct TestMemoryHogActor : public Actor
     {
         std::cout << "TestMemoryHogActor()" << std::endl;
         char *test = new (Allocator<char>(getAllocator()).allocate(16)) char[16];
-        test[0] = 't';
-        test[1] = 'r';
-        test[2] = 'z';
-        test[3] = '\0';
+        test[0]    = 't';
+        test[1]    = 'r';
+        test[2]    = 'z';
+        test[3]    = '\0';
         std::cout << test << std::endl;
     }
 
@@ -350,7 +348,7 @@ struct TestMemoryHogActor : public Actor
         shared.isDestroyed = true;
     }
 
-  private:
+private:
     Shared &shared;
 };
 
@@ -367,13 +365,14 @@ void testAnonymousService()
 void testInvalidCore()
 {
     TestStartSequence startSequence;
-    ASSERT_THROW(startSequence.addActor<TestActor>((tredzone::Engine::CoreId)tredzone::cpuGetConfiguredCount()), std::runtime_error);
+    ASSERT_THROW(startSequence.addActor<TestActor>((tredzone::Engine::CoreId)tredzone::cpuGetConfiguredCount()),
+                 std::runtime_error);
 }
 
-void testUnreleasedMemory()                 // [PL to check]
+void testUnreleasedMemory() // [PL to check]
 {
     TestMemoryHogActor::Shared shared;
-    TestStartSequence startSequence;
+    TestStartSequence          startSequence;
     startSequence.addActor<TestMemoryHogActor>(testCore(0), &shared);
 
     ASSERT_FALSE(shared.isDestroyed);

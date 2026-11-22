@@ -16,7 +16,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <exception>
 #include <memory>
 #include <queue>
 #include <tuple>
@@ -54,7 +53,8 @@ using fd_t = int64_t;
  * @tparam _MaxReceivePerLoop maximum read operations per loop
  * @tparam _MaxSendPerLoop maximum write operations per loop
  * @tparam _MaxDataPerRead the maximum data to get each read
- * @tparam _MaxPendingIncomingConnectionRequest maximum pending external connections per service. Additional connections will be rejected
+ * @tparam _MaxPendingIncomingConnectionRequest maximum pending external connections per service. Additional connections
+ * will be rejected
  */
 template <size_t _MaxReceivePerLoop, size_t _MaxSendPerLoop, size_t _MaxDataPerRead,
           size_t _MaxPendingIncomingConnectionRequest, class _TNetworkCalls = NetworkCalls>
@@ -63,14 +63,14 @@ class Network : public Actor
     using TcpClient = IClient<Network>;
     using TcpServer = IServer<Network>;
 
-    public:
+public:
     /**
      * @brief exception thrown when epoll file descriptor creation fails
      *
      */
     class EpollCreateException : public exception
     {
-        public:
+    public:
         virtual const char *what() const noexcept { return "Couldn't create epollSocket"; }
     };
 
@@ -80,12 +80,12 @@ class Network : public Actor
      */
     class DirectSendException : public exception
     {
-        public:
+    public:
         DirectSendException(const string &err) : m_msg("Failed to direct send message: " + err) {}
 
         virtual const char *what() const noexcept { return m_msg.c_str(); }
 
-        private:
+    private:
         string m_msg;
     };
 
@@ -218,7 +218,7 @@ class Network : public Actor
     }
 
     /**
-     * @brief queue a client actor for later, asynchronous (on next network handler loop) 
+     * @brief queue a client actor for later, asynchronous (on next network handler loop)
      * getting and writing its buffer to the socket
      *
      * @param socket identifying client
@@ -232,7 +232,8 @@ class Network : public Actor
     /**
      * @brief synchronously write [datasize] bytes of data to socket in max [retryNumber] attempts
      * Here, the write opperation is non-blocking (as opposed to calling blockingDirectSend())
-     * /!\ can significantly degrade performance when multiple clients/servers are used on the same core, so prefer addToSendQueue
+     * /!\ can significantly degrade performance when multiple clients/servers are used on the same core, so prefer
+     * addToSendQueue
      *
      * @param socket to send on
      * @param data to send
@@ -262,7 +263,8 @@ class Network : public Actor
     /**
      * @brief synchronously write [datasize] bytes of data to the socket in max [retryNumber] attempts
      * Here, the write opperation is blocking, as opposed to calling directSend()
-     * /!\ can significantly degrade performance when multiple clients/servers are used on the same core, so prefer addToSendQueue
+     * /!\ can significantly degrade performance when multiple clients/servers are used on the same core, so prefer
+     * addToSendQueue
      *
      * @param socket to send on
      * @param data to send
@@ -352,7 +354,7 @@ class Network : public Actor
         }
     }
 
-    protected:
+protected:
     /**
      * @brief callback triggered upon socket connection timeout
      * triggers actor callback, then removes socket and associated actor from network handler
@@ -536,7 +538,7 @@ class Network : public Actor
             // get client params
             const auto     params        = client->getConnectParam();
             const uint64_t addressFamily = params.m_addressFamily;
-            const string & ipAddress     = params.m_ipAddress;
+            const string  &ipAddress     = params.m_ipAddress;
             const int16_t  port          = params.m_port;
 
             typename _TNetworkCalls::Sockaddr_in serv_addr;
@@ -609,7 +611,7 @@ class Network : public Actor
             registerCallbackOnce(m_pendingConnectionCallback);
 
             if (connectResult >= 0)
-            {   
+            {
                 // successful socket connection
                 onCompleteConnection(newSocket);
             }
@@ -811,7 +813,7 @@ class Network : public Actor
                 {
                     // successful socket connection
                     m_connectionPending.erase(it1);
-                    
+
                     if (!onCompleteConnection(m_events[i].data.fd))
                         continue;
 
@@ -825,7 +827,7 @@ class Network : public Actor
                         // socket event toggling failed
                         auto it2 = m_clientBySocket.find(m_events[i].data.fd);
                         if (it2 != m_clientBySocket.end())
-                        {   
+                        {
                             onConnectionLost(m_events[i].data.fd);
                         }
                     }
@@ -841,7 +843,7 @@ class Network : public Actor
                     onNewConnection(it->first, it->second);
                 }
                 else
-                {   // client socket = message
+                { // client socket = message
                     addToReadQueue(m_events[i].data.fd);
                 }
             }
@@ -920,20 +922,21 @@ class Network : public Actor
                 continue;
             // get data to send
             const auto     messageToSend = it1->second->getDataToSend();
-            const uint8_t *dataToSend = get<0>(messageToSend);
-            const size_t dataSize = get<1>(messageToSend);
+            const uint8_t *dataToSend    = get<0>(messageToSend);
+            const size_t   dataSize      = get<1>(messageToSend);
             if (dataSize == 0)
                 continue;
 
             --sendCount;
-            const ssize_t sent = _TNetworkCalls::send(socket, dataToSend, dataSize,
-                                                      _TNetworkCalls::Msg_dontwait | MSG_NOSIGNAL);
+            const ssize_t sent =
+                _TNetworkCalls::send(socket, dataToSend, dataSize, _TNetworkCalls::Msg_dontwait | MSG_NOSIGNAL);
             if (sent > 0)
             {
                 if (it1->second->shiftBuffer(static_cast<size_t>(sent)) > 0)
                     m_sendQueue.push(socket);
             }
-            else if (sent == 0 || errno == EINTR || errno == _TNetworkCalls::Eagain || errno == _TNetworkCalls::Ewouldblock)
+            else if (sent == 0 || errno == EINTR || errno == _TNetworkCalls::Eagain ||
+                     errno == _TNetworkCalls::Ewouldblock)
             {
                 m_sendQueue.push(socket);
             }

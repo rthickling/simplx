@@ -33,7 +33,7 @@ using isolated_test::Config;
 using tredzone::Actor;
 using tredzone::Engine;
 using CpuIds = std::array<unsigned, 3>;
-using Clock = std::chrono::steady_clock;
+using Clock  = std::chrono::steady_clock;
 using namespace std::chrono_literals;
 
 void require(bool condition, const std::string &message)
@@ -65,8 +65,8 @@ void setAffinity(const cpu_set_t &mask)
 
 std::set<unsigned> readCpuList(const std::string &file)
 {
-    const std::string path = "/sys/devices/system/cpu/" + file;
-    std::ifstream input(path);
+    const std::string  path = "/sys/devices/system/cpu/" + file;
+    std::ifstream      input(path);
     std::set<unsigned> result;
     for (unsigned first; input >> first;)
     {
@@ -102,7 +102,7 @@ void expectCoreSet(const Engine::CoreSet &cores, std::span<const unsigned> expec
     for (size_t index = 0; index < expected.size(); ++index)
     {
         const auto node = static_cast<Engine::CoreSet::NodeId>(index);
-        const auto cpu = static_cast<Engine::CoreId>(expected[index]);
+        const auto cpu  = static_cast<Engine::CoreId>(expected[index]);
         require(cores.at(node) == cpu && cores.index(cpu) == node,
                 "CoreSet CPU and node index mismatch for Linux CPU " + std::to_string(expected[index]));
     }
@@ -110,7 +110,7 @@ void expectCoreSet(const Engine::CoreSet &cores, std::span<const unsigned> expec
 
 void checkDiscoveredSet(const std::set<unsigned> &online)
 {
-    const auto allowed = affinity();
+    const auto            allowed = affinity();
     std::vector<unsigned> expected;
     for (unsigned cpu : online)
     {
@@ -121,8 +121,7 @@ void checkDiscoveredSet(const std::set<unsigned> &online)
             expected.push_back(cpu);
         }
     }
-    require(expected.size() <= Actor::MAX_NODE_COUNT,
-            "select a launch affinity within Simplx's node limit");
+    require(expected.size() <= Actor::MAX_NODE_COUNT, "select a launch affinity within Simplx's node limit");
     expectCoreSet(Engine::FullCoreSet(), expected);
 }
 
@@ -167,26 +166,26 @@ void checkCleanup(const cpu_set_t &original, const std::set<pid_t> &originalThre
 
 struct Observation
 {
-    pid_t tid{};
-    int cpu{-1};
-    int policy{-1};
-    int priority{-1};
-    bool haveAffinity{};
-    cpu_set_t affinity{};
+    pid_t         tid{};
+    int           cpu{-1};
+    int           policy{-1};
+    int           priority{-1};
+    bool          haveAffinity{};
+    cpu_set_t     affinity{};
     Actor::CoreId logicalCpu{};
-    size_t node{};
+    size_t        node{};
 };
 
 struct Placement
 {
-    Observation constructed;
-    Observation dispatched;
+    Observation       constructed;
+    Observation       dispatched;
     std::atomic<bool> dispatchedReady{false};
 };
 
 class PlacementActor : public Actor, public Actor::Callback
 {
-  public:
+public:
     explicit PlacementActor(Placement *placement) : placement(*placement)
     {
         this->placement.constructed = observe();
@@ -199,14 +198,14 @@ class PlacementActor : public Actor, public Actor::Callback
         placement.dispatchedReady.store(true, std::memory_order_release);
     }
 
-  private:
+private:
     Placement &placement;
 
     Observation observe() const noexcept
     {
         Observation result;
-        result.tid = gettid();
-        result.cpu = sched_getcpu();
+        result.tid    = gettid();
+        result.cpu    = sched_getcpu();
         result.policy = sched_getscheduler(0);
         sched_param parameter{};
         if (sched_getparam(0, &parameter) == 0)
@@ -214,8 +213,8 @@ class PlacementActor : public Actor, public Actor::Callback
             result.priority = parameter.sched_priority;
         }
         result.haveAffinity = sched_getaffinity(0, sizeof(result.affinity), &result.affinity) == 0;
-        result.logicalCpu = getCore();
-        result.node = getActorId().getCoreIndex();
+        result.logicalCpu   = getCore();
+        result.node         = getActorId().getCoreIndex();
         return result;
     }
 };
@@ -245,8 +244,8 @@ void configureFifo(Engine::StartSequence &start, const CpuIds &cpus, int priorit
 void verifyObservation(const Observation &observation, unsigned cpu, size_t node, int policy, int priority)
 {
     const auto expectedMask = singleCpu(cpu);
-    const auto expectedCpu = static_cast<int>(cpu);
-    const auto task = "Linux CPU " + std::to_string(cpu) + " TID " + std::to_string(observation.tid);
+    const auto expectedCpu  = static_cast<int>(cpu);
+    const auto task         = "Linux CPU " + std::to_string(cpu) + " TID " + std::to_string(observation.tid);
     require(observation.haveAffinity && CPU_EQUAL(&observation.affinity, &expectedMask),
             "incorrect singleton affinity on " + task);
     require(observation.cpu == expectedCpu && observation.logicalCpu == cpu && observation.node == node,
@@ -256,11 +255,12 @@ void verifyObservation(const Observation &observation, unsigned cpu, size_t node
                 ", priority " + std::to_string(observation.priority) + ")");
 }
 
-void runPlacement(const CpuIds &cpus, int fifoPriority, const cpu_set_t &original, const std::set<pid_t> &originalThreads)
+void runPlacement(const CpuIds &cpus, int fifoPriority, const cpu_set_t &original,
+                  const std::set<pid_t> &originalThreads)
 {
-    const auto controller = gettid();
+    const auto               controller = gettid();
     std::array<Placement, 3> placements;
-    Engine::StartSequence start(makeCoreSet(cpus));
+    Engine::StartSequence    start(makeCoreSet(cpus));
     configureFifo(start, cpus, fifoPriority);
     for (size_t i = 0; i < cpus.size(); ++i)
     {
@@ -268,13 +268,13 @@ void runPlacement(const CpuIds &cpus, int fifoPriority, const cpu_set_t &origina
     }
     const auto controllerMask = singleCpu(cpus[2]);
     {
-        Engine engine(start);
+        Engine     engine(start);
         const auto restored = affinity();
         require(CPU_EQUAL(&restored, &original), "engine startup did not restore launcher affinity");
         setAffinity(controllerMask);
         expectCoreSet(engine.getCoreSet(), cpus);
-        auto expectedThreads = originalThreads;
-        const auto deadline = Clock::now() + 5s;
+        auto       expectedThreads = originalThreads;
+        const auto deadline        = Clock::now() + 5s;
         for (size_t i = 0; i < cpus.size(); ++i)
         {
             const auto &placement = placements[i];
@@ -288,11 +288,11 @@ void runPlacement(const CpuIds &cpus, int fifoPriority, const cpu_set_t &origina
             const auto &worker = placement.dispatched;
             require(expectedThreads.insert(worker.tid).second, "actor callbacks shared a launcher or worker TID");
             const int priority = i < 2 ? fifoPriority : 0;
-            const int policy = priority == 0 ? SCHED_OTHER : SCHED_FIFO;
+            const int policy   = priority == 0 ? SCHED_OTHER : SCHED_FIFO;
             verifyObservation(worker, cpus[i], i, policy, priority);
             std::cout << "worker cpu=" << cpus[i] << " node=" << i << " tid=" << worker.tid
-                      << " policy=" << (policy == SCHED_FIFO ? "SCHED_FIFO" : "SCHED_OTHER")
-                      << " priority=" << priority << '\n';
+                      << " policy=" << (policy == SCHED_FIFO ? "SCHED_FIFO" : "SCHED_OTHER") << " priority=" << priority
+                      << '\n';
         }
         require(threadIds() == expectedThreads, "unexpected worker thread while the engine was active");
     }
@@ -309,14 +309,14 @@ struct ConstructorFailure : std::runtime_error
 
 class FailingActor : public Actor
 {
-  public:
+public:
     FailingActor() { throw ConstructorFailure(); }
 };
 
 void testPartialStartup(const CpuIds &cpus, int priority, const cpu_set_t &original,
                         const std::set<pid_t> &originalThreads)
 {
-    Placement prepared;
+    Placement             prepared;
     Engine::StartSequence start(makeCoreSet(cpus));
     configureFifo(start, cpus, priority);
     start.addActor<PlacementActor>(static_cast<Engine::CoreId>(cpus[0]), &prepared);
@@ -338,7 +338,7 @@ void testRejectedAffinity(unsigned rejectedCpu, unsigned validCpu, const cpu_set
                           const std::set<pid_t> &originalThreads)
 {
     const auto rejected = singleCpu(rejectedCpu);
-    errno = 0;
+    errno               = 0;
     if (sched_setaffinity(0, sizeof(rejected), &rejected) == 0)
     {
         setAffinity(original);
@@ -363,12 +363,11 @@ void testRejectedAffinity(unsigned rejectedCpu, unsigned validCpu, const cpu_set
     }
 }
 
-void testDeniedFifo(const CpuIds &cpus, int priority, const cpu_set_t &original,
-                    const std::set<pid_t> &originalThreads)
+void testDeniedFifo(const CpuIds &cpus, int priority, const cpu_set_t &original, const std::set<pid_t> &originalThreads)
 {
     sched_param request{};
     request.sched_priority = priority;
-    errno = 0;
+    errno                  = 0;
     if (sched_setscheduler(0, SCHED_FIFO, &request) == 0)
     {
         sched_param ordinary{};
@@ -396,18 +395,17 @@ void testDeniedFifo(const CpuIds &cpus, int priority, const cpu_set_t &original,
 void run(const Config &config)
 {
     const CpuIds cpus{config.cpuA, config.cpuB, config.housekeeping};
-    const auto original = affinity();
-    const auto online = readCpuList("online");
-    const auto originalThreads = threadIds();
-    const auto representable = [](unsigned cpu) { return cpu <= std::numeric_limits<Engine::CoreId>::max(); };
+    const auto   original        = affinity();
+    const auto   online          = readCpuList("online");
+    const auto   originalThreads = threadIds();
+    const auto   representable   = [](unsigned cpu) { return cpu <= std::numeric_limits<Engine::CoreId>::max(); };
     require(sched_getscheduler(0) == SCHED_OTHER, "launch the controller with ordinary SCHED_OTHER policy");
     for (auto cpu : cpus)
     {
         require(representable(cpu) && online.contains(cpu) && CPU_ISSET(cpu, &original),
                 "select representable online CPUs in the launch affinity");
     }
-    require(cpus[0] != cpus[1] && cpus[0] != cpus[2] && cpus[1] != cpus[2],
-            "the three worker CPUs must be distinct");
+    require(cpus[0] != cpus[1] && cpus[0] != cpus[2] && cpus[1] != cpus[2], "the three worker CPUs must be distinct");
 
     const int priority = config.fifoPriority;
     require(priority == 0 ||
@@ -423,12 +421,11 @@ void run(const Config &config)
     }
 
     const auto present = readCpuList("present");
-    auto offline = config.offlineCpu;
+    auto       offline = config.offlineCpu;
     if (!offline)
     {
-        const auto found = std::ranges::find_if(present, [&](unsigned cpu) {
-            return representable(cpu) && !online.contains(cpu);
-        });
+        const auto found =
+            std::ranges::find_if(present, [&](unsigned cpu) { return representable(cpu) && !online.contains(cpu); });
         if (found != present.end())
         {
             offline = *found;
@@ -456,7 +453,7 @@ void run(const Config &config)
     runPlacement({cpus[1], cpus[0], cpus[2]}, priority, original, originalThreads);
     std::cout << "PASS placement, reversed roles, and restart\n";
 }
-}
+} // namespace
 
 int main(int argc, char **argv)
 {

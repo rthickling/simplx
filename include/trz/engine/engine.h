@@ -8,8 +8,8 @@
 #pragma once
 
 #include <cstring>
-#include <new>
 #include <memory>
+#include <new>
 
 #include "trz/engine/actor.h"
 #include "trz/engine/engineversion.h"
@@ -20,26 +20,27 @@ extern "C"
 {
 
 #ifdef TREDZONE_COMPILER_ID
-    #error TREDZONE_COMPILER_ID macro already defined
+#    error TREDZONE_COMPILER_ID macro already defined
 #endif
-    #pragma pack(push, 1)
+#pragma pack(push, 1)
 #if defined(__GNUG__)
-    /**
-     * @def TREDZONE_COMPILER_ID
-     * @brief Compiler specific identifier used for library compatibility check
-     */
-    #define TREDZONE_COMPILER_ID 1
+/**
+ * @def TREDZONE_COMPILER_ID
+ * @brief Compiler specific identifier used for library compatibility check
+ */
+#    define TREDZONE_COMPILER_ID 1
     struct TREDZONE_SDK_COMPILER_VERSION_type
     {
         int vmajor;
         int vminor;
         int vpatch;
-        inline TREDZONE_SDK_COMPILER_VERSION_type() : vmajor(__GNUC__), vminor(__GNUC_MINOR__), vpatch(__GNUC_PATCHLEVEL__)
+        inline TREDZONE_SDK_COMPILER_VERSION_type()
+            : vmajor(__GNUC__), vminor(__GNUC_MINOR__), vpatch(__GNUC_PATCHLEVEL__)
         {
         }
     };
 #else
-    #error C++ compiler not supported!
+#    error C++ compiler not supported!
 #endif
 #pragma pack(pop)
 
@@ -63,30 +64,34 @@ class EngineToEngineConnector;
  */
 class AsyncExceptionHandler
 {
-public:    
-    
+public:
     virtual ~AsyncExceptionHandler() = default;
-    
-    virtual void onEventException(Actor *, const std::type_info &asyncActorTypeInfo, const char *onXXX_FunctionName, const Actor::Event &, const char *whatException) noexcept;
-    virtual void onUnreachableException(Actor &, const std::type_info &asyncActorTypeInfo, const Actor::ActorId::RouteIdComparable &, const char *whatException) noexcept;
-    
+
+    virtual void onEventException(Actor *, const std::type_info &asyncActorTypeInfo, const char *onXXX_FunctionName,
+                                  const Actor::Event &, const char *whatException) noexcept;
+    virtual void onUnreachableException(Actor &, const std::type_info                         &asyncActorTypeInfo,
+                                        const Actor::ActorId::RouteIdComparable &, const char *whatException) noexcept;
+
     // wrappers to lock mutex & redirect to above
-    void onEventExceptionSynchronous(Actor *asyncActor, const std::type_info &asyncActorTypeInfo, const char *onXXX_FunctionName, const Actor::Event &event, const char *whatException) noexcept
+    void onEventExceptionSynchronous(Actor *asyncActor, const std::type_info &asyncActorTypeInfo,
+                                     const char *onXXX_FunctionName, const Actor::Event &event,
+                                     const char *whatException) noexcept
     {
         Mutex::Lock lock(m_Mutex);
-    
+
         onEventException(asyncActor, asyncActorTypeInfo, onXXX_FunctionName, event, whatException);
     }
-    void onUnreachableExceptionSynchrononous(Actor &asyncActor, const std::type_info &asyncActorTypeInfo, const Actor::ActorId::RouteIdComparable &routeIdComparable, const char *whatException) noexcept
+    void onUnreachableExceptionSynchrononous(Actor &asyncActor, const std::type_info &asyncActorTypeInfo,
+                                             const Actor::ActorId::RouteIdComparable &routeIdComparable,
+                                             const char                              *whatException) noexcept
     {
         Mutex::Lock lock(m_Mutex);
-    
+
         onUnreachableException(asyncActor, asyncActorTypeInfo, routeIdComparable, whatException);
     }
 
 private:
-
-    Mutex   m_Mutex;
+    Mutex m_Mutex;
 };
 
 /**
@@ -117,18 +122,18 @@ public:
      */
     const Engine &getEngine() const noexcept;
 
-  protected:
-    virtual void run() noexcept = 0;
-    virtual void preRun() noexcept;
-    virtual void postRun() noexcept;
-    void runWhileNotInterrupted() noexcept;
-    void synchronize() noexcept;
-    bool isRunning() noexcept;
-    void returnToSender(const Actor::Event &) noexcept;
-    Actor::NodeId getNodeId() const noexcept;
-    Actor::CoreId getCoreId() const noexcept;
+protected:
+    virtual void           run() noexcept = 0;
+    virtual void           preRun() noexcept;
+    virtual void           postRun() noexcept;
+    void                   runWhileNotInterrupted() noexcept;
+    void                   synchronize() noexcept;
+    bool                   isRunning() noexcept;
+    void                   returnToSender(const Actor::Event &) noexcept;
+    Actor::NodeId          getNodeId() const noexcept;
+    Actor::CoreId          getCoreId() const noexcept;
     AsyncExceptionHandler &getAsyncExceptionHandler() const noexcept;
-    inline bool isInterrupted() const noexcept
+    inline bool            isInterrupted() const noexcept
     {
         assert(interruptFlag != 0);
         return *interruptFlag;
@@ -137,15 +142,15 @@ public:
     inline unsigned debugGetSynchronizeCount() const noexcept { return debugSynchronizeCount; }
 #endif
 
-  private:
+private:
     friend class AsyncNode;
     friend class EngineCustomEventLoopFactory;
 
     AsyncNode *asyncNode;
-    bool *interruptFlag;
-    bool isBeingDestroyedFlag;
+    bool      *interruptFlag;
+    bool       isBeingDestroyedFlag;
 #ifndef NDEBUG
-    bool debugPreRunCalledFlag;
+    bool     debugPreRunCalledFlag;
     unsigned debugSynchronizeCount;
 #endif
 
@@ -164,7 +169,7 @@ public:
  */
 class EngineCustomEventLoopFactory
 {
-  public:
+public:
     class DefaultEventLoop;
     template <class _EventLoop> struct EventLoopAutoPointerNew;
 
@@ -173,7 +178,7 @@ class EngineCustomEventLoopFactory
      */
     class DefaultEventLoop : public EngineEventLoop
     {
-      protected:
+    protected:
         virtual void run() noexcept;
     };
 
@@ -182,7 +187,7 @@ class EngineCustomEventLoopFactory
      */
     class EventLoopAutoPointer
     {
-      public:
+    public:
         /** @brief Default constructor */
         inline EventLoopAutoPointer() noexcept : eventLoop(0) {}
         /** @brief Default copy constructor */
@@ -207,7 +212,7 @@ class EngineCustomEventLoopFactory
         inline EventLoopAutoPointer &operator=(const EventLoopAutoPointer &other) noexcept
         {
             reset();
-            eventLoop = other.eventLoop;
+            eventLoop       = other.eventLoop;
             other.eventLoop = 0;
             return *this;
         }
@@ -240,7 +245,7 @@ class EngineCustomEventLoopFactory
             }
         }
 
-      private:
+    private:
         mutable EngineEventLoop *eventLoop;
 
         EventLoopAutoPointer(EngineEventLoop *eventLoop) noexcept : eventLoop(eventLoop) {}
@@ -269,7 +274,7 @@ class EngineCustomEventLoopFactory
  */
 class EngineCustomCoreActorFactory
 {
-  public:
+public:
     /** @brief Default destructor */
     virtual ~EngineCustomCoreActorFactory() noexcept {}
     /**
@@ -283,13 +288,12 @@ class EngineCustomCoreActorFactory
      * @throw ? Any other exception possibly thrown depending on specialized core-actor
      * constructor call.
      */
-    virtual Actor::ActorReference<Actor> newCustomCoreActor(Engine &, Actor::CoreId, bool,
-                                                                      Actor &parent)
+    virtual Actor::ActorReference<Actor> newCustomCoreActor(Engine &, Actor::CoreId, bool, Actor &parent)
     {
         return parent.newReferencedActor<DefaultCoreActor>();
     }
 
-  protected:
+protected:
     /**
      * @brief DefaultCoreActor
      */
@@ -309,12 +313,11 @@ public:
  *
  * The Engine manages the Actor's life cycle, event distribution, callback...
  */
-class Engine: public virtual IEngine
+class Engine : public virtual IEngine
 {
 public:
-    
-    static const int SDK_COMPATIBILITY_VERSION = TREDZONE_ENGINE_VERSION_MINOR; /**< SDK minor version */
-    static const int SDK_PATCH_VERSION = TREDZONE_ENGINE_VERSION_PATCH;         /**< SDK patch version */
+    static const int SDK_COMPATIBILITY_VERSION         = TREDZONE_ENGINE_VERSION_MINOR; /**< SDK minor version */
+    static const int SDK_PATCH_VERSION                 = TREDZONE_ENGINE_VERSION_PATCH; /**< SDK patch version */
     static const int DEFAULT_EVENT_ALLOCATOR_PAGE_SIZE = 64 * 1024; /**< Default event allocator page size */
 
     typedef Actor::CoreId CoreId;
@@ -376,23 +379,17 @@ public:
      */
     class CoreSet
     {
-      public:
+    public:
         typedef Actor::NodeId NodeId;
         /** @brief Thrown when the number of cpu-cores exceeds Actor::MAX_NODE_COUNT. */
         struct TooManyCoresException : std::exception
         {
-            virtual const char *what() const noexcept
-            {
-                return "tredzone::Engine::CoreSet::TooManyCoresException";
-            }
+            virtual const char *what() const noexcept { return "tredzone::Engine::CoreSet::TooManyCoresException"; }
         };
         /** @brief Thrown when the provided cpu-core is invalid. */
         struct UndefinedCoreException : std::exception
         {
-            virtual const char *what() const noexcept
-            {
-                return "tredzone::Engine::CoreSet::UndefinedCoreException";
-            }
+            virtual const char *what() const noexcept { return "tredzone::Engine::CoreSet::UndefinedCoreException"; }
         };
 
         /** @brief Default constructor */
@@ -420,7 +417,7 @@ public:
         /** @brief Return the number of available core-ids. */
         inline size_t size() const noexcept { return coreCount; }
 
-      private:
+    private:
         size_t coreCount;
         CoreId cores[Actor::MAX_NODE_COUNT];
     };
@@ -448,7 +445,7 @@ public:
      */
     class ServiceIndex
     {
-      public:
+    public:
         static const int MAX_SIZE = 1024; ///< Maximum number of service-index entries.
                                           /**
                                            * @brief Get the next available ServiceIndex index value.
@@ -463,8 +460,7 @@ public:
          * @brief Get the ActorId associated to the given service-tag (_Service)
          * @return Found ActorId or null if not found
          */
-        template <class _Service>
-        const Actor::ActorId &getServiceActorId() const noexcept
+        template <class _Service> const Actor::ActorId &getServiceActorId() const noexcept
         {
             int i = 0;
             for (const unsigned index = getIndexValue<_Service>();
@@ -481,10 +477,9 @@ public:
          * @brief Set Registry value for given service-tag (_Service)
          * @throws UndersizedException is thrown if ServiceIndex has reached the MAX_SIZE value. ie: registry is full.
          */
-        template <class _Service>
-        void setServiceActorId(const Actor::ActorId &actorId)
+        template <class _Service> void setServiceActorId(const Actor::ActorId &actorId)
         {
-            int i = 0;
+            int      i     = 0;
             unsigned index = getIndexValue<_Service>();
             for (; i < MAX_SIZE && table[i].actorId != tredzone::null && table[i].index != index; ++i)
             {
@@ -493,25 +488,25 @@ public:
             {
                 throw UndersizedException();
             }
-            table[i].index = index;
+            table[i].index   = index;
             table[i].actorId = actorId;
-            table[i].name = _Service::name();
+            table[i].name    = _Service::name();
         }
 
-      private:
+    private:
         friend class EngineToEngineConnector;
         struct Table
         {
-            unsigned index;
+            unsigned       index;
             Actor::ActorId actorId;
-            std::string name;
+            std::string    name;
             inline Table() noexcept : index(0) {}
         };
 
-        static Mutex mutex;
+        static Mutex    mutex;
         static unsigned staticIndexValue;
-        Actor::ActorId null;
-        Table table[MAX_SIZE];
+        Actor::ActorId  null;
+        Table           table[MAX_SIZE];
 
         /**
          * @brief Get the next available ServiceIndex index value.
@@ -542,7 +537,7 @@ public:
      */
     class StartSequence
     {
-      public:
+    public:
         /**
          * @brief Thrown if two Services share the same service-tag. The service-tag must be unique,
          * to the exception of AnonymousService service-tag.
@@ -747,9 +742,8 @@ public:
          */
         const char *getEngineName() const noexcept;
 
-        template <typename _T>
-        void setUserData(_T *data);
-        
+        template <typename _T> void setUserData(_T *data);
+
         /**
          * @brief Set the Engine's suffix.
          * The Engine's suffix is used to identify in a networked cluster. This must be unique.
@@ -762,17 +756,16 @@ public:
          */
         const char *getEngineSuffix() const noexcept;
 
-      private:
+    private:
         friend class Engine;
         struct Starter : MultiForwardChainLink<Starter>
         {
-            const CoreId coreId;
-            const bool isServiceFlag;
+            const CoreId   coreId;
+            const bool     isServiceFlag;
             const unsigned serviceIndex;
             Starter(CoreId pcoreId, bool pisServiceFlag, unsigned pserviceIndex = 0)
                 : // throw(std::bad_alloc, ...)
-                  coreId(pcoreId),
-                  isServiceFlag(pisServiceFlag), serviceIndex(pserviceIndex)
+                  coreId(pcoreId), isServiceFlag(pisServiceFlag), serviceIndex(pserviceIndex)
             {
                 // CoreId is a Linux logical CPU number. Under nosmt those ids are
                 // sparse and may be >= cpuGetCount() (online count).
@@ -785,16 +778,14 @@ public:
                 }
             }
             virtual ~Starter() noexcept {}
-            virtual Actor::ActorId onStart(Engine &, AsyncNode &, const Actor::ActorId &,
-                                                bool) const = 0;
+            virtual Actor::ActorId onStart(Engine &, AsyncNode &, const Actor::ActorId &, bool) const = 0;
         };
         template <class _ActorInit> struct ActorStarter : Starter
         {
             const _ActorInit actorInit;
             ActorStarter(CoreId pcoreId, const _ActorInit &pactorInit, bool pisServiceFlag, unsigned pserviceIndex = 0)
                 : // throw(std::bad_alloc, ...)
-                  Starter(pcoreId, pisServiceFlag, pserviceIndex),
-                  actorInit(pactorInit)
+                  Starter(pcoreId, pisServiceFlag, pserviceIndex), actorInit(pactorInit)
             {
             }
             virtual ~ActorStarter() noexcept {}
@@ -804,23 +795,23 @@ public:
             AddServiceActorWrapper(int) {}
         };
         typedef Starter::ForwardChain<> StarterChain;
-        typedef std::list<CoreId> RedZoneCoreIdList;
+        typedef std::list<CoreId>       RedZoneCoreIdList;
 
-        const CoreSet coreSet;
+        const CoreSet                       coreSet;
         std::unique_ptr<AsyncNodeAllocator> asyncNodeAllocator;
-        StarterChain starterChain;
+        StarterChain                        starterChain;
 
-        RedZoneCoreIdList redZoneCoreIdList;
-        ThreadRealTimeParam redZoneParam;
-        AsyncExceptionHandler *asyncExceptionHandler;
+        RedZoneCoreIdList             redZoneCoreIdList;
+        ThreadRealTimeParam           redZoneParam;
+        AsyncExceptionHandler        *asyncExceptionHandler;
         EngineCustomCoreActorFactory *engineCustomCoreActorFactory;
         EngineCustomEventLoopFactory *engineCustomEventLoopFactory;
-        size_t eventAllocatorPageSizeByte;
-        size_t threadStackSizeByte;
-        std::string engineName;
-        std::string engineSuffix;
-        
-        void    *m_UserData;
+        size_t                        eventAllocatorPageSizeByte;
+        size_t                        threadStackSizeByte;
+        std::string                   engineName;
+        std::string                   engineSuffix;
+
+        void *m_UserData;
     };
 
     /**
@@ -890,8 +881,7 @@ public:
     /**
      * @see newCore(CoreId, bool)
      */
-    template <class _Actor, class _ActorInit>
-    inline Actor::ActorId newCore(CoreId, bool isRedZone, const _ActorInit &);
+    template <class _Actor, class _ActorInit> inline Actor::ActorId newCore(CoreId, bool isRedZone, const _ActorInit &);
 
 #ifndef NDEBUG
     /**
@@ -909,10 +899,10 @@ public:
         assert(currentEngineTLS.get() != 0);
         return *currentEngineTLS.get();
     }
-    
+
     void *getUserData(void) const noexcept;
 
-  private:
+private:
     friend class Actor;
     friend class EngineToEngineConnector;
     friend class EngineEventLoop;
@@ -928,31 +918,31 @@ public:
     class ServiceSingletonActor;
     class CoreActor;
 
-    char cacheLineHeaderPadding[CACHE_LINE_SIZE - 1];
-    const std::string engineName;
-    const std::string engineSuffix;
-    const size_t threadStackSizeByte;
-    const ThreadRealTimeParam redZoneParam;
-    CacheLineAlignedObject<unsigned> regularActorsCoreCount;
+    char                                          cacheLineHeaderPadding[CACHE_LINE_SIZE - 1];
+    const std::string                             engineName;
+    const std::string                             engineSuffix;
+    const size_t                                  threadStackSizeByte;
+    const ThreadRealTimeParam                     redZoneParam;
+    CacheLineAlignedObject<unsigned>              regularActorsCoreCount;
     std::unique_ptr<EngineCustomCoreActorFactory> defaultCoreActorFactory;
     std::unique_ptr<EngineCustomEventLoopFactory> defaultEventLoopFactory;
-    std::unique_ptr<AsyncNodeManager> nodeManager;
-    ServiceIndex serviceIndex;
-    EngineCustomCoreActorFactory &customCoreActorFactory;
-    EngineCustomEventLoopFactory &customEventLoopFactory;
-    static ThreadLocalStorage<Engine *> currentEngineTLS;
-    char cacheLineTrailerPadding[CACHE_LINE_SIZE - 1];
+    std::unique_ptr<AsyncNodeManager>             nodeManager;
+    ServiceIndex                                  serviceIndex;
+    EngineCustomCoreActorFactory                 &customCoreActorFactory;
+    EngineCustomEventLoopFactory                 &customEventLoopFactory;
+    static ThreadLocalStorage<Engine *>           currentEngineTLS;
+    char                                          cacheLineTrailerPadding[CACHE_LINE_SIZE - 1];
 
-    void start(const StartSequence &); // throw (std::bad_alloc, ...)
-    void finish() noexcept;
-    static void threadStartHook(void *);
+    void           start(const StartSequence &); // throw (std::bad_alloc, ...)
+    void           finish() noexcept;
+    static void    threadStartHook(void *);
     Actor::ActorId newCore(CoreId, bool isRedZone, NewCoreStarter &); // throw (std::bad_alloc, CoreInUseException, ...)
-    void    *m_UserData;
+    void          *m_UserData;
 };
 
 class Engine::ServiceSingletonActor : public Actor
 {
-  public:
+public:
     typedef std::list<Actor *, Allocator<Actor *>> ServiceActorList;
 
     inline ServiceSingletonActor() noexcept : serviceActorList(getAllocator()), isServiceDestroyTimeFlag(true) {}
@@ -962,14 +952,14 @@ class Engine::ServiceSingletonActor : public Actor
         serviceActorList.remove(&actor);
         serviceActorList.push_back(&actor);
     }
-    inline void unregisterServiceActor(Actor &actor) noexcept { serviceActorList.remove(&actor); }
-    inline bool isServiceDestroyTime() noexcept { return isServiceDestroyTimeFlag; }
+    inline void             unregisterServiceActor(Actor &actor) noexcept { serviceActorList.remove(&actor); }
+    inline bool             isServiceDestroyTime() noexcept { return isServiceDestroyTimeFlag; }
     const ServiceActorList &getServiceActorList() const noexcept { return serviceActorList; }
 
-  private:
+private:
     friend class CoreActor;
     ServiceActorList serviceActorList;
-    bool isServiceDestroyTimeFlag;
+    bool             isServiceDestroyTimeFlag;
 
     void destroyServiceActors() noexcept
     {
@@ -982,11 +972,9 @@ class Engine::ServiceSingletonActor : public Actor
     }
 };
 
-template <class _Actor, class _ActorInit>
-class Engine::ServiceActorWrapper : virtual public ActorBase, public _Actor
+template <class _Actor, class _ActorInit> class Engine::ServiceActorWrapper : virtual public ActorBase, public _Actor
 {
 public:
-
     inline ServiceActorWrapper(AsyncNode &pasyncNode, const _ActorInit &actorInit,
                                const Actor::ActorId &ppreviousServiceDestroyActorId, bool plastServiceFlag)
         : ActorBase(&pasyncNode), _Actor(actorInit),
@@ -997,27 +985,24 @@ public:
     {
         serviceSingletonActor->registerServiceActor(*this);
     }
-        
+
     virtual ~ServiceActorWrapper() noexcept
     {
         serviceSingletonActor->unregisterServiceActor(*this);
         destroyEventActor->serviceActor = 0;
     }
-    inline static void operator delete(
-        ServiceActorWrapper* p, std::destroying_delete_t) noexcept
+    inline static void operator delete(ServiceActorWrapper *p, std::destroying_delete_t) noexcept
     {
-        Actor::Allocator<ServiceActorWrapper> allocator{
-            Actor::AllocatorBase{*p->Actor::asyncNode}
-        };
+        Actor::Allocator<ServiceActorWrapper> allocator{Actor::AllocatorBase{*p->Actor::asyncNode}};
 
         p->~ServiceActorWrapper();
         allocator.deallocate(p, 1);
     }
+
 private:
-    
     friend class StartSequence;
-    
-    // 
+
+    //
     struct DestroyEventActor : public Actor
     {
     public:
@@ -1041,7 +1026,7 @@ private:
                 serviceActor->requestDestroy();
             }
         }
-        
+
         virtual void onDestroyRequest() noexcept
         {
             if (previousServiceDestroyActorId != tredzone::null)
@@ -1064,11 +1049,11 @@ private:
     };
 
     Actor::ActorReference<ServiceSingletonActor> serviceSingletonActor;
-    Actor::ActorReference<DestroyEventActor> destroyEventActor;
-    bool lastServiceFlag;
+    Actor::ActorReference<DestroyEventActor>     destroyEventActor;
+    bool                                         lastServiceFlag;
 
     const Actor::ActorId &getDestroyEventActorId() const noexcept { return destroyEventActor->getActorId(); }
-    virtual void onDestroyRequest() noexcept
+    virtual void          onDestroyRequest() noexcept
     {
         if (serviceSingletonActor->isServiceDestroyTime() && lastServiceFlag)
         {
@@ -1091,15 +1076,16 @@ template <class _Actor> Actor::ActorId Engine::newCore(CoreId coreId, bool isRed
 {
     struct NewActorCoreStarter : NewCoreStarter
     {
-		virtual Actor::ActorId start(AsyncNode& node)
+        virtual Actor::ActorId start(AsyncNode &node)
         {
-            _Actor& actor = Actor::newActor<_Actor>(node);
+            _Actor &actor = Actor::newActor<_Actor>(node);
 
-            TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
+            TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId,
+                     cppDemangledTypeInfoName(typeid(actor)))
 
-			return actor.getActorId();
-		}
-	};
+                return actor.getActorId();
+        }
+    };
     NewActorCoreStarter newActorCoreStarter;
     return newCore(coreId, isRedZone, newActorCoreStarter);
 }
@@ -1113,12 +1099,13 @@ Actor::ActorId Engine::newCore(CoreId coreId, bool isRedZone, const _ActorInit &
         inline NewActorCoreStarter(const _ActorInit &pactorInit) noexcept : actorInit(pactorInit) {}
         virtual Actor::ActorId start(AsyncNode &node)
         {
-			_Actor& actor = Actor::newActor<_Actor>(node, actorInit);
-            
-            TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
-            
-			return actor.getActorId();
-		}
+            _Actor &actor = Actor::newActor<_Actor>(node, actorInit);
+
+            TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId,
+                     cppDemangledTypeInfoName(typeid(actor)))
+
+                return actor.getActorId();
+        }
     };
     NewActorCoreStarter newActorCoreStarter(actorInit);
     return newCore(coreId, isRedZone, newActorCoreStarter);
@@ -1132,13 +1119,14 @@ template <class _Actor> void Engine::StartSequence::addActor(CoreId coreId)
         virtual ~AddActorStarter() noexcept {}
         virtual Actor::ActorId onStart(Engine &, AsyncNode &node, const Actor::ActorId &, bool) const
         {
-			_Actor  &actor = Actor::newActor<_Actor>(node);
+            _Actor &actor = Actor::newActor<_Actor>(node);
             (void)actor;
-            
-            TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
-            
-            return Actor::ActorId();
-		}
+
+            TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId,
+                     cppDemangledTypeInfoName(typeid(actor)))
+
+                return Actor::ActorId();
+        }
     };
     starterChain.push_back(new AddActorStarter(coreId));
 }
@@ -1153,16 +1141,17 @@ void Engine::StartSequence::addActor(CoreId coreId, const _ActorInit &actorInit)
         {
         }
         virtual ~AddActorStarter() noexcept {}
-        
-        virtual Actor::ActorId onStart(Engine&, AsyncNode& node, const Actor::ActorId&, bool) const
+
+        virtual Actor::ActorId onStart(Engine &, AsyncNode &node, const Actor::ActorId &, bool) const
         {
-            _Actor  &actor = Actor::newActor<_Actor, _ActorInit>(node, this->actorInit);
+            _Actor &actor = Actor::newActor<_Actor, _ActorInit>(node, this->actorInit);
             (void)actor;
-            
-            TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
-            
-			return Actor::ActorId();
-		}
+
+            TraceREF(&node, __func__, "-1.-1", cppDemangledTypeInfoName(typeid(*this)), actor.actorId,
+                     cppDemangledTypeInfoName(typeid(actor)))
+
+                return Actor::ActorId();
+        }
     };
     starterChain.push_back(new AddActorStarter(coreId, actorInit));
 }
@@ -1183,13 +1172,14 @@ void Engine::StartSequence::addServiceActor(CoreId coreId, const _ActorInit &act
         }
         virtual ~AddServiceActorStarter() noexcept {}
         virtual Actor::ActorId onStart(Engine &engine, AsyncNode &asyncNode,
-                                            const Actor::ActorId &previousServiceDestroyActorId,
-                                            bool isLastService) const
+                                       const Actor::ActorId &previousServiceDestroyActorId, bool isLastService) const
         {
             ServiceActorWrapper<_Actor, _ActorInit> &serviceActor = *new (
-                Actor::Allocator<ServiceActorWrapper<_Actor, _ActorInit>>(Actor::AllocatorBase(asyncNode))
-                    .allocate(1)) ServiceActorWrapper<_Actor, _ActorInit>(asyncNode, this->actorInit,
-                                                                          previousServiceDestroyActorId, isLastService);
+                Actor::Allocator<ServiceActorWrapper<_Actor, _ActorInit>>(Actor::AllocatorBase(asyncNode)).allocate(1))
+                                                                        ServiceActorWrapper<_Actor, _ActorInit>(
+                                                                            asyncNode, this->actorInit,
+                                                                            previousServiceDestroyActorId,
+                                                                            isLastService);
             if (EngineStartSequenceServiceTraits<_Service>::isAnonymous() == false)
             {
                 assert(engine.serviceIndex.getServiceActorId<_Service>() == tredzone::null);
@@ -1213,4 +1203,4 @@ void Engine::StartSequence::addServiceActor(CoreId coreId, const _ActorInit &act
     starterChain.push_back(new AddServiceActorStarter(coreId, actorInit, serviceIndex));
 }
 
-} // namespace
+} // namespace tredzone

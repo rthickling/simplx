@@ -10,6 +10,7 @@
 #pragma once
 
 #include <arpa/inet.h>
+#include <cerrno>
 #include <fcntl.h>
 
 #include <sys/epoll.h>
@@ -27,7 +28,7 @@ namespace tcp
 
 class NetworkCalls
 {
-    public:
+public:
     using Epoll_event = struct epoll_event;
     using Sockaddr_in = sockaddr_in;
     using Sockaddr    = sockaddr;
@@ -77,20 +78,11 @@ class NetworkCalls
         return ret;
     }
 
-    static int recv(int fd, void *buf, size_t len, int flags) noexcept
-    {
-        return ::recv(fd, buf, len, flags);
-    }
+    static int recv(int fd, void *buf, size_t len, int flags) noexcept { return ::recv(fd, buf, len, flags); }
 
-    static int write(int fd, const void *buf, size_t count) noexcept
-    {
-        return ::write(fd, buf, count);
-    }
+    static int write(int fd, const void *buf, size_t count) noexcept { return ::write(fd, buf, count); }
 
-    static int send(int fd, const void *buf, size_t len, int flags) noexcept
-    {
-        return ::send(fd, buf, len, flags);
-    }
+    static int send(int fd, const void *buf, size_t len, int flags) noexcept { return ::send(fd, buf, len, flags); }
 
     static int listen(int sockfd, int backlog) noexcept { return ::listen(sockfd, backlog); }
 
@@ -117,7 +109,7 @@ class NetworkCalls
         if (-1 == flags)
             return false;
         flags &= !O_NONBLOCK;
-        return ::fcntl(socket, F_SETFL, flags ) == 0;
+        return ::fcntl(socket, F_SETFL, flags) == 0;
     }
 
     static int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen) noexcept

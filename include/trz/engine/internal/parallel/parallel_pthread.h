@@ -4,7 +4,7 @@
  * @copyright 2013-2019 Tredzone (www.tredzone.com). All rights reserved.
  * Please see accompanying LICENSE file for licensing terms.
  */
- 
+
 #pragma once
 
 #include <pthread.h>
@@ -18,17 +18,8 @@ void mutexDestroy(mutex_t &);
 void mutexLock(mutex_t &);
 void mutexUnlock(mutex_t &);
 
-inline
-void memoryBarrier()
-{
-    __sync_synchronize();
-}
+inline void memoryBarrier() { __sync_synchronize(); }
 
 using thread_t = pthread_t;
 
 } // namespace tredzone
-
-
-
-
- 

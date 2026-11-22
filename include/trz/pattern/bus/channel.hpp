@@ -9,35 +9,35 @@
 #include "data.hpp"
 #include "ringbuffer.hpp"
 
-
-namespace xthreadbus {
+namespace xthreadbus
+{
 /**
  * @brief holds chanel's specific publisher, consumer and transfer buffer
- * 
+ *
  * @tparam _MaxSize of exchange buffer
  */
 template <std::size_t _MaxSize> class Channel
 {
-    public:
+public:
     /**
-     * @brief communication sending part 
-     * 
+     * @brief communication sending part
+     *
      */
     class Publisher
     {
         Channel &m_channel;
 
-        public:
+    public:
         /**
          * @brief Construct a new Publisher
-         * 
-         * @param channel to publish on 
+         *
+         * @param channel to publish on
          */
         Publisher(Channel &channel) : m_channel(channel), m_sendBuffer(_MaxSize) { m_sendBuffer.clear(); }
-        
+
         /**
          * @brief store data pointer for later send
-         * 
+         *
          * @tparam _TDataType data pointer type
          * @param data pointer to publish
          * @return _TDataType& ref to data
@@ -52,11 +52,11 @@ template <std::size_t _MaxSize> class Channel
         /**
          * @brief directly publish pointer data in transfer buffer
          * when transfer buffer is full, store data pointer to a later push
-         * 
+         *
          * @tparam _TDataType data pointer type
          * @param data pointer to publish
-         * @param storeOnFail when send fails, store for later send 
-         * @return [sent] 
+         * @param storeOnFail when send fails, store for later send
+         * @return [sent]
          */
         template <typename _TDataType> bool publishOne(_TDataType *data, bool storeOnFail = true)
         {
@@ -71,9 +71,9 @@ template <std::size_t _MaxSize> class Channel
         }
 
         /**
-         * @brief send all/maximum (until transfer buffer is full) 
+         * @brief send all/maximum (until transfer buffer is full)
          * prepared/stored data pointer all in a row.
-         * 
+         *
          * @return size_t [data pointer left to be send]
          */
         std::size_t publishAll()
@@ -93,42 +93,42 @@ template <std::size_t _MaxSize> class Channel
             return leftToSend;
         }
 
-        private:
+    private:
         std::vector<Data *> m_sendBuffer;
     };
 
     /**
      * @brief communication receiving part
-     * 
+     *
      */
     class Subscriber
     {
         /**
          * @brief helper casting data pointer type into subscribed type
-         * 
+         *
          * @tparam _TDataType data pointer type
          * @tparam _TSubscriberType handler type having onData(const _TDataType &) method
          */
         template <class _TDataType, class _TSubscriberType> class StaticEventHandler
         {
-            public:
+        public:
             static void staticRead(void *subscriber, const Data &data)
             {
                 reinterpret_cast<_TSubscriberType *>(subscriber)->onData(static_cast<const _TDataType &>(data));
             }
         };
 
-        public:
+    public:
         /**
          * @brief Construct a new Subscriber
-         * 
-         * @param channel 
+         *
+         * @param channel
          */
         Subscriber(Channel &channel) : m_channel(channel) {}
 
         /**
          * @brief subscribe handler to data pointer type
-         * 
+         *
          * @tparam _TDataType data pointer type
          * @tparam _TSubscriberType handler type having onData(const _TDataType &) method
          * @param subscriber handler instance address
@@ -136,7 +136,8 @@ template <std::size_t _MaxSize> class Channel
         template <class _TDataType, class _TSubscriberType> void subscribe(_TSubscriberType *subscriber)
         {
             auto dataTypeId = std::type_index(typeid(_TDataType));
-            if (m_subscribers.count(dataTypeId)) return ; // TODO ? : erase previously subscribed handler ?
+            if (m_subscribers.count(dataTypeId))
+                return; // TODO ? : erase previously subscribed handler ?
             static_assert(std::is_base_of<Data, _TDataType>::value, "_TDataType must extend Data");
             void (*staticRead)(void *, const Data &) = &StaticEventHandler<_TDataType, _TSubscriberType>::staticRead;
             std::tuple<void *, void (*)(void *, const Data &)> consumeFunc = std::make_tuple(subscriber, staticRead);
@@ -145,33 +146,32 @@ template <std::size_t _MaxSize> class Channel
 
         /**
          * @brief get next data pointer in transfer buffer
-         * then callback handler onData method 
-         * 
+         * then callback handler onData method
+         *
          * @return [data pointer found]
          */
         bool readOne()
         {
-            const bool msgRead = m_channel.m_ringbuffer.dequeue(m_readBuffer.data(), 1)==1;
-            std::size_t index = 0;
+            const bool  msgRead = m_channel.m_ringbuffer.dequeue(m_readBuffer.data(), 1) == 1;
+            std::size_t index   = 0;
             if (msgRead && nullptr != m_readBuffer[index])
             {
-                    const auto it = m_subscribers.find(std::type_index(typeid(*m_readBuffer[index])));
-                    if (it != m_subscribers.end())
-                    {
-                        auto subscriber = std::get<0>(it->second);
-                        auto onData     = std::get<1>(it->second);
-                        onData(subscriber, *m_readBuffer[index]);
-                    }
-                    delete m_readBuffer[index];
-                
+                const auto it = m_subscribers.find(std::type_index(typeid(*m_readBuffer[index])));
+                if (it != m_subscribers.end())
+                {
+                    auto subscriber = std::get<0>(it->second);
+                    auto onData     = std::get<1>(it->second);
+                    onData(subscriber, *m_readBuffer[index]);
+                }
+                delete m_readBuffer[index];
             }
             return msgRead;
         }
 
         /**
          * @brief get all data pointer in transfer buffer
-         * then callback all handlers onData method 
-         * 
+         * then callback all handlers onData method
+         *
          * @return std::size_t amount of data pointer read
          */
         std::size_t readAll()
@@ -194,23 +194,23 @@ template <std::size_t _MaxSize> class Channel
             return size;
         }
 
-        private:
-        Channel &                                                                               m_channel;
+    private:
+        Channel                                                                                &m_channel;
         std::unordered_map<std::type_index, std::tuple<void *, void (*)(void *, const Data &)>> m_subscribers;
         std::array<Data *, _MaxSize>                                                            m_readBuffer;
     };
 
-    public:
+public:
     /**
      * @brief Construct a new Channel
-     * 
+     *
      */
     Channel() : m_publisher(*this), m_consumer(*this) {}
 
-    Publisher & getPublisher() { return m_publisher; }
+    Publisher  &getPublisher() { return m_publisher; }
     Subscriber &getSubscriber() { return m_consumer; }
 
-    private:
+private:
     Publisher                    m_publisher;
     Subscriber                   m_consumer;
     ringbuffer<Data *, _MaxSize> m_ringbuffer;

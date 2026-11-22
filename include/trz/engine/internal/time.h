@@ -27,7 +27,7 @@ enum Null
  */
 class Time
 {
-  public:
+public:
     struct Second;
     struct Millisecond;
     struct Microsecond;
@@ -155,7 +155,7 @@ class Time
      */
     inline int64_t toNanosecond() const noexcept { return nanoseconds; }
 
-  protected:
+protected:
     int64_t nanoseconds;
 };
 
@@ -168,7 +168,7 @@ class Time
  */
 class DateTime : public Time
 {
-  public:
+public:
     enum DayOfTheWeekEnum
     {
         SUNDAY = 0,
@@ -182,45 +182,34 @@ class DateTime : public Time
     /**
      * @brief Default constructor that sets date to 0
      */
-    inline DateTime() noexcept : utcYear(0),
-                                 utcMonth(0),
-                                 utcDayOfTheWeek(0),
-                                 utcDayOfTheMonth(0),
-                                 utcDayOfTheYear(0),
-                                 utcHour(0),
-                                 utcMinute(0),
-                                 utcSecond(0),
-                                 localYear(0),
-                                 localMonth(0),
-                                 localDayOfTheWeek(0),
-                                 localDayOfTheMonth(0),
-                                 localDayOfTheYear(0),
-                                 localHour(0),
-                                 localMinute(0)
+    inline DateTime() noexcept
+        : utcYear(0), utcMonth(0), utcDayOfTheWeek(0), utcDayOfTheMonth(0), utcDayOfTheYear(0), utcHour(0),
+          utcMinute(0), utcSecond(0), localYear(0), localMonth(0), localDayOfTheWeek(0), localDayOfTheMonth(0),
+          localDayOfTheYear(0), localHour(0), localMinute(0)
     {
     }
-    DateTime(const DateTime&) noexcept = default;
+    DateTime(const DateTime &) noexcept = default;
     DateTime &operator=(const DateTime &t) noexcept
     {
         Time::operator=(t);
-        utcYear = t.utcYear;
-        utcMonth = t.utcMonth;
-        utcDayOfTheWeek = t.utcDayOfTheWeek;
-        utcDayOfTheMonth = t.utcDayOfTheMonth;
-        utcDayOfTheYear = t.utcDayOfTheYear;
-        utcHour = t.utcHour;
-        utcMinute = t.utcMinute;
-        utcSecond = t.utcSecond;
-        localYear = t.localYear;
-        localMonth = t.localMonth;
-        localDayOfTheWeek = t.localDayOfTheWeek;
+        utcYear            = t.utcYear;
+        utcMonth           = t.utcMonth;
+        utcDayOfTheWeek    = t.utcDayOfTheWeek;
+        utcDayOfTheMonth   = t.utcDayOfTheMonth;
+        utcDayOfTheYear    = t.utcDayOfTheYear;
+        utcHour            = t.utcHour;
+        utcMinute          = t.utcMinute;
+        utcSecond          = t.utcSecond;
+        localYear          = t.localYear;
+        localMonth         = t.localMonth;
+        localDayOfTheWeek  = t.localDayOfTheWeek;
         localDayOfTheMonth = t.localDayOfTheMonth;
-        localDayOfTheYear = t.localDayOfTheYear;
-        localHour = t.localHour;
-        localMinute = t.localMinute;
+        localDayOfTheYear  = t.localDayOfTheYear;
+        localHour          = t.localHour;
+        localMinute        = t.localMinute;
         return *this;
     }
-    
+
     /**
      * @brief Get utc year expressed in unsigned int year
      * @return year in unsigned 32 bytes
@@ -302,50 +291,50 @@ class DateTime : public Time
      */
     inline uint8_t getLocalSecond() const noexcept { return utcSecond; }
 
-  private:
+private:
     friend DateTime timeGetEpoch();
     template <class> friend class Accessor;
 
     uint32_t utcYear;
-    uint8_t utcMonth;
-    uint8_t utcDayOfTheWeek;
-    uint8_t utcDayOfTheMonth;
+    uint8_t  utcMonth;
+    uint8_t  utcDayOfTheWeek;
+    uint8_t  utcDayOfTheMonth;
     uint16_t utcDayOfTheYear;
-    uint8_t utcHour;
-    uint8_t utcMinute;
-    uint8_t utcSecond;
+    uint8_t  utcHour;
+    uint8_t  utcMinute;
+    uint8_t  utcSecond;
     uint32_t localYear;
-    uint8_t localMonth;
-    uint8_t localDayOfTheWeek;
-    uint8_t localDayOfTheMonth;
+    uint8_t  localMonth;
+    uint8_t  localDayOfTheWeek;
+    uint8_t  localDayOfTheMonth;
     uint16_t localDayOfTheYear;
-    uint8_t localHour;
-    uint8_t localMinute;
+    uint8_t  localHour;
+    uint8_t  localMinute;
 
     inline DateTime(time_t epochSecond, uint32_t millisecond)
         : Time((int64_t)epochSecond * (int64_t)1000000000 + (int64_t)millisecond * (int64_t)1000000)
     {
-        struct tm vtm;
+        struct tm  vtm;
         struct tm *ptm;
         ptm = gmtime_r(&epochSecond, &vtm);
         assert(ptm == &vtm);
-        utcYear = (uint32_t)(ptm->tm_year + 1900);
-        utcMonth = (uint8_t)(ptm->tm_mon + 1);
-        utcDayOfTheWeek = (uint8_t)ptm->tm_wday;
+        utcYear          = (uint32_t)(ptm->tm_year + 1900);
+        utcMonth         = (uint8_t)(ptm->tm_mon + 1);
+        utcDayOfTheWeek  = (uint8_t)ptm->tm_wday;
         utcDayOfTheMonth = (uint8_t)ptm->tm_mday;
-        utcDayOfTheYear = (uint16_t)(ptm->tm_yday + 1);
-        utcHour = (uint8_t)ptm->tm_hour;
-        utcMinute = (uint8_t)ptm->tm_min;
-        utcSecond = (uint8_t)ptm->tm_sec;
-        ptm = localtime_r(&epochSecond, &vtm);
+        utcDayOfTheYear  = (uint16_t)(ptm->tm_yday + 1);
+        utcHour          = (uint8_t)ptm->tm_hour;
+        utcMinute        = (uint8_t)ptm->tm_min;
+        utcSecond        = (uint8_t)ptm->tm_sec;
+        ptm              = localtime_r(&epochSecond, &vtm);
         assert(ptm == &vtm);
-        localYear = (uint32_t)(ptm->tm_year + 1900);
-        localMonth = (uint8_t)(ptm->tm_mon + 1);
-        localDayOfTheWeek = (uint8_t)ptm->tm_wday;
+        localYear          = (uint32_t)(ptm->tm_year + 1900);
+        localMonth         = (uint8_t)(ptm->tm_mon + 1);
+        localDayOfTheWeek  = (uint8_t)ptm->tm_wday;
         localDayOfTheMonth = (uint8_t)ptm->tm_mday;
-        localDayOfTheYear = (uint16_t)(ptm->tm_yday + 1);
-        localHour = (uint8_t)ptm->tm_hour;
-        localMinute = (uint8_t)ptm->tm_min;
+        localDayOfTheYear  = (uint16_t)(ptm->tm_yday + 1);
+        localHour          = (uint8_t)ptm->tm_hour;
+        localMinute        = (uint8_t)ptm->tm_min;
         assert(utcSecond == (uint8_t)ptm->tm_sec);
     }
 };
@@ -356,7 +345,7 @@ class DateTime : public Time
 struct Time::Second : Time
 {
     inline Second(const Time &other) noexcept : Time(other) {}
-    inline Second(int32_t pSeconds) noexcept : Time((int64_t)pSeconds *(int64_t)1000000000) {}
+    inline Second(int32_t pSeconds) noexcept : Time((int64_t)pSeconds * (int64_t)1000000000) {}
 };
 /**
  * 	@brief Struct used to store the millisecond value
@@ -364,7 +353,7 @@ struct Time::Second : Time
 struct Time::Millisecond : Time
 {
     inline Millisecond(const Time &other) noexcept : Time(other) {}
-    inline Millisecond(int32_t pMilliseconds) noexcept : Time((int64_t)pMilliseconds *(int64_t)1000000) {}
+    inline Millisecond(int32_t pMilliseconds) noexcept : Time((int64_t)pMilliseconds * (int64_t)1000000) {}
 };
 /**
  * 	@brief Struct used to store the microsecond value
@@ -372,7 +361,7 @@ struct Time::Millisecond : Time
 struct Time::Microsecond : Time
 {
     inline Microsecond(const Time &other) noexcept : Time(other) {}
-    inline Microsecond(int64_t pMicroseconds) noexcept : Time(pMicroseconds *(int64_t)1000) {}
+    inline Microsecond(int64_t pMicroseconds) noexcept : Time(pMicroseconds * (int64_t)1000) {}
 };
 /**
  * 	@brief Struct used to store the nanosecond value
@@ -413,4 +402,4 @@ inline std::ostream &operator<<(std::ostream &s, const Time::Microsecond &t)
  */
 inline std::ostream &operator<<(std::ostream &s, const Time::Nanosecond &t) { return s << t.toNanosecond() << "ns"; }
 
-} // namespace
+} // namespace tredzone

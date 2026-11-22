@@ -93,9 +93,9 @@ void testPropertyCheck(const TestProperty &property, const char *name, const _Va
     {
         testMemory.badAlloc = 0;
 
-        TestMemory testMemory2;
+        TestMemory                   testMemory2;
         TestProperty::allocator_type allocator2(testMemory2);
-        TestProperty property2(allocator2);
+        TestProperty                 property2(allocator2);
         property2 = property;
         ASSERT_EQ(property2.get_allocator().getMemory(), &testMemory2);
         ASSERT_EQ(std::string(property2.getName()), name);
@@ -105,9 +105,9 @@ void testPropertyCheck(const TestProperty &property, const char *name, const _Va
     {
         testMemory.badAlloc = 0;
 
-        TestMemory testMemory2;
+        TestMemory                   testMemory2;
         TestProperty::allocator_type allocator2(testMemory2);
-        TestProperty property2(allocator2);
+        TestProperty                 property2(allocator2);
         property2.setName(property.getName()).setAbstractValue(property.getAbstractValue());
         ASSERT_EQ(property2.get_allocator().getMemory(), &testMemory2);
         ASSERT_EQ(std::string(property2.getName()), name);
@@ -135,7 +135,7 @@ void testPropertyCheck(const TestProperty &property, const char *name, const _Va
 
 void testProperty()
 {
-    TestMemory testMemory;
+    TestMemory                      testMemory;
     TestAllocator<void, TestMemory> allocator(testMemory);
     testPropertyCheck(TestProperty(allocator), "", TestProperty::nullValue(), testMemory);
     testPropertyCheck(TestProperty(allocator).setName("Test"), "Test", TestProperty::nullValue(), testMemory);
@@ -159,16 +159,16 @@ std::ostream &operator<<(std::ostream &left, const TestPropertyExceptionsValue &
 
 void testPropertyBadAlloc()
 {
-    TestMemory testMemory;
+    TestMemory                      testMemory;
     TestAllocator<void, TestMemory> allocator(testMemory);
-    TestProperty property(allocator);
+    TestProperty                    property(allocator);
     testMemory.badAlloc = 0;
     property.setAbstractValue(property.nullValue());
     testMemory.badAlloc = std::numeric_limits<size_t>::max();
     property.setName("XXX");
     size_t szIntValue = testMemory.inUse;
     property.setValue<int>(1);
-    szIntValue = testMemory.inUse - szIntValue;
+    szIntValue          = testMemory.inUse - szIntValue;
     testMemory.badAlloc = 0;
 
     ASSERT_THROW(property.setName("Test"), std::bad_alloc);
@@ -310,8 +310,8 @@ TestProperty::Collection getTestPropertyCollection2(TestProperty::Collection::al
     case 2:
         ret.insert(++ret.begin())
             ->setNameAndValue<int>(TestProperty::string_type(ret.get_allocator()) + ostr.str().c_str() + '2', 2);
-		// fallthrough
-		// Don't remove the previous line to disable gcc 7 warning
+        // fallthrough
+        // Don't remove the previous line to disable gcc 7 warning
     case 1:
         ret.insert(++ret.begin())
             ->setNameAndValue<int>(TestProperty::string_type(ret.get_allocator()) + ostr.str().c_str() + '1', 1);
@@ -326,15 +326,15 @@ template <size_t DEPTH> TestProperty::Collection getTestPropertyCollection(TestM
 {
     EXPECT_TRUE(level < DEPTH);
     TestProperty::Collection::allocator_type allocator(testMemory);
-    TestProperty::Collection ret(allocator);
+    TestProperty::Collection                 ret(allocator);
     ret = getTestPropertyCollection2<DEPTH>(allocator, level);
     if (++level < DEPTH)
     {
         for (TestProperty::Collection::iterator i = ret.begin(), endi = ret.end(); i != endi; ++i)
         {
             TestProperty property = *i;
-            *i = getTestPropertyCollection<DEPTH>(testMemory, level);
-            *i = property;
+            *i                    = getTestPropertyCollection<DEPTH>(testMemory, level);
+            *i                    = property;
         }
     }
     testPropertyCollection<DEPTH>(ret, &testMemory, level - 1);
@@ -353,36 +353,36 @@ inline std::ostream &operator<<(std::ostream &left, const Property<TestAllocator
 
 void testPropertyCollection()
 {
-    static const size_t DEPTH = 4;
-    TestMemory testMemory;
+    static const size_t      DEPTH = 4;
+    TestMemory               testMemory;
     TestProperty::Collection propertyCollection = getTestPropertyCollection<DEPTH>(testMemory);
     {
         TestProperty::Collection propertyCollection2 = propertyCollection;
         testPropertyCollection<DEPTH>(propertyCollection2, &testMemory);
     }
     {
-        TestMemory testMemory2;
+        TestMemory                               testMemory2;
         TestProperty::Collection::allocator_type allocator(testMemory2);
-        TestProperty::Collection propertyCollection2(allocator);
+        TestProperty::Collection                 propertyCollection2(allocator);
         propertyCollection2 = propertyCollection;
         testPropertyCollection<DEPTH>(propertyCollection2, &testMemory2);
     }
     {
         ASSERT_EQ(propertyCollection.erase(propertyCollection.begin()), propertyCollection.end());
         ASSERT_TRUE(propertyCollection.empty());
-        propertyCollection = getTestPropertyCollection<DEPTH>(testMemory);
-        TestProperty::Collection &leave = *propertyCollection.begin()->begin();
-        TestProperty::Collection::iterator i = leave.erase(++leave.begin());
+        propertyCollection                       = getTestPropertyCollection<DEPTH>(testMemory);
+        TestProperty::Collection          &leave = *propertyCollection.begin()->begin();
+        TestProperty::Collection::iterator i     = leave.erase(++leave.begin());
         ASSERT_EQ(i, ++leave.begin());
         i = leave.erase(leave.begin());
         ASSERT_EQ(i, leave.begin());
     }
     {
-        TestMemory testMemory2;
+        TestMemory                               testMemory2;
         TestProperty::Collection::allocator_type allocator(testMemory2);
-        TestProperty::Collection propertyCollection2(allocator);
-        size_t sz = testMemory2.inUse;
-        propertyCollection2 = getTestPropertyCollection<DEPTH>(testMemory);
+        TestProperty::Collection                 propertyCollection2(allocator);
+        size_t                                   sz = testMemory2.inUse;
+        propertyCollection2                         = getTestPropertyCollection<DEPTH>(testMemory);
         ASSERT_TRUE(testMemory2.inUse > sz);
         ASSERT_FALSE(propertyCollection2.empty());
         propertyCollection2.clear();
@@ -391,7 +391,7 @@ void testPropertyCollection()
     }
     {
         std::basic_ostringstream<char, std::char_traits<char>, TestAllocator<char, TestMemory>> ostm;
-        TestProperty property;
+        TestProperty                                                                            property;
         property.toOStream(ostm);
         ASSERT_EQ(ostm.str(), "");
         ostm.seekp(0);
@@ -440,7 +440,7 @@ std::ostream &operator<<(std::ostream &left, const TestPropertyCollectionBadAllo
 
 void testPropertyCollectionBadAlloc()
 {
-    TestMemory testMemory;
+    TestMemory                   testMemory;
     TestProperty::allocator_type allocator(testMemory);
     {
         TestProperty::Collection propertyCollection(allocator);
@@ -478,10 +478,10 @@ void testPropertyCollectionBadAlloc()
 
 void testPropertyBadCast()
 {
-    TestMemory testMemory;
+    TestMemory                   testMemory;
     TestProperty::allocator_type allocator(testMemory);
-    TestProperty property(allocator);
-    const TestProperty &const_property = property;
+    TestProperty                 property(allocator);
+    const TestProperty          &const_property = property;
     ASSERT_EQ(TestProperty::nullValue(), property.getAbstractValue());
     ASSERT_EQ(property.getAbstractValue(), TestProperty::nullValue());
     property.setValue<int>(1);

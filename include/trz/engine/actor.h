@@ -7,22 +7,22 @@
 
 #pragma once
 
-#include <vector>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <new>
+#include <vector>
 
 #include "trz/engine/event.h"
-#include "trz/engine/internal/macro.h"
+#include "trz/engine/internal/RefMapper.h"
 #include "trz/engine/internal/cacheline.h"
 #include "trz/engine/internal/intrinsics.h"
+#include "trz/engine/internal/macro.h"
 #include "trz/engine/internal/mdoublechain.h"
 #include "trz/engine/internal/mforwardchain.h"
 #include "trz/engine/internal/property.h"
 #include "trz/engine/internal/serialbufferchain.h"
 #include "trz/engine/internal/stringstream.h"
 #include "trz/engine/internal/thread.h"
-#include "trz/engine/internal/RefMapper.h"
 
 namespace tredzone
 {
@@ -46,7 +46,7 @@ class EngineToEngineConnectorEventFactory;
 struct FeatureNotImplementedException : std::exception
 {
     const char *what() const noexcept override
-    {   // feature is not (yet) implemented!
+    { // feature is not (yet) implemented!
         return "tredzone::FeaturedNotImplementedException";
     }
 };
@@ -69,14 +69,9 @@ template <class> class Accessor;
 struct ActorBase
 {
 public:
-    ActorBase()
-        : asyncNode(nullptr)
-    {
-        breakThrow(std::runtime_error("illegal direct base instantiation"));
-    }
+    ActorBase() : asyncNode(nullptr) { breakThrow(std::runtime_error("illegal direct base instantiation")); }
 
 private:
-
     friend class Actor;
     friend class EngineToEngineConnector;
     friend class EngineToEngineSharedMemoryConnector;
@@ -95,13 +90,15 @@ private:
  */
 class Actor : private MultiDoubleChainLink<Actor, 2u>, virtual private ActorBase
 {
-  public:
-    static const int MAX_NODE_COUNT     = 255; ///< Maximum number of parallel event-loops, with one event-loop per cpu-core.
-    static const int MAX_EVENT_ID_COUNT = 4096; ///< Maximum number of classes derived from Actor::Event that can be instantiated at run-time
-    
-    size_t  CountReferencesTo(void) const;
-    size_t  CountRefDest(void) const;
-    
+public:
+    static const int MAX_NODE_COUNT =
+        255; ///< Maximum number of parallel event-loops, with one event-loop per cpu-core.
+    static const int MAX_EVENT_ID_COUNT =
+        4096; ///< Maximum number of classes derived from Actor::Event that can be instantiated at run-time
+
+    size_t CountReferencesTo(void) const;
+    size_t CountRefDest(void) const;
+
     /**
      * @brief This exception is thrown when actor A attempts to get a reference to actor B,
      * where B already has a direct or indirect reference to A.
@@ -115,47 +112,45 @@ class Actor : private MultiDoubleChainLink<Actor, 2u>, virtual private ActorBase
     {
         virtual const char *what() const noexcept { return "tredzone::Actor::CircularReferenceException"; }
     };
-    
-    static void appendRefLog(AsyncNode* paN, std::string str);
-    
-    void    onAdded(AsyncNode &nod);
-    void    onRemoved(AsyncNode &nod);
 
-  private:
+    static void appendRefLog(AsyncNode *paN, std::string str);
+
+    void onAdded(AsyncNode &nod);
+    void onRemoved(AsyncNode &nod);
+
+private:
     struct EventBase;
     friend class EngineToEngineConnectorEventFactory;
 
-//---- ActorReferenceBase START ------------------------------------------------
+    //---- ActorReferenceBase START ------------------------------------------------
 
     // is also a chain LINK, MultiDoubleChainLink<> must be publicly derived for external traversers
 
-    class ActorReferenceBase: public MultiDoubleChainLink<ActorReferenceBase>
+    class ActorReferenceBase : public MultiDoubleChainLink<ActorReferenceBase>
     {
-      public:
-      
+    public:
         // must be public!
         using Chain = ActorReferenceBase::DoubleChain<>;
 
-        size_t  CountRefDest(void) const;
+        size_t CountRefDest(void) const;
 
         // vanilla ctor
-        ActorReferenceBase(ActorReferenceBase::DoubleChain<> *ref_chain = nullptr, Actor *self = nullptr, const bool destroy_f = false) noexcept
+        ActorReferenceBase(ActorReferenceBase::DoubleChain<> *ref_chain = nullptr, Actor *self = nullptr,
+                           const bool destroy_f = false) noexcept
             : m_ShouldDestroyFlag(destroy_f), m_RefDestChain(ref_chain), m_SelfActor(self)
         {
         }
-        
+
         // COPY ctor
         inline ActorReferenceBase(const ActorReferenceBase &other) noexcept
-            : MultiDoubleChainLink<ActorReferenceBase>(),
-              m_ShouldDestroyFlag(other.m_ShouldDestroyFlag),
-              m_RefDestChain(other.m_RefDestChain),
-              m_SelfActor(other.m_SelfActor)
+            : MultiDoubleChainLink<ActorReferenceBase>(), m_ShouldDestroyFlag(other.m_ShouldDestroyFlag),
+              m_RefDestChain(other.m_RefDestChain), m_SelfActor(other.m_SelfActor)
         {
             if (m_RefDestChain)
             {
                 m_RefDestChain->push_back(this);
             }
-            
+
             if (m_SelfActor)
             {
                 assert(m_SelfActor->m_ReferenceFromCount > 0);
@@ -164,9 +159,8 @@ class Actor : private MultiDoubleChainLink<Actor, 2u>, virtual private ActorBase
         }
 
         // CREATE reference
-        inline ActorReferenceBase(Actor &org, Actor &dest, bool destroy_f)        //  throws CircularReferenceException
-            : m_ShouldDestroyFlag(destroy_f), m_RefDestChain(&org.m_ReferenceToChain),
-              m_SelfActor(&dest)
+        inline ActorReferenceBase(Actor &org, Actor &dest, bool destroy_f) //  throws CircularReferenceException
+            : m_ShouldDestroyFlag(destroy_f), m_RefDestChain(&org.m_ReferenceToChain), m_SelfActor(&dest)
         {
             if (recursiveFind(org, *m_SelfActor))
             {
@@ -175,25 +169,25 @@ class Actor : private MultiDoubleChainLink<Actor, 2u>, virtual private ActorBase
             m_RefDestChain->push_back(this);
             ++(m_SelfActor->m_ReferenceFromCount);
         }
-        
+
         // dtor
         inline ~ActorReferenceBase() noexcept { unreference(); }
-        
+
         // assignment operator
         inline ActorReferenceBase &operator=(const ActorReferenceBase &other) noexcept
         {
             // unref any existing
             unreference();
-            
+
             m_ShouldDestroyFlag = other.m_ShouldDestroyFlag;
-            m_RefDestChain = other.m_RefDestChain;
-            m_SelfActor = other.m_SelfActor;
-            
-            if (m_RefDestChain)                        // stupid Sleem logic so can u-test (bad) usage of multiple unreference()
+            m_RefDestChain      = other.m_RefDestChain;
+            m_SelfActor         = other.m_SelfActor;
+
+            if (m_RefDestChain) // stupid Sleem logic so can u-test (bad) usage of multiple unreference()
             {
                 m_RefDestChain->push_back(this);
             }
-            
+
             if (m_SelfActor)
             {
                 assert(m_SelfActor->m_ReferenceFromCount > 0);
@@ -201,27 +195,26 @@ class Actor : private MultiDoubleChainLink<Actor, 2u>, virtual private ActorBase
             }
             return *this;
         }
-        inline Actor *getReferencedActor() const noexcept 
-        {
-            return m_SelfActor; 
-        }
-        
+        inline Actor *getReferencedActor() const noexcept { return m_SelfActor; }
+
         // unref
-        inline
-        void unreference() noexcept
+        inline void unreference() noexcept
         {
             // would HANG destruction
             // if (!m_RefDestChain || !m_SelfActor)    return;     // nothing to do
-            
-            TraceREF(m_SelfActor->getAsyncNode(), __func__, "-1,-1", cppDemangledTypeInfoName(typeid(*this)), m_SelfActor->getActorId(), cppDemangledTypeInfoName(typeid(*m_SelfActor)))
-            
-            if (m_RefDestChain)
-            {   m_RefDestChain->remove(this);
+
+            TraceREF(m_SelfActor->getAsyncNode(), __func__, "-1,-1", cppDemangledTypeInfoName(typeid(*this)),
+                     m_SelfActor->getActorId(), cppDemangledTypeInfoName(typeid(*m_SelfActor)))
+
+                if (m_RefDestChain)
+            {
+                m_RefDestChain->remove(this);
                 m_RefDestChain = nullptr;
             }
-            
+
             if (m_SelfActor)
-            {   assert(m_SelfActor->m_ReferenceFromCount > 0);
+            {
+                assert(m_SelfActor->m_ReferenceFromCount > 0);
                 if (--(m_SelfActor->m_ReferenceFromCount) == 0 &&
                     (m_ShouldDestroyFlag || m_SelfActor->onUnreferencedDestroyFlag))
                 {
@@ -230,10 +223,9 @@ class Actor : private MultiDoubleChainLink<Actor, 2u>, virtual private ActorBase
                 m_SelfActor = nullptr;
             }
         }
-        
+
         // called on actor dtor -- is HOW DIFFERENT from unreference
-        inline
-        void unchain(Chain &
+        inline void unchain(Chain &
 #ifndef NDEBUG
                                 debugChain
 #endif
@@ -243,33 +235,30 @@ class Actor : private MultiDoubleChainLink<Actor, 2u>, virtual private ActorBase
             m_RefDestChain->remove(this);
             m_RefDestChain = nullptr;
         }
-        
-        std::string    Dump(void) const;
 
+        std::string Dump(void) const;
 
-      private:
-      
-        bool        m_ShouldDestroyFlag;
-        Chain       *m_RefDestChain;
-        Actor       *m_SelfActor;
+    private:
+        bool   m_ShouldDestroyFlag;
+        Chain *m_RefDestChain;
+        Actor *m_SelfActor;
 
-        static
-        bool        recursiveFind(const Actor &dest, const Actor &org);      // noexcept;        
+        static bool recursiveFind(const Actor &dest, const Actor &org); // noexcept;
     };
-    
-//----- ActorReferenceBase END -------------------------------------------------
+
+    //----- ActorReferenceBase END -------------------------------------------------
 
 public:
-  
     typedef uint8_t CoreId; ///< Scalar type representing a physical cpu-core of a CPU, its value range is arbitrary
                             ///(hardware dependent).
-    typedef uint8_t NodeId; ///< Scalar type representing a logical cpu-core of a CPU, its value range is compact (+1
-                            ///increment) starting from 0. There is a one-to-one relationship between NodeId and CoreId.
+    typedef uint8_t
+        NodeId; ///< Scalar type representing a logical cpu-core of a CPU, its value range is compact (+1
+                /// increment) starting from 0. There is a one-to-one relationship between NodeId and CoreId.
     typedef uint64_t NodeActorId; ///< Scalar type representing the actor-id within an event-loop (there is one
-                                  ///event-loop per cpu-core). Valid values start at 1 (0 is invalid).
+                                  /// event-loop per cpu-core). Valid values start at 1 (0 is invalid).
     class Event;
     typedef uint16_t EventId; ///< Scalar type representing an event-class during run-time. An event-class is derived
-                              ///from Actor::Event.
+                              /// from Actor::Event.
     struct ReturnToSenderException;
     struct UndersizedException;
     struct ShutdownException;
@@ -287,12 +276,9 @@ public:
      */
     struct AlreadyRegisterdEventHandlerException : std::exception
     {
-        virtual const char *what() const noexcept
-        {
-            return "tredzone::Actor::AlreadyRegisterdEventHandlerException";
-        }
+        virtual const char *what() const noexcept { return "tredzone::Actor::AlreadyRegisterdEventHandlerException"; }
     };
-    
+
     /**
      * @brief This exception is thrown when attempting to instantiate an actor while the engine is being shutdown.
      *
@@ -314,7 +300,7 @@ public:
             }
         }
     };
-    
+
     /**
      * @brief This exception is thrown when attempting to instantiate a reference (Actor::ActorReference)
      * to an actor using its actor-id cannot be achieved.
@@ -328,7 +314,7 @@ public:
     {
         const bool notLocalFlag;
         inline ReferenceLocalActorException(bool pnotLocalFlag) noexcept : notLocalFlag(pnotLocalFlag) {}
-        
+
         virtual const char *what() const noexcept
         {
             if (notLocalFlag)
@@ -341,7 +327,7 @@ public:
             }
         }
     };
-    
+
     /**
      * @brief Non-template base-class of stl-compliant Actor::Allocator.
      *
@@ -352,7 +338,7 @@ public:
      */
     class AllocatorBase
     {
-      public:
+    public:
         /**
          * @brief Default constructor.
          * @note As explained in the class-description, this constructor should not be used.
@@ -421,7 +407,7 @@ public:
         const ThreadId &debugGetThreadId() const noexcept;
 #endif
 
-      protected:
+    protected:
         /**
          * @brief Allocates a memory bloc in the event-loop dedicated memory.
          * @param sz size (byte count) to be allocated
@@ -437,7 +423,7 @@ public:
          */
         void deallocate(size_t sz, void *p) noexcept;
 
-      private:
+    private:
         friend class Actor;
         friend class EngineToEngineConnectorEventFactory;
         AsyncNodeAllocator *const asyncNodeAllocator;
@@ -450,14 +436,14 @@ public:
      */
     template <class T> class Allocator : public AllocatorBase
     {
-      public:
-        typedef T value_type;              ///< STL-compliant
-        typedef size_t size_type;          ///< STL-compliant
+    public:
+        typedef T         value_type;      ///< STL-compliant
+        typedef size_t    size_type;       ///< STL-compliant
         typedef ptrdiff_t difference_type; ///< STL-compliant
-        typedef T *pointer;                ///< STL-compliant
-        typedef const T *const_pointer;    ///< STL-compliant
-        typedef T &reference;              ///< STL-compliant
-        typedef const T &const_reference;  ///< STL-compliant
+        typedef T        *pointer;         ///< STL-compliant
+        typedef const T  *const_pointer;   ///< STL-compliant
+        typedef T        &reference;       ///< STL-compliant
+        typedef const T  &const_reference; ///< STL-compliant
 
         /**
          * @brief STL-compliant.
@@ -503,10 +489,10 @@ public:
          */
         inline void deallocate(pointer p, size_type n) noexcept { AllocatorBase::deallocate(n * sizeof(T), p); }
 
-/**
- * @brief STL-compliant.
- */
-        template <class U, class... Args> void construct(U *p, Args &&... args)
+        /**
+         * @brief STL-compliant.
+         */
+        template <class U, class... Args> void construct(U *p, Args &&...args)
         {
             ::new ((void *)p) U(std::forward<Args>(args)...);
         }
@@ -521,10 +507,10 @@ public:
          */
         inline size_type max_size() const noexcept { return std::numeric_limits<size_type>::max(); }
 
-      private:
+    private:
         inline Allocator(AsyncNode &pasyncNode) noexcept : AllocatorBase(pasyncNode) {}
     };
-    
+
     /**
      * @brief Smart-pointer placeholder to an actor reference.
      *
@@ -535,13 +521,12 @@ public:
      * -# newReferencedActor()
      * -# newReferencedSingletonActor()
      */
-    
+
     //--------------------------------------------------------------------------
-    // utility wrapper so can automatically do operations between different ActorReferences<XXX> with automatic typecast 
-    template <class _Actor>
-    class ActorReference: private ActorReferenceBase
+    // utility wrapper so can automatically do operations between different ActorReferences<XXX> with automatic typecast
+    template <class _Actor> class ActorReference : private ActorReferenceBase
     {
-        
+
     public:
         /**
          * @brief Default constructor, which initializes the internal actor-reference to NULL.
@@ -648,18 +633,12 @@ public:
          * @brief Getter to the internal actor-reference.
          * @return A const pointer to the internal actor-reference, which can be NULL.
          */
-        inline const _Actor *get() const noexcept
-        {
-            return static_cast<const _Actor *>(getReferencedActor());
-        }
-        
-        inline
-        std::string    Dump(void) const {return ActorReferenceBase::Dump();}
-        
+        inline const _Actor *get() const noexcept { return static_cast<const _Actor *>(getReferencedActor()); }
+
+        inline std::string Dump(void) const { return ActorReferenceBase::Dump(); }
+
     public:
-        
     private:
-    
         friend class Actor;
         friend class Engine;
 
@@ -672,7 +651,7 @@ public:
         }
     };
     //--------------------------------------------------------------------------
-    
+
     /**
      * @brief Singleton class (one per event-loop) to access the real-time performance counters.
      * Reference to the current event-loop CorePerformanceCounters instance is through
@@ -680,7 +659,7 @@ public:
      */
     class CorePerformanceCounters
     {
-      public:
+    public:
         /**
          * @brief Getter to the cumulative total event-loop count, regardless of functional activity.
          * This is a significant indicator of application throughput at event-loop (cpu-core) level.
@@ -745,15 +724,15 @@ public:
             return nodeId < writtenSizePointerVector.size() ? *writtenSizePointerVector[nodeId] : 0;
         }
 
-      private:
+    private:
         friend class AsyncNode;
         friend class AsyncNodesHandle;
         typedef std::vector<const uint64_t *, Allocator<const uint64_t *>> SizePointerVector;
-        SizePointerVector writtenSizePointerVector;
-        uint64_t loopTotalCount;
-        uint64_t loopUsageCount;
-        uint64_t onEventCount;
-        uint64_t onCallbackCount;
+        SizePointerVector                                                  writtenSizePointerVector;
+        uint64_t                                                           loopTotalCount;
+        uint64_t                                                           loopUsageCount;
+        uint64_t                                                           onEventCount;
+        uint64_t                                                           onCallbackCount;
 
         CorePerformanceCounters(const AllocatorBase &allocator, size_t nodeCount)
             : writtenSizePointerVector(allocator), loopTotalCount(0), loopUsageCount(0), onEventCount(0),
@@ -772,7 +751,7 @@ public:
      */
     class Callback : private MultiDoubleChainLink<Callback>
     {
-      public:
+    public:
         /**
          * @brief Destructor where a call to unregister() is performed.
          */
@@ -797,18 +776,18 @@ public:
             }
         }
 
-      protected:
+    protected:
         /**
          * @brief Default constructor.
          */
         inline Callback() noexcept : chain(0) {}
 
-      private:
+    private:
         friend class Actor;
         friend class AsyncNode;
         friend struct AsyncNodeBase;
         friend class IRefMapper;
-        
+
         struct Chain : DoubleChain<0u, Chain>
         {
             inline static Callback *getItem(::tredzone::MultiDoubleChainLink<Callback> *link) noexcept
@@ -828,13 +807,13 @@ public:
                 return static_cast<const ::tredzone::MultiDoubleChainLink<Callback> *>(item);
             }
         };
-        Chain *chain;
+        Chain      *chain;
         NodeActorId nodeActorId;
         EventTable *actorEventTable;
         void (*onCallback)(Callback &) noexcept;
     };
     typedef std::basic_string<char, std::char_traits<char>, Allocator<char>>
-        string_type;                                 ///< std::basic_string specialization using Actor::Allocator.
+                                      string_type;   ///< std::basic_string specialization using Actor::Allocator.
     typedef Property<Allocator<char>> property_type; ///< tredzone::Property specialization using Actor::Allocator.
     typedef OutputStringStream<char, Allocator<char>,
                                TREDZONE_DEFAULT_STREAM_BUFFER_INCREMENT_SIZE>
@@ -855,7 +834,7 @@ public:
         friend struct Actor::EventBase;
         friend class SerialInProcessActorId;
 
-      public:
+    public:
         /**
          * @brief Default constructor. Initialize the actor-id to invalid.
          */
@@ -865,9 +844,8 @@ public:
          * to match the one of the actor passed as argument.
          * @param actor reference to the actor from which the actor-id is copied.
          */
-        inline InProcessActorId(const Actor &actor) noexcept : nodeId(actor.actorId.nodeId),
-                                                                    nodeActorId(actor.actorId.nodeActorId),
-                                                                    eventTable(actor.actorId.eventTable)
+        inline InProcessActorId(const Actor &actor) noexcept
+            : nodeId(actor.actorId.nodeId), nodeActorId(actor.actorId.nodeActorId), eventTable(actor.actorId.eventTable)
         {
         }
         /**
@@ -935,16 +913,14 @@ public:
          */
         inline NodeActorId getNodeActorId() const noexcept { return nodeActorId; }
 
-        EventTable* getEventTable(void) const noexcept { return eventTable; }
+        EventTable *getEventTable(void) const noexcept { return eventTable; }
 
     protected:
         /**
          * @brief Internal usage constructor.
          */
         inline InProcessActorId(NodeId pnodeId, NodeActorId pnodeActorId, EventTable *peventTable) noexcept
-            : nodeId(pnodeId),
-              nodeActorId(pnodeActorId),
-              eventTable(peventTable)
+            : nodeId(pnodeId), nodeActorId(pnodeActorId), eventTable(peventTable)
         {
         }
         /**
@@ -952,14 +928,14 @@ public:
          */
         inline InProcessActorId(int) noexcept {}
 
-      private:
+    private:
         friend class Actor;
         friend class AsyncNodesHandle;
         friend class EngineToEngineSerialConnector;
         friend std::ostream &operator<<(std::ostream &, const Actor::ActorId &);
         template <class> friend class Accessor;
 
-        NodeId nodeId;
+        NodeId      nodeId;
         NodeActorId nodeActorId;
         EventTable *eventTable;
     };
@@ -975,7 +951,7 @@ public:
      */
     class ActorId : public InProcessActorId
     {
-      public:
+    public:
         /**
          * @brief This exception is thrown when attempt is
          * made to get engine (process) local information out of an
@@ -994,10 +970,10 @@ public:
          */
         class RouteIdComparable
         {
-          public:
+        public:
             typedef uint32_t NodeConnectionId; ///< Scalar type representing the connection-id within an event-loop
                                                ///(there is one event-loop per cpu-core). Valid values start at 1 (0 is
-                                               ///invalid).
+                                               /// invalid).
 
             /**
              * @brief Default constructor. Initializes this route-id to invalid.
@@ -1009,24 +985,23 @@ public:
              * @param pnodeConnectionId initialization value for nodeConnectionId member.
              */
             RouteIdComparable(NodeId pnodeId, NodeConnectionId pnodeConnectionId) noexcept
-                : nodeId(pnodeId),
-                  nodeConnectionId(pnodeConnectionId)
+                : nodeId(pnodeId), nodeConnectionId(pnodeConnectionId)
             {
             }
-            
+
             RouteIdComparable &operator=(const RouteIdComparable &other) noexcept
             {
-                nodeId = other.nodeId;
+                nodeId           = other.nodeId;
                 nodeConnectionId = other.nodeConnectionId;
                 return *this;
             }
-            
+
             // (copy ctor)
             RouteIdComparable(const RouteIdComparable &other) noexcept
                 : nodeId(other.nodeId), nodeConnectionId(other.nodeConnectionId)
             {
             }
-            
+
             /**
              * @brief Assign operator to null. Which invalidates route-id.
              * @param tredzone::null represents the invalid value of route-id.
@@ -1100,10 +1075,10 @@ public:
              */
             inline NodeConnectionId getNodeConnectionId() const noexcept { return nodeConnectionId; }
 
-          protected:
+        protected:
             template <class> friend class Accessor;
 
-            NodeId nodeId;                     ///< node-id part of this route-id.
+            NodeId           nodeId;           ///< node-id part of this route-id.
             NodeConnectionId nodeConnectionId; ///< node-connection-id part of this route-id.
         };
         /**
@@ -1115,26 +1090,22 @@ public:
         class RouteId : public RouteIdComparable
         {
         public:
-        
             typedef RouteIdComparable::NodeConnectionId NodeConnectionId;
 
             /**
              * @brief Default constructor. Initializes this route-id to invalid.
              */
             inline RouteId() noexcept {}
-            
+
             RouteId &operator=(const RouteId &other) noexcept
             {
                 RouteIdComparable::operator=(other);
                 nodeConnection = other.nodeConnection;
                 return *this;
             }
-            
-            RouteId(const RouteId &other) noexcept
-                : RouteIdComparable(other), nodeConnection(other.nodeConnection)
-            {
-            }
-            
+
+            RouteId(const RouteId &other) noexcept : RouteIdComparable(other), nodeConnection(other.nodeConnection) {}
+
             /**
              * @brief Assign operator to null. Which invalidates route-id.
              * @param tredzone::null represents the invalid value of route-id.
@@ -1147,7 +1118,6 @@ public:
             }
 
         private:
-          
             friend class Actor;
             friend class AsyncNodesHandle;
             friend class EngineToEngineConnector;
@@ -1156,8 +1126,7 @@ public:
             NodeConnection *nodeConnection;
 
             inline RouteId(NodeId pnodeId, NodeConnectionId pnodeConnectionId, NodeConnection *pnodeConnection) noexcept
-                : RouteIdComparable(pnodeId, pnodeConnectionId),
-                  nodeConnection(pnodeConnection)
+                : RouteIdComparable(pnodeId, pnodeConnectionId), nodeConnection(pnodeConnection)
             {
             }
         };
@@ -1264,7 +1233,7 @@ public:
          */
         CoreId getCore() const; // throw (NotInProcessException)
 
-      private:
+    private:
         friend class Event;
         friend class AsyncNode;
         friend class Actor;
@@ -1280,12 +1249,14 @@ public:
         {
         }
         inline ActorId(const InProcessActorId &other) noexcept : InProcessActorId(other) {}
-        inline ActorId(const InProcessActorId &other, const RouteId &prouteId) noexcept : InProcessActorId(other),
-                                                                                          routeId(prouteId)
+        inline ActorId(const InProcessActorId &other, const RouteId &prouteId) noexcept
+            : InProcessActorId(other), routeId(prouteId)
         {
         }
         inline ActorId(int) noexcept : InProcessActorId(0) {}
-        public : Actor* getEventTableActor(); //only use this method from the same core as the eventTable->asyncActor
+
+    public:
+        Actor *getEventTableActor(); // only use this method from the same core as the eventTable->asyncActor
     };
 #pragma pack(pop)
 
@@ -1314,13 +1285,12 @@ public:
      * @return A copy of a local event-loop (cpu-core) allocator.
      */
 
-       /**
+    /**
      * @brief Helper to get the ActorId associated to the given service-tag (_ServiceTag)
      * @return Found ActorId or null if not found
      */
-    template<class _ServiceTag>
-    const ActorId& getServiceActorId(void) const noexcept;
-    
+    template <class _ServiceTag> const ActorId &getServiceActorId(void) const noexcept;
+
     AllocatorBase getAllocator() const noexcept;
     /**
      * @brief Create a new typed actor-reference to an existing actor.
@@ -1492,8 +1462,7 @@ public:
      * @throw ? Any other exception possibly thrown depending on _Actor (the template first generic type)
      * constructor call.
      */
-    template <class _Actor, class _ActorInit>
-    inline const ActorId &newUnreferencedActor(const _ActorInit &actorInit);
+    template <class _Actor, class _ActorInit> inline const ActorId &newUnreferencedActor(const _ActorInit &actorInit);
     /**
      * @brief Registers the callback-handler passed as a parameter.
      * The callback-handler is of template generic type _Callback
@@ -1525,8 +1494,8 @@ public:
     /**
      * @brief Marks this actor for later destruction by the runtime. The actual destruction is asynchronous.
      * When eligible for destruction, the onDestroyRequest() method of this actor will be called.
-     * If destruction should be aborted (see onDestroyRequest()), destruction can be requested at a later point by calling this method again.
-     * Calling this method multiple times has the same effect as calling it once.
+     * If destruction should be aborted (see onDestroyRequest()), destruction can be requested at a later point by
+     * calling this method again. Calling this method multiple times has the same effect as calling it once.
      * @note An actor onDestroyRequest() method will be called when the following conditions are met:
      * - its requestDestroy() method was called
      * 		- explicitly
@@ -1640,7 +1609,7 @@ public:
      */
     template <class _Event> inline bool isRegisteredUndeliveredEventHandler() const noexcept;
 
-  protected:
+protected:
     /**
      * @brief Default constructor.
      * @throw ShutdownException The engine is shutting down (destructor of Engine being called),
@@ -1704,19 +1673,19 @@ public:
      * \endcode
      */
     virtual void onDestroyRequest() noexcept;
-    
+
     /**
      * @brief Accept destroy request by flagging the Actor for (sometime later) destruction
      */
     virtual void acceptDestroy(void) noexcept;
-    
+
     /**
      * @brief Getter.
      * @return The event-loop instance running this actor.
      */
     EngineEventLoop &getEventLoop() const noexcept;
 
-  private:
+private:
     friend class AsyncNode;
     friend struct AsyncNodeBase;
     friend class AsyncNodesHandle;
@@ -1724,79 +1693,66 @@ public:
     friend class EngineToEngineConnector;
     friend class EngineToEngineSharedMemoryConnector;
     friend class RefMapper;
-    
+
     typedef MultiDoubleChainLink<Actor, 2u> super;
-    typedef uint16_t SingletonActorIndex;
-    
+    typedef uint16_t                        SingletonActorIndex;
+
     using ReferenceToChain = ActorReferenceBase::Chain;
-    
+
     template <class _Event, class _EventHandler> struct StaticEventHandler;
     template <class _Callback> struct StaticCallbackHandler;
     struct Chain : DoubleChain<0u, Chain>
     {
-        inline static Actor *getItem(super *link) noexcept { return static_cast<Actor *>(link); }
-        inline static const Actor *getItem(const super *link) noexcept
-        {
-            return static_cast<const Actor *>(link);
-        }
-        inline static super *getLink(Actor *item) noexcept { return static_cast<super *>(item); }
+        inline static Actor       *getItem(super *link) noexcept { return static_cast<Actor *>(link); }
+        inline static const Actor *getItem(const super *link) noexcept { return static_cast<const Actor *>(link); }
+        inline static super       *getLink(Actor *item) noexcept { return static_cast<super *>(item); }
         inline static const super *getLink(const Actor *item) noexcept { return static_cast<const super *>(item); }
     };
     struct OnUnreachableChain : DoubleChain<1u, OnUnreachableChain>
     {
-        inline static Actor *getItem(super *link) noexcept { return static_cast<Actor *>(link); }
-        inline static const Actor *getItem(const super *link) noexcept
-        {
-            return static_cast<const Actor *>(link);
-        }
-        inline static super *getLink(Actor *item) noexcept { return static_cast<super *>(item); }
+        inline static Actor       *getItem(super *link) noexcept { return static_cast<Actor *>(link); }
+        inline static const Actor *getItem(const super *link) noexcept { return static_cast<const Actor *>(link); }
+        inline static super       *getLink(Actor *item) noexcept { return static_cast<super *>(item); }
         inline static const super *getLink(const Actor *item) noexcept { return static_cast<const super *>(item); }
     };
-    template <class _Actor>
-    struct ActorWrapper : public virtual ActorBase, public _Actor
+    template <class _Actor> struct ActorWrapper : public virtual ActorBase, public _Actor
     {
     public:
-    
         // ctor
-        inline
-        ActorWrapper(AsyncNode &asyncNode)
-            : ActorBase(&asyncNode)
+        inline ActorWrapper(AsyncNode &asyncNode) : ActorBase(&asyncNode)
         {
             // Actor::onAdded(asyncNode);
             int i = 0;
             (void)i;
         }
-        
+
         // dtor
         virtual ~ActorWrapper()
         {
-            _Actor &actor = static_cast<_Actor&>(*this);
+            _Actor &actor = static_cast<_Actor &>(*this);
             (void)actor;
 
-            TraceREF(actor.getAsyncNode(), __func__, actor.actorId, cppDemangledTypeInfoName(typeid(actor)), "-1.-1", "null")
+            TraceREF(actor.getAsyncNode(), __func__, actor.actorId, cppDemangledTypeInfoName(typeid(actor)), "-1.-1",
+                     "null")
         }
-        
+
         template <class _ActorInit>
         inline ActorWrapper(AsyncNode &asyncNode, const _ActorInit &actorInit)
-            : ActorBase(&asyncNode),
-            _Actor(actorInit)
+            : ActorBase(&asyncNode), _Actor(actorInit)
         {
         }
 
-        inline
-        static void operator delete(
-        ActorWrapper* p, std::destroying_delete_t) noexcept
+        inline static void operator delete(ActorWrapper *p, std::destroying_delete_t) noexcept
         {
-            auto* node = p->getAsyncNode();
+            auto *node = p->getAsyncNode();
             p->~ActorWrapper();
             AllocatorBase(*node).deallocate(sizeof(ActorWrapper), p);
         }
-        
+
         // (we assume that this function must be implemented by STL allocator interface but is never called)
-        inline
-        void operator delete(void *, void *p) noexcept
+        inline void operator delete(void *, void *p) noexcept
         {
-            AllocatorBase(*(static_cast<ActorWrapper *>(p))->getAsyncNode()).deallocate(sizeof(ActorWrapper), p);                           // ok
+            AllocatorBase(*(static_cast<ActorWrapper *>(p))->getAsyncNode()).deallocate(sizeof(ActorWrapper), p); // ok
         }
     };
     struct RetainedSingletonActorIndex
@@ -1809,54 +1765,54 @@ public:
         inline ~RetainedSingletonActorIndex() noexcept { releaseSingletonActorIndex(singletonActorIndex); }
     };
 
-    EventTable &eventTable;
+    EventTable         &eventTable;
     SingletonActorIndex singletonActorIndex;
-    ActorId actorId;
-    Chain *chain;
+    ActorId             actorId;
+    Chain              *chain;
     OnUnreachableChain *onUnreachableChain;
-    size_t m_ReferenceFromCount;
-    ReferenceToChain m_ReferenceToChain;
-    bool m_DestroyRequestedFlag;
-    bool onUnreferencedDestroyFlag;
-    size_t processOutPipeCount;
+    size_t              m_ReferenceFromCount;
+    ReferenceToChain    m_ReferenceToChain;
+    bool                m_DestroyRequestedFlag;
+    bool                onUnreferencedDestroyFlag;
+    size_t              processOutPipeCount;
 #ifndef NDEBUG
     size_t debugPipeCount;
 #endif
 
     uint8_t registerLowPriorityEventHandler(void *, EventId, void *,
-                                            bool (*)(void *, const Event &));                // throw (std::bad_alloc)
-    void registerLowPriorityEventHandler(EventId, void *, bool (*)(void *, const Event &));  // throw (std::bad_alloc)
-    void registerHighPriorityEventHandler(EventId, void *, bool (*)(void *, const Event &)); // throw (std::bad_alloc)
-    void registerUndeliveredEventHandler(EventId, void *, bool (*)(void *, const Event &));  // throw (std::bad_alloc)
+                                            bool (*)(void *, const Event &));                  // throw (std::bad_alloc)
+    void    registerLowPriorityEventHandler(EventId, void *, bool (*)(void *, const Event &)); // throw (std::bad_alloc)
+    void registerHighPriorityEventHandler(EventId, void *, bool (*)(void *, const Event &));   // throw (std::bad_alloc)
+    void registerUndeliveredEventHandler(EventId, void *, bool (*)(void *, const Event &));    // throw (std::bad_alloc)
     uint8_t unregisterLowPriorityEventHandler(void *, EventId) noexcept;
-    void unregisterLowPriorityEventHandlers(void *) noexcept;
-    void unregisterHighPriorityEventHandler(EventId) noexcept;
-    void unregisterEventHandler(EventId) noexcept;
-    void unregisterUndeliveredEventHandler(EventId) noexcept;
-    bool isRegisteredLowPriorityEventHandler(void *, EventId) const noexcept;
-    bool isRegisteredHighPriorityEventHandler(EventId) const noexcept;
-    bool isRegisteredEventHandler(EventId) const noexcept;
-    bool isRegisteredUndeliveredEventHandler(EventId) const noexcept;
-    void registerCallback(void (*onCallback)(Callback &) noexcept, Callback &) noexcept;
-    void registerPerformanceNeutralCallback(void (*onCallback)(Callback &) noexcept, Callback &) noexcept;
-    Actor *getSingletonActor(SingletonActorIndex) noexcept;
-    void reserveSingletonActor(SingletonActorIndex); // throw (CircularReferenceException)
-    void setSingletonActor(SingletonActorIndex, Actor &) noexcept;
-    void unsetSingletonActor(SingletonActorIndex) noexcept;
+    void    unregisterLowPriorityEventHandlers(void *) noexcept;
+    void    unregisterHighPriorityEventHandler(EventId) noexcept;
+    void    unregisterEventHandler(EventId) noexcept;
+    void    unregisterUndeliveredEventHandler(EventId) noexcept;
+    bool    isRegisteredLowPriorityEventHandler(void *, EventId) const noexcept;
+    bool    isRegisteredHighPriorityEventHandler(EventId) const noexcept;
+    bool    isRegisteredEventHandler(EventId) const noexcept;
+    bool    isRegisteredUndeliveredEventHandler(EventId) const noexcept;
+    void    registerCallback(void (*onCallback)(Callback &) noexcept, Callback &) noexcept;
+    void    registerPerformanceNeutralCallback(void (*onCallback)(Callback &) noexcept, Callback &) noexcept;
+    Actor  *getSingletonActor(SingletonActorIndex) noexcept;
+    void    reserveSingletonActor(SingletonActorIndex); // throw (CircularReferenceException)
+    void    setSingletonActor(SingletonActorIndex, Actor &) noexcept;
+    void    unsetSingletonActor(SingletonActorIndex) noexcept;
     template <class _Actor>
     inline static _Actor &newActor(AsyncNode &); // throw (std::bad_alloc, ShutdownException, ...)
     template <class _Actor, class _ActorInit>
-    inline static _Actor &newActor(AsyncNode &,
-                                        const _ActorInit &); // throw (std::bad_alloc, ShutdownException, ...)
+    inline static _Actor                                     &newActor(AsyncNode &,
+                                                                       const _ActorInit &); // throw (std::bad_alloc, ShutdownException, ...)
     template <class _Actor> inline static SingletonActorIndex getSingletonActorIndex()
     { // throw (std::bad_alloc)
         static RetainedSingletonActorIndex retainedSingletonActorIndex;
         return retainedSingletonActorIndex.singletonActorIndex;
     }
     static SingletonActorIndex retainSingletonActorIndex(); // throw (std::bad_alloc)
-    static void releaseSingletonActorIndex(SingletonActorIndex) noexcept;
-    Actor &getReferenceToLocalActor(const ActorId &); // throw (ReferenceLocalActorException)
-    inline AsyncNode *getAsyncNode() noexcept { return asyncNode; }
+    static void                releaseSingletonActorIndex(SingletonActorIndex) noexcept;
+    Actor                     &getReferenceToLocalActor(const ActorId &); // throw (ReferenceLocalActorException)
+    inline AsyncNode          *getAsyncNode() noexcept { return asyncNode; }
 
     Actor &operator=(const Actor &);
 };
@@ -1933,9 +1889,7 @@ struct Actor::UndersizedException : std::bad_alloc
 struct Actor::EventBase
 {
 public:
-  
-    EventBase()
-        : classId(0), sourceActorId(0), destinationActorId(0), routeOffset(0)
+    EventBase() : classId(0), sourceActorId(0), destinationActorId(0), routeOffset(0)
     {
         // should never instantiate EventBase or a derivative manually
         // Events are instatiated "in-place" by the engine inside pipe::push<>()
@@ -1943,7 +1897,6 @@ public:
     }
 
 private:
-  
     friend class Actor::Event;
     friend class AsyncExceptionHandler;
     friend class EngineToEngineConnectorEventFactory;
@@ -1954,34 +1907,33 @@ private:
     Actor::InProcessActorId destinationActorId;
     route_offset_type       routeOffset;
 
-    EventBase(Actor::EventId _classId, Actor::InProcessActorId _sourceActorId, Actor::InProcessActorId _destinationActorId, route_offset_type _routeOffset)
-        : classId(_classId), sourceActorId(_sourceActorId), destinationActorId(_destinationActorId), routeOffset(_routeOffset)
+    EventBase(Actor::EventId _classId, Actor::InProcessActorId _sourceActorId,
+              Actor::InProcessActorId _destinationActorId, route_offset_type _routeOffset)
+        : classId(_classId), sourceActorId(_sourceActorId), destinationActorId(_destinationActorId),
+          routeOffset(_routeOffset)
     {
     }
 };
 
 namespace e2econnector
 {
-    // forward declare
-    class DicoTimer;
-    
+// forward declare
+class DicoTimer;
+
 } // namespace e2econnector
 
 // cross-machine absolute event entry
 struct AbsoluteEventEntry
 {
-    AbsoluteEventEntry(const uint16_t &id, const string &s)
-        : m_Id(id), m_Name(s)
-    {
-    }
-    
-    const uint16_t    m_Id;
+    AbsoluteEventEntry(const uint16_t &id, const string &s) : m_Id(id), m_Name(s) {}
+
+    const uint16_t m_Id;
     // Actor::string_type      m_Name;
-    const string      m_Name;
+    const string m_Name;
 };
 
 // absolute event dictionary
-using AbsoluteEventVector = vector<AbsoluteEventEntry>;     // , Actor::Allocator<AbsoluteEventEntry>>;
+using AbsoluteEventVector = vector<AbsoluteEventEntry>; // , Actor::Allocator<AbsoluteEventEntry>>;
 
 /**
  * @brief Base-class for events used in:
@@ -2001,7 +1953,6 @@ using AbsoluteEventVector = vector<AbsoluteEventEntry>;     // , Actor::Allocato
 class Actor::Event : private MultiForwardChainLink<Event>, virtual private EventBase
 {
 public:
-  
     class AllocatorBase;
     template <class T> class Allocator;
     typedef Property<Allocator<char>> property_type;
@@ -2020,10 +1971,13 @@ public:
             return "tredzone::Actor::Event::DuplicateAbsoluteEventIdException";
         }
     };
-    
-    using EventE2EDeserializeFunction = void (*)(EngineToEngineConnectorEventFactory &, const void *, size_t); ///< Function type for cluster-event deserialization (see isE2ECapable())
-    using EventE2ESerializeFunction = void (*)(SerialBuffer &, const Event &); ///< Function type for cluster-event serialization (see isE2ECapable())
-    
+
+    using EventE2EDeserializeFunction =
+        void (*)(EngineToEngineConnectorEventFactory &, const void *,
+                 size_t); ///< Function type for cluster-event deserialization (see isE2ECapable())
+    using EventE2ESerializeFunction =
+        void (*)(SerialBuffer &, const Event &); ///< Function type for cluster-event serialization (see isE2ECapable())
+
     /**
      * @brief Event reference placeholder used for event-name output operator specialization.
      */
@@ -2135,10 +2089,7 @@ public:
      * @brief Getter.
      * @return true if this event was exchanged between two engines (processes).
      */
-    bool isRouted() const noexcept
-    {
-        return routeOffset != 0;
-    }
+    bool isRouted() const noexcept { return routeOffset != 0; }
     /**
      * @brief Getter.
      * @attention This method should only be called if the event was routed (see isRouted()).
@@ -2157,8 +2108,7 @@ public:
      * @throw UndersizedException The number of Event sub-classes specialized at runtime exceeds the limit (4096).
      * @throw std::bad_alloc
      */
-    template <class _Event>
-    inline static EventId getClassId()
+    template <class _Event> inline static EventId getClassId()
     {
         static RetainedEventId retainedEventId(Event::nameToOStream, _Event::contentToOStream, _Event::isE2ECapable);
         return retainedEventId.eventId;
@@ -2229,41 +2179,36 @@ public:
     inline static const char *newCString(const AllocatorBase &allocator, const Actor::ostringstream_type &s);
 
 protected:
-
     /**
      * @brief Default constructor.
      */
-    inline Event() noexcept
-        : EventBase(0, 0, 0, 0)
-    {
-        assert(sourceActorId.getNodeActorId() != 0);
-    }
+    inline Event() noexcept : EventBase(0, 0, 0, 0) { assert(sourceActorId.getNodeActorId() != 0); }
     /**
      * @brief Destructor.
      */
     inline ~Event() noexcept {}
 
 private:
-
     friend class AsyncNodesHandle;
     friend class AsyncExceptionHandler;
     friend class EngineToEngineConnector;
     friend class EngineToEngineConnectorEventFactory;
     friend e2econnector::DicoTimer;
-    
+
     friend std::ostream &operator<<(std::ostream &, const Actor::Event::OStreamName &);
     friend std::ostream &operator<<(std::ostream &, const Actor::Event::OStreamContent &);
 
     typedef void (*EventToOStreamFunction)(std::ostream &, const Event &);
-    typedef bool (*EventIsE2ECapableFunction)(const char *&, EventE2ESerializeFunction &, EventE2EDeserializeFunction &);
+    typedef bool (*EventIsE2ECapableFunction)(const char *&, EventE2ESerializeFunction &,
+                                              EventE2EDeserializeFunction &);
     struct RetainedEventId
     {
         const EventId eventId;
         /**
          * throw (std::bad_alloc, UndersizedException)
          */
-        inline RetainedEventId(EventToOStreamFunction peventNameToOStreamFunction,
-                               EventToOStreamFunction peventContentToOStreamFunction,
+        inline RetainedEventId(EventToOStreamFunction    peventNameToOStreamFunction,
+                               EventToOStreamFunction    peventContentToOStreamFunction,
                                EventIsE2ECapableFunction peventIsE2ECapableFunction)
             : eventId(retainEventId(peventNameToOStreamFunction, peventContentToOStreamFunction,
                                     peventIsE2ECapableFunction))
@@ -2271,7 +2216,7 @@ private:
         }
         inline ~RetainedEventId() noexcept { releaseEventId(eventId); }
     };
-    
+
     struct Chain : ForwardChain<0u, Chain>
     {
         inline static Event *getItem(MultiForwardChainLink<Event> *link) noexcept { return static_cast<Event *>(link); }
@@ -2289,12 +2234,14 @@ private:
         }
     };
 
-    static EventId retainEventId(EventToOStreamFunction, EventToOStreamFunction,
-                                 EventIsE2ECapableFunction); // throw (std::bad_alloc)
-    static void releaseEventId(EventId) noexcept;
+    static EventId                  retainEventId(EventToOStreamFunction, EventToOStreamFunction,
+                                                  EventIsE2ECapableFunction); // throw (std::bad_alloc)
+    static void                     releaseEventId(EventId) noexcept;
     static std::pair<bool, EventId> findEventId(const char *) noexcept;
+
 public:
     static AbsoluteEventVector getAbsoluteEventDictionary(void);
+
 private:
     static bool isE2ECapable(EventId, const char *&, EventE2ESerializeFunction &, EventE2EDeserializeFunction &);
     static bool isE2ECapable(const char *, EventId &, EventE2ESerializeFunction &, EventE2EDeserializeFunction &);
@@ -2351,7 +2298,7 @@ private:
  */
 class Actor::Event::Batch
 {
-  public:
+public:
     /**
      * @brief Type used to overload Batch constructor.
      */
@@ -2388,16 +2335,13 @@ class Actor::Event::Batch
      * };
      *
      * MyEvent& firstCycleIteration(tredzone::Actor::Event::Pipe& pipe, tredzone::Actor::Event::Batch& batch) {
-     *     batch = tredzone::Actor::Event::Batch(pipe); // this call initializes batch with respect to a push occurring in
-     * the same event-loop iteration
-     *     return pipe.push<MyEvent>(); // push occurring in the same event-loop iteration as batch initialization
+     *     batch = tredzone::Actor::Event::Batch(pipe); // this call initializes batch with respect to a push occurring
+     * in the same event-loop iteration return pipe.push<MyEvent>(); // push occurring in the same event-loop iteration
+     * as batch initialization
      * }
      *
-     * MyEvent& nextCycleIteration(MyEvent& myCurrentEvent, tredzone::Actor::Event::Pipe& pipe, tredzone::Actor::Event::Batch&
-     * batch) {
-     *     if (batch.isPushCommitted(pipe)) {
-     *         return pipe.push<MyEvent>();
-     *     } else {
+     * MyEvent& nextCycleIteration(MyEvent& myCurrentEvent, tredzone::Actor::Event::Pipe& pipe,
+     * tredzone::Actor::Event::Batch& batch) { if (batch.isPushCommitted(pipe)) { return pipe.push<MyEvent>(); } else {
      *         return myCurrentEvent;
      *     }
      * }
@@ -2408,18 +2352,18 @@ class Actor::Event::Batch
      */
     inline bool isPushCommitted(const Pipe &pipe) noexcept;
 
-  private:
+private:
     friend class AllocatorBase;
 
     uint64_t batchId;
 
-    inline bool checkHasChanged(uint64_t) noexcept;
+    inline bool     checkHasChanged(uint64_t) noexcept;
     inline uint64_t getCurrentBatchId(const Pipe &) noexcept;
-    inline void forceChange(const Pipe &) noexcept;
+    inline void     forceChange(const Pipe &) noexcept;
 
 #ifndef NDEBUG
     typedef uint64_t (*DebugBatchFn)(void *, bool);
-    void *debugContext;
+    void        *debugContext;
     DebugBatchFn debugBatchFn;
     Batch() noexcept;
     Batch(void *, DebugBatchFn) noexcept;
@@ -2444,7 +2388,7 @@ class Actor::Event::Batch
  */
 class Actor::Event::AllocatorBase
 {
-  public:
+public:
     /**
      * @brief Compare 2 allocators based on there contexts.<br>
      * Two allocators with the same contexts can be used indifferently
@@ -2462,7 +2406,7 @@ class Actor::Event::AllocatorBase
      */
     inline bool operator!=(const AllocatorBase &other) const noexcept { return factory != other.factory; }
 
-  protected:
+protected:
     /**
      * @brief Default constructor.
      * @note As explained in the class-description, this constructor should not be used.
@@ -2496,28 +2440,26 @@ class Actor::Event::AllocatorBase
      */
     size_t max_size() const noexcept;
 
-  private:
+private:
     friend class Pipe;
     friend class EngineToEngineConnectorEventFactory;
     struct Factory
     {
         typedef void *(*AllocateFn)(size_t, void *);
         typedef void *(*AllocateAndGetIndexFn)(size_t, void *, uint32_t &, size_t &);
-        void *context; // valid pointer throughout the node lifetime
-        AllocateFn allocateFn;
+        void                 *context; // valid pointer throughout the node lifetime
+        AllocateFn            allocateFn;
         AllocateAndGetIndexFn allocateAndGetIndexFn;
         inline Factory() noexcept
         {
 #ifndef NDEBUG
-            context = 0;
-            allocateFn = 0;
+            context               = 0;
+            allocateFn            = 0;
             allocateAndGetIndexFn = 0;
 #endif
         }
         inline Factory(void *pcontext, AllocateFn pallocateFn, AllocateAndGetIndexFn pallocateAndGetIndexFn) noexcept
-            : context(pcontext),
-              allocateFn(pallocateFn),
-              allocateAndGetIndexFn(pallocateAndGetIndexFn)
+            : context(pcontext), allocateFn(pallocateFn), allocateAndGetIndexFn(pallocateAndGetIndexFn)
         {
         }
     };
@@ -2541,14 +2483,14 @@ class Actor::Event::AllocatorBase
  */
 template <class T> class Actor::Event::Allocator : public Actor::Event::AllocatorBase
 {
-  public:
-    typedef T value_type;              ///< STL-compliant
-    typedef size_t size_type;          ///< STL-compliant
+public:
+    typedef T         value_type;      ///< STL-compliant
+    typedef size_t    size_type;       ///< STL-compliant
     typedef ptrdiff_t difference_type; ///< STL-compliant
-    typedef T *pointer;                ///< STL-compliant
-    typedef const T *const_pointer;    ///< STL-compliant
-    typedef T &reference;              ///< STL-compliant
-    typedef const T &const_reference;  ///< STL-compliant
+    typedef T        *pointer;         ///< STL-compliant
+    typedef const T  *const_pointer;   ///< STL-compliant
+    typedef T        &reference;       ///< STL-compliant
+    typedef const T  &const_reference; ///< STL-compliant
 
     /**
      * @brief STL-compliant.
@@ -2591,10 +2533,10 @@ template <class T> class Actor::Event::Allocator : public Actor::Event::Allocato
      * @brief For STL-compliance. Does not do anything.
      */
     inline void deallocate(pointer, size_type) noexcept {}
-/**
- * @brief STL-compliant.
- */
-    template <class U, class... Args> void construct(U *p, Args &&... args)
+    /**
+     * @brief STL-compliant.
+     */
+    template <class U, class... Args> void construct(U *p, Args &&...args)
     {
         new ((void *)p) U(std::forward<Args>(args)...);
     }
@@ -2630,7 +2572,7 @@ template <class T> class Actor::Event::Allocator : public Actor::Event::Allocato
  */
 class Actor::Event::Pipe
 {
-  public:
+public:
     /**
      * @brief Constructor.
      * @param sourceActor source actor.
@@ -2641,10 +2583,9 @@ class Actor::Event::Pipe
      * @brief Copy constructor.
      * @param other another pipe.
      */
-    inline Pipe(const Pipe &other) noexcept : sourceActor(other.sourceActor),
-                                              destinationActorId(other.destinationActorId),
-                                              asyncNode(other.asyncNode),
-                                              eventFactory(other.eventFactory)
+    inline Pipe(const Pipe &other) noexcept
+        : sourceActor(other.sourceActor), destinationActorId(other.destinationActorId), asyncNode(other.asyncNode),
+          eventFactory(other.eventFactory)
     {
 #ifndef NDEBUG
         ++sourceActor.debugPipeCount;
@@ -2704,7 +2645,7 @@ class Actor::Event::Pipe
     template <class _Event> inline _Event &push()
     {
         EventChain *destinationEventChain;
-        _Event *ret = newEvent<_Event>(destinationEventChain);
+        _Event     *ret = newEvent<_Event>(destinationEventChain);
         destinationEventChain->push_back(ret);
         return *ret;
     }
@@ -2725,21 +2666,22 @@ class Actor::Event::Pipe
      * constructor call.
      */
 
-	template<class _Event, class... _Args> inline _Event& push(_Args&&...args) {
-		EventChain* destinationEventChain;
-		_Event* ret = newEvent<_Event>(destinationEventChain, args...);
-		destinationEventChain->push_back(ret);
-		return *ret;
-	}
+    template <class _Event, class... _Args> inline _Event &push(_Args &&...args)
+    {
+        EventChain *destinationEventChain;
+        _Event     *ret = newEvent<_Event>(destinationEventChain, args...);
+        destinationEventChain->push_back(ret);
+        return *ret;
+    }
 
-    template<class _Event, class _EventInit> inline _Event& push(
-			const _EventInit& eventInit) { // throw (std::bad_alloc, ...)
-		EventChain* destinationEventChain;
-		_Event* ret = newEvent<_Event>(destinationEventChain, eventInit);
-		destinationEventChain->push_back(ret);
+    template <class _Event, class _EventInit> inline _Event &push(const _EventInit &eventInit)
+    { // throw (std::bad_alloc, ...)
+        EventChain *destinationEventChain;
+        _Event     *ret = newEvent<_Event>(destinationEventChain, eventInit);
+        destinationEventChain->push_back(ret);
 
-		return *ret;
-	}
+        return *ret;
+    }
     /**
      * @brief Allocates an array of T entry-type in the current event-batch dedicated memory.
      * @note equivalent to (with less overhead):
@@ -2769,30 +2711,30 @@ class Actor::Event::Pipe
                                                                       eventPageIndex, eventPageOffset));
     }
 
-  private:
+private:
     friend class AllocatorBase;
     friend class Batch;
     friend class BufferedPipe;
     friend class EngineToEngineConnectorEventFactory;
     typedef Event::Chain EventChain;
 
-        template<class _Event>
-        struct EventWrapper: virtual private EventBase, _Event
+    template <class _Event> struct EventWrapper : virtual private EventBase, _Event
+    {
+        inline EventWrapper(const Pipe &eventPipe, route_offset_type routeOffset)
+            : EventBase(Event::getClassId<_Event>(), eventPipe.sourceActor.getActorId(), eventPipe.destinationActorId,
+                        routeOffset)
         {
-            inline
-            EventWrapper(const Pipe& eventPipe, route_offset_type routeOffset)
-                : EventBase(Event::getClassId<_Event>(), eventPipe.sourceActor.getActorId(), eventPipe.destinationActorId, routeOffset)
-            {
-            }
-	
-            template<class... Args>
-            inline
-            EventWrapper(const Pipe& eventPipe, route_offset_type routeOffset, Args&&... args)
-                : EventBase(Event::getClassId<_Event>(), eventPipe.sourceActor.getActorId(), eventPipe.destinationActorId, routeOffset), _Event(args...)
-            {
-            }
-        };
-    
+        }
+
+        template <class... Args>
+        inline EventWrapper(const Pipe &eventPipe, route_offset_type routeOffset, Args &&...args)
+            : EventBase(Event::getClassId<_Event>(), eventPipe.sourceActor.getActorId(), eventPipe.destinationActorId,
+                        routeOffset),
+              _Event(args...)
+        {
+        }
+    };
+
     struct EventFactory : AllocatorBase::Factory
     {
         typedef void *(Pipe::*NewFn)(size_t, EventChain *&, uintptr_t, Event::route_offset_type &);
@@ -2801,26 +2743,24 @@ class Actor::Event::Pipe
 #else
         typedef uint64_t (*BatchFn)(void *);
 #endif
-        NewFn newFn;
+        NewFn   newFn;
         BatchFn batchFn;
         inline EventFactory(void *pcontext, NewFn pnewFn, AllocateFn pallocateFn,
                             AllocateAndGetIndexFn pallocateAndGetIndexFn, BatchFn pbatchFn) noexcept
-            : AllocatorBase::Factory(pcontext, pallocateFn, pallocateAndGetIndexFn),
-              newFn(pnewFn),
-              batchFn(pbatchFn)
+            : AllocatorBase::Factory(pcontext, pallocateFn, pallocateAndGetIndexFn), newFn(pnewFn), batchFn(pbatchFn)
         {
         }
     };
 
-    Actor &sourceActor;
-    ActorId destinationActorId;
-    AsyncNode &asyncNode;
+    Actor       &sourceActor;
+    ActorId      destinationActorId;
+    AsyncNode   &asyncNode;
     EventFactory eventFactory;
 
-    Pipe &operator=(const Pipe &);
+    Pipe               &operator=(const Pipe &);
     inline EventFactory getEventFactory() noexcept;
-    inline void registerProcessOutPipe() noexcept;
-    inline void unregisterProcessOutPipe() noexcept
+    inline void         registerProcessOutPipe() noexcept;
+    inline void         unregisterProcessOutPipe() noexcept
     {
         if (destinationActorId.isInProcess() == false)
         {
@@ -2831,7 +2771,7 @@ class Actor::Event::Pipe
     void *newInProcessEvent(size_t, EventChain *&, uintptr_t, Event::route_offset_type &);    // throw (std::bad_alloc)
     void *newOutOfProcessEvent(size_t, EventChain *&, uintptr_t, Event::route_offset_type &); // throw (std::bad_alloc)
     void *newOutOfProcessEvent(void *, size_t, EventChain *&, uintptr_t,
-                                      Event::route_offset_type &); // throw (std::bad_alloc)
+                               Event::route_offset_type &); // throw (std::bad_alloc)
     void *newOutOfProcessSharedMemoryEvent(size_t, EventChain *&, uintptr_t,
                                            Event::route_offset_type &);                       // throw (std::bad_alloc)
     static void *allocateInProcessEvent(size_t, void *);                                      // throw (std::bad_alloc)
@@ -2848,20 +2788,21 @@ class Actor::Event::Pipe
     template <class _Event> inline _Event *newEvent(EventChain *&destinationEventChain)
     { // throw (std::bad_alloc, ...)
         Event::route_offset_type routeOffset = 0;
-        _Event *ret =
+        _Event                  *ret =
             new ((this->*eventFactory.newFn)(sizeof(EventWrapper<_Event>), destinationEventChain,
-                                             (uintptr_t) static_cast<Event *>((EventWrapper<_Event> *)0), routeOffset))
+                                             (uintptr_t)static_cast<Event *>((EventWrapper<_Event> *)0), routeOffset))
                 EventWrapper<_Event>(*this, routeOffset);
         return ret;
     }
-	template<class _Event, class... Args> inline _Event* newEvent(EventChain*& destinationEventChain, Args&&...args) { // throw (std::bad_alloc, ...)
-		Event::route_offset_type routeOffset = 0;
-		_Event* ret = new (
-				(this->*eventFactory.newFn)(sizeof(EventWrapper<_Event> ),
-						destinationEventChain, (uintptr_t)static_cast<Event*>((EventWrapper<_Event>*)0), routeOffset)) EventWrapper<_Event>(*this,
-				routeOffset, args...);
-		return ret;
-	}
+    template <class _Event, class... Args> inline _Event *newEvent(EventChain *&destinationEventChain, Args &&...args)
+    { // throw (std::bad_alloc, ...)
+        Event::route_offset_type routeOffset = 0;
+        _Event                  *ret =
+            new ((this->*eventFactory.newFn)(sizeof(EventWrapper<_Event>), destinationEventChain,
+                                             (uintptr_t)static_cast<Event *>((EventWrapper<_Event> *)0), routeOffset))
+                EventWrapper<_Event>(*this, routeOffset, args...);
+        return ret;
+    }
 };
 
 /**
@@ -2891,9 +2832,8 @@ class Actor::Event::Pipe
  * class MyEvent : public tredzone::Actor::Event {
  * };
  *
- * void atomicPush(tredzone::Actor& source, const tredzone::Actor::ActorId& firstDestination, const tredzone::Actor::ActorId&
- * secondDestination) {
- *     Actor::Event::BufferedPipe bufferedPipe(source, firstDestination);
+ * void atomicPush(tredzone::Actor& source, const tredzone::Actor::ActorId& firstDestination, const
+ * tredzone::Actor::ActorId& secondDestination) { Actor::Event::BufferedPipe bufferedPipe(source, firstDestination);
  *     bufferedPipe.push<MyEvent>(); // creates and stores the event, without actually pushing it
  *     Actor::Event::Pipe(source, secondDestination).push<MyEvent>(); // if this push throws an exception, the
  * buffered-pipe stored event will not be released, hense not actually pushed
@@ -2905,7 +2845,7 @@ class Actor::Event::Pipe
  */
 class Actor::Event::BufferedPipe : public Actor::Event::Pipe
 {
-  public:
+public:
     /**
      * @brief Thrown if stored events are no more valid due to
      * internal BufferedPipe batch-control.
@@ -2924,9 +2864,7 @@ class Actor::Event::BufferedPipe : public Actor::Event::Pipe
      * @param destinationActorId destination actor-id.
      */
     inline BufferedPipe(Actor &asyncActor, const ActorId &destinationActorId) noexcept
-        : Pipe(asyncActor, destinationActorId),
-          batch(*this),
-          destinationEventChain(0)
+        : Pipe(asyncActor, destinationActorId), batch(*this), destinationEventChain(0)
     {
     }
     /**
@@ -3046,10 +2984,10 @@ class Actor::Event::BufferedPipe : public Actor::Event::Pipe
         batch.isPushCommitted(*this);
     }
 
-  private:
-    Batch batch;
+private:
+    Batch       batch;
     EventChain *destinationEventChain;
-    EventChain eventChain;
+    EventChain  eventChain;
 
     BufferedPipe(const BufferedPipe &);
     BufferedPipe &operator=(const BufferedPipe &);
@@ -3088,8 +3026,7 @@ template <class _Callback> void Actor::registerPerformanceNeutralCallback(_Callb
     registerPerformanceNeutralCallback(StaticCallbackHandler<_Callback>::onCallback, callback);
 }
 
-template <class _Event, class _EventHandler>
-void Actor::registerEventHandler(_EventHandler &eventHandler)
+template <class _Event, class _EventHandler> void Actor::registerEventHandler(_EventHandler &eventHandler)
 {
     if (isRegisteredEventHandler<_Event>())
     {
@@ -3099,8 +3036,7 @@ void Actor::registerEventHandler(_EventHandler &eventHandler)
                                      StaticEventHandler<_Event, _EventHandler>::onEvent);
 }
 
-template <class _Event, class _EventHandler>
-void Actor::registerUndeliveredEventHandler(_EventHandler &eventHandler)
+template <class _Event, class _EventHandler> void Actor::registerUndeliveredEventHandler(_EventHandler &eventHandler)
 {
     if (isRegisteredUndeliveredEventHandler<_Event>())
     {
@@ -3130,20 +3066,20 @@ template <class _Event> bool Actor::isRegisteredUndeliveredEventHandler() const 
     return isRegisteredUndeliveredEventHandler(Event::getClassId<_Event>());
 }
 
-template <class _Actor>
-Actor::ActorReference<_Actor> Actor::referenceLocalActor(const ActorId &pactorId)
+template <class _Actor> Actor::ActorReference<_Actor> Actor::referenceLocalActor(const ActorId &pactorId)
 {
     TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), pactorId, "null")
-    
-    return ActorReference<_Actor>(*this, dynamic_cast<_Actor &>(getReferenceToLocalActor(pactorId)), false);
+
+        return ActorReference<_Actor>(*this, dynamic_cast<_Actor &>(getReferenceToLocalActor(pactorId)), false);
 }
 
 template <class _Actor> Actor::ActorReference<_Actor> Actor::newReferencedActor()
 {
     _Actor &actor = newActor<_Actor>(*asyncNode);
-    
-    TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
-    
+
+    TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId,
+             cppDemangledTypeInfoName(typeid(actor)))
+
     try
     {
         return ActorReference<_Actor>(*this, actor);
@@ -3160,8 +3096,9 @@ Actor::ActorReference<_Actor> Actor::newReferencedActor(const _ActorInit &init)
 {
     _Actor &actor = newActor<_Actor>(*asyncNode, init);
 
-    TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
-    
+    TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId,
+             cppDemangledTypeInfoName(typeid(actor)))
+
     try
     {
         return ActorReference<_Actor>(*this, actor);
@@ -3176,14 +3113,15 @@ Actor::ActorReference<_Actor> Actor::newReferencedActor(const _ActorInit &init)
 template <class _Actor> Actor::ActorReference<_Actor> Actor::newReferencedSingletonActor()
 {
     SingletonActorIndex singletonActorIndex = getSingletonActorIndex<_Actor>();
-    Actor *actor = getSingletonActor(singletonActorIndex);
+    Actor              *actor               = getSingletonActor(singletonActorIndex);
     if (actor != 0)
     {
         assert(dynamic_cast<_Actor *>(actor) != 0);
 
-        TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor->actorId, cppDemangledTypeInfoName(typeid(*actor)))
-        
-        return ActorReference<_Actor>(*this, static_cast<_Actor &>(*actor));
+        TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor->actorId,
+                 cppDemangledTypeInfoName(typeid(*actor)))
+
+            return ActorReference<_Actor>(*this, static_cast<_Actor &>(*actor));
     }
     reserveSingletonActor(singletonActorIndex);
     try
@@ -3199,28 +3137,29 @@ template <class _Actor> Actor::ActorReference<_Actor> Actor::newReferencedSingle
     }
 }
 
-template<class _Actor>
-const Actor::ActorId& Actor::newUnreferencedActor()
+template <class _Actor> const Actor::ActorId &Actor::newUnreferencedActor()
 {
-	_Actor& actor = newActor<_Actor>(*asyncNode);
+    _Actor &actor = newActor<_Actor>(*asyncNode);
 
-    TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
-    
-	return actor.getActorId();
+    TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId,
+             cppDemangledTypeInfoName(typeid(actor)))
+
+        return actor.getActorId();
 }
 
 template <class _Actor, class _ActorInit>
 Actor::ActorReference<_Actor> Actor::newReferencedSingletonActor(const _ActorInit &init)
 {
     SingletonActorIndex singletonActorIndex = getSingletonActorIndex<_Actor>();
-    Actor *actor = getSingletonActor(singletonActorIndex);
+    Actor              *actor               = getSingletonActor(singletonActorIndex);
     if (actor != 0)
     {
         assert(dynamic_cast<_Actor *>(actor) != 0);
-        
-        TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor->actorId, cppDemangledTypeInfoName(typeid(*actor)))
-        
-        return ActorReference<_Actor>(*this, static_cast<_Actor &>(*actor));
+
+        TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor->actorId,
+                 cppDemangledTypeInfoName(typeid(*actor)))
+
+            return ActorReference<_Actor>(*this, static_cast<_Actor &>(*actor));
     }
     reserveSingletonActor(singletonActorIndex);
     try
@@ -3236,69 +3175,69 @@ Actor::ActorReference<_Actor> Actor::newReferencedSingletonActor(const _ActorIni
     }
 }
 
-template<class _Actor, class _ActorInit>
-const Actor::ActorId& Actor::newUnreferencedActor(const _ActorInit& init)
+template <class _Actor, class _ActorInit> const Actor::ActorId &Actor::newUnreferencedActor(const _ActorInit &init)
 {
-	_Actor& actor = newActor<_Actor>(*asyncNode, init);
+    _Actor &actor = newActor<_Actor>(*asyncNode, init);
 
-    TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId, cppDemangledTypeInfoName(typeid(actor)))
-    
-	return actor.getActorId();
+    TraceREF(getAsyncNode(), __func__, actorId, cppDemangledTypeInfoName(typeid(*this)), actor.actorId,
+             cppDemangledTypeInfoName(typeid(actor)))
+
+        return actor.getActorId();
 }
 
 // static
-template <class _Actor>
-_Actor& Actor::newActor(AsyncNode &asyncNode)
+template <class _Actor> _Actor &Actor::newActor(AsyncNode &asyncNode)
 {
     // placement new
     auto *inst = new (AllocatorBase(asyncNode).allocate(sizeof(ActorWrapper<_Actor>))) ActorWrapper<_Actor>(asyncNode);
-    
+
     // inst->onAdded(asyncNode);
-    
+
     return *inst;
 }
 
 // static
-template <class _Actor, class _ActorInit>
-_Actor& Actor::newActor(AsyncNode &asyncNode, const _ActorInit &init)
+template <class _Actor, class _ActorInit> _Actor &Actor::newActor(AsyncNode &asyncNode, const _ActorInit &init)
 {
-    auto *inst = new (AllocatorBase(asyncNode).allocate(sizeof(ActorWrapper<_Actor>))) ActorWrapper<_Actor>(asyncNode, init);
-    
+    auto *inst =
+        new (AllocatorBase(asyncNode).allocate(sizeof(ActorWrapper<_Actor>))) ActorWrapper<_Actor>(asyncNode, init);
+
     // inst->onAdded(asyncNode);
-    
+
     return *inst;
 }
 
 const char *Actor::Event::newCString(const AllocatorBase &a, const char *s)
 {
-    size_t sz = std::strlen(s) + 1;
-    char *ret = Allocator<char>(a).allocate(sz);
+    size_t sz  = std::strlen(s) + 1;
+    char  *ret = Allocator<char>(a).allocate(sz);
     std::memcpy(ret, s, sz);
     return ret;
 }
 
 const char *Actor::Event::newCString(const AllocatorBase &a, const Actor::string_type &s)
 {
-    size_t sz = s.size() + 1;
-    char *ret = Allocator<char>(a).allocate(sz);
+    size_t sz  = s.size() + 1;
+    char  *ret = Allocator<char>(a).allocate(sz);
     std::memcpy(ret, s.c_str(), sz);
     return ret;
 }
 
 const char *Actor::Event::newCString(const AllocatorBase &a, const Actor::ostringstream_type &s)
 {
-    size_t sz = s.size() + 1;
-    char *ret = Allocator<char>(a).allocate(sz);
+    size_t sz  = s.size() + 1;
+    char  *ret = Allocator<char>(a).allocate(sz);
     std::memcpy(ret, s.c_str(), sz);
     return ret;
 }
 
 Actor::Event::AllocatorBase::AllocatorBase() noexcept : factory(0) {}
 
-Actor::Event::AllocatorBase::AllocatorBase(const Pipe &peventPipe) noexcept : factory(&peventPipe.eventFactory)
+Actor::Event::AllocatorBase::AllocatorBase(const Pipe &peventPipe) noexcept
+    : factory(&peventPipe.eventFactory)
 #ifndef NDEBUG
-                                                                                       ,
-                                                                                   debugEventBatch(peventPipe)
+      ,
+      debugEventBatch(peventPipe)
 #endif
 {
 }
@@ -3306,10 +3245,9 @@ Actor::Event::AllocatorBase::AllocatorBase(const Pipe &peventPipe) noexcept : fa
 Actor::Event::AllocatorBase::AllocatorBase(const Factory &pfactory) noexcept : factory(&pfactory) {}
 
 #ifndef NDEBUG
-Actor::Event::AllocatorBase::AllocatorBase(const Factory &pfactory,
-                                                Actor::Event::Batch::DebugBatchFn pdebugBatchFn) noexcept
-    : factory(&pfactory),
-      debugEventBatch(pfactory.context, pdebugBatchFn)
+Actor::Event::AllocatorBase::AllocatorBase(const Factory                    &pfactory,
+                                           Actor::Event::Batch::DebugBatchFn pdebugBatchFn) noexcept
+    : factory(&pfactory), debugEventBatch(pfactory.context, pdebugBatchFn)
 {
 }
 #endif
@@ -3336,11 +3274,11 @@ void *Actor::Event::AllocatorBase::allocate(size_t sz, uint32_t &eventPageIndex,
     return (*factory->allocateAndGetIndexFn)(sz, factory->context, eventPageIndex, eventPageOffset);
 }
 
-Actor::Event::Batch::Batch(const Pipe &eventPipe) noexcept : batchId(getCurrentBatchId(eventPipe))
+Actor::Event::Batch::Batch(const Pipe &eventPipe) noexcept
+    : batchId(getCurrentBatchId(eventPipe))
 #ifndef NDEBUG
-                                                                      ,
-                                                                  debugContext(eventPipe.eventFactory.context),
-                                                                  debugBatchFn(eventPipe.eventFactory.batchFn)
+      ,
+      debugContext(eventPipe.eventFactory.context), debugBatchFn(eventPipe.eventFactory.batchFn)
 #endif
 {
 }
@@ -3348,9 +3286,8 @@ Actor::Event::Batch::Batch(const Pipe &eventPipe) noexcept : batchId(getCurrentB
 Actor::Event::Batch::Batch(const Pipe &eventPipe, IsPushCommittedTrueEnum) noexcept
     : batchId(getCurrentBatchId(eventPipe))
 #ifndef NDEBUG
-          ,
-      debugContext(eventPipe.eventFactory.context),
-      debugBatchFn(eventPipe.eventFactory.batchFn)
+      ,
+      debugContext(eventPipe.eventFactory.context), debugBatchFn(eventPipe.eventFactory.batchFn)
 #endif
 {
     Batch::forceChange(eventPipe);
@@ -3371,14 +3308,14 @@ uint64_t Actor::Event::Batch::getCurrentBatchId(const Pipe &eventPipe) noexcept
                                              ,
                                              true
 #endif
-                                             );
+    );
 }
 
 bool Actor::Event::Batch::isPushCommitted(const Pipe &eventPipe) noexcept
 {
     uint64_t currentBatchId = getCurrentBatchId(eventPipe);
-    bool ret = checkHasChanged(currentBatchId);
-    batchId = currentBatchId;
+    bool     ret            = checkHasChanged(currentBatchId);
+    batchId                 = currentBatchId;
     return ret;
 }
 
@@ -3386,10 +3323,7 @@ bool Actor::Event::Batch::isPushCommitted(const Pipe &eventPipe) noexcept
  * @brief Force the next call to isNewPushRequired() to return true.
  * @param eventPipe event Pipe to verify
  */
-void Actor::Event::Batch::forceChange(const Pipe &eventPipe) noexcept
-{
-    batchId = getCurrentBatchId(eventPipe) - 1;
-}
+void Actor::Event::Batch::forceChange(const Pipe &eventPipe) noexcept { batchId = getCurrentBatchId(eventPipe) - 1; }
 
 inline std::ostream &operator<<(std::ostream &os, const Actor::ActorId::RouteIdComparable &routeIdComparable)
 {
@@ -3426,16 +3360,13 @@ inline std::ostream &operator<<(std::ostream &os, const Actor::Event &event)
     return os << Actor::Event::OStreamName(event) << '{' << Actor::Event::OStreamContent(event) << '}';
 }
 
-inline std::ostream &operator<<(std::ostream &s, const Actor::property_type::Collection &p)
-{
-    return p.toOStream(s);
-}
+inline std::ostream &operator<<(std::ostream &s, const Actor::property_type::Collection &p) { return p.toOStream(s); }
 
 inline std::ostream &operator<<(std::ostream &s, const Actor::Event::property_type::Collection &p)
 {
     return p.toOStream(s);
 }
-}
+} // namespace tredzone
 
 #include <functional>
 namespace std
@@ -3447,5 +3378,4 @@ template <> struct hash<tredzone::Actor::ActorId>
         return static_cast<size_t>(actorId.getNodeId()) + static_cast<size_t>(actorId.getNodeActorId()) * 100;
     }
 };
-}
-
+} // namespace std

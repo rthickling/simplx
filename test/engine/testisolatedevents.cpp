@@ -19,34 +19,48 @@
 
 namespace
 {
+using isolated_test::Config;
 using tredzone::Actor;
 using tredzone::Engine;
-using isolated_test::Config;
-using Clock = std::chrono::steady_clock;
+using Clock       = std::chrono::steady_clock;
 using Nanoseconds = std::chrono::nanoseconds;
 using namespace std::chrono_literals;
 
-constexpr unsigned workerCount = 3;
-constexpr unsigned laneA = 0;
-constexpr unsigned laneB = 1;
-constexpr unsigned laneHK = 2;
-constexpr unsigned burstSize = 1024;
-constexpr unsigned window = 128;
-constexpr auto phaseTimeout = 15s;
+constexpr unsigned workerCount  = 3;
+constexpr unsigned laneA        = 0;
+constexpr unsigned laneB        = 1;
+constexpr unsigned laneHK       = 2;
+constexpr unsigned burstSize    = 1024;
+constexpr unsigned window       = 128;
+constexpr auto     phaseTimeout = 15s;
 
-enum class Phase { waiting, first, burst, secondBurst, reusedBurst, stalled, pipeline, paced, rejected, shutdown, restart, count };
-constexpr auto phaseCount = static_cast<std::size_t>(Phase::count);
-constexpr std::array phaseNames{"waiting", "first_after_idle", "burst", "second_burst", "reused_burst",
-                                "stalled_receiver", "pipeline", "paced", "return_to_sender",
-                                "shutdown_with_pending", "restart"};
+enum class Phase
+{
+    waiting,
+    first,
+    burst,
+    secondBurst,
+    reusedBurst,
+    stalled,
+    pipeline,
+    paced,
+    rejected,
+    shutdown,
+    restart,
+    count
+};
+constexpr auto       phaseCount = static_cast<std::size_t>(Phase::count);
+constexpr std::array phaseNames{"waiting",          "first_after_idle",      "burst",    "second_burst",
+                                "reused_burst",     "stalled_receiver",      "pipeline", "paced",
+                                "return_to_sender", "shutdown_with_pending", "restart"};
 static_assert(phaseNames.size() == phaseCount);
 
 struct Stream
 {
-    unsigned total = 0;
-    std::atomic<unsigned> sent{0};
-    std::atomic<unsigned> received{0};
-    std::atomic<unsigned> returned{0};
+    unsigned                      total = 0;
+    std::atomic<unsigned>         sent{0};
+    std::atomic<unsigned>         received{0};
+    std::atomic<unsigned>         returned{0};
     std::vector<Nanoseconds::rep> latency;
     std::vector<Nanoseconds::rep> scheduledLatency;
 };
@@ -54,7 +68,7 @@ struct Stream
 struct Progress
 {
     Clock::time_point previous{};
-    Nanoseconds maxGap{};
+    Nanoseconds       maxGap{};
 
     void update(Clock::time_point now)
     {
@@ -67,15 +81,15 @@ struct Progress
 struct Work
 {
     std::array<std::array<Stream, workerCount>, workerCount> streams;
-    std::array<Progress, workerCount> progress;
-    Clock::time_point start;
-    Nanoseconds duration{0};
-    unsigned peakPending = 0;
+    std::array<Progress, workerCount>                        progress;
+    Clock::time_point                                        start;
+    Nanoseconds                                              duration{0};
+    unsigned                                                 peakPending = 0;
 
     void setStream(unsigned source, unsigned destination, unsigned count, bool pace = false)
     {
         Stream &stream = streams[source][destination];
-        stream.total = count;
+        stream.total   = count;
         stream.latency.resize(count);
         if (pace)
             stream.scheduledLatency.resize(count);
@@ -107,8 +121,8 @@ struct Work
             for (const Stream &stream : outgoing)
             {
                 const unsigned sent = stream.sent.load(std::memory_order_acquire);
-                const unsigned resolved = stream.received.load(std::memory_order_acquire) +
-                                          stream.returned.load(std::memory_order_acquire);
+                const unsigned resolved =
+                    stream.received.load(std::memory_order_acquire) + stream.returned.load(std::memory_order_acquire);
                 pending += sent > resolved ? sent - resolved : 0;
             }
         peakPending = std::max(peakPending, pending);
@@ -117,25 +131,25 @@ struct Work
 
 struct WorkerLocation
 {
-    pid_t tid = -1;
-    int cpu = -1;
-    int policy = -1;
-    int priority = -1;
+    pid_t tid      = -1;
+    int   cpu      = -1;
+    int   policy   = -1;
+    int   priority = -1;
 };
 
 struct Shared
 {
     std::array<Actor::ActorId, workerCount> ids;
     std::array<WorkerLocation, workerCount> locations;
-    std::array<Work, phaseCount> phases;
+    std::array<Work, phaseCount>            phases;
 #ifdef SIMPLX_TEST_EVENT_PAGE_COUNTS
     std::array<tredzone::detail::EventPageCounts, workerCount> eventPages{};
 #endif
-    std::atomic<Phase> active{Phase::waiting};
-    std::atomic<unsigned> ready{0};
-    std::atomic<bool> receiverHeld{false};
-    std::atomic<bool> releaseReceiver{false};
-    std::atomic<bool> destructionRequested{false};
+    std::atomic<Phase>        active{Phase::waiting};
+    std::atomic<unsigned>     ready{0};
+    std::atomic<bool>         receiverHeld{false};
+    std::atomic<bool>         releaseReceiver{false};
+    std::atomic<bool>         destructionRequested{false};
     std::atomic<const char *> failure{nullptr};
 
     Work &work(Phase phase) { return phases[static_cast<std::size_t>(phase)]; }
@@ -160,11 +174,11 @@ constexpr std::uint8_t byteAt(unsigned source, unsigned sequence, std::size_t of
 
 template <std::size_t size> struct Message : Actor::Event
 {
-    Phase phase;
-    unsigned source;
-    unsigned sequence;
-    Clock::time_point sentAt;
-    Clock::time_point scheduledAt;
+    Phase                          phase;
+    unsigned                       source;
+    unsigned                       sequence;
+    Clock::time_point              sentAt;
+    Clock::time_point              scheduledAt;
     std::array<std::uint8_t, size> payload;
 
     Message(Phase phase, unsigned source, unsigned sequence, Clock::time_point sentAt, Clock::time_point scheduledAt)
@@ -181,10 +195,10 @@ struct Rejected : Actor::Event
 
 class Worker : public Actor, public Actor::Callback
 {
-  public:
+public:
     struct Init
     {
-        Shared &shared;
+        Shared  &shared;
         unsigned lane;
     };
 
@@ -201,10 +215,7 @@ class Worker : public Actor, public Actor::Callback
     }
 
 #ifdef SIMPLX_TEST_EVENT_PAGE_COUNTS
-    ~Worker() override
-    {
-        shared.eventPages[lane] = tredzone::detail::currentEventPageCounts();
-    }
+    ~Worker() override { shared.eventPages[lane] = tredzone::detail::currentEventPageCounts(); }
 #endif
 
     void onCallback() noexcept
@@ -213,8 +224,8 @@ class Worker : public Actor, public Actor::Callback
         {
             announced = true;
             sched_param scheduling{};
-            const bool havePriority = sched_getparam(0, &scheduling) == 0;
-            shared.locations[lane] = {gettid(), sched_getcpu(), sched_getscheduler(0),
+            const bool  havePriority = sched_getparam(0, &scheduling) == 0;
+            shared.locations[lane]   = {gettid(), sched_getcpu(), sched_getscheduler(0),
                                       havePriority ? scheduling.sched_priority : -1};
             shared.ready.fetch_add(1);
         }
@@ -242,8 +253,8 @@ class Worker : public Actor, public Actor::Callback
             shared.fail("incorrect Event source or destination");
             return;
         }
-        Work &work = shared.work(message.phase);
-        Stream &stream = work.streams[message.source][lane];
+        Work          &work     = shared.work(message.phase);
+        Stream        &stream   = work.streams[message.source][lane];
         const unsigned expected = stream.received.load(std::memory_order_relaxed);
         if (message.sequence != expected || expected >= stream.total)
         {
@@ -258,7 +269,8 @@ class Worker : public Actor, public Actor::Callback
             }
         stream.latency[expected] = std::chrono::duration_cast<Nanoseconds>(now - message.sentAt).count();
         if (!stream.scheduledLatency.empty())
-            stream.scheduledLatency[expected] = std::chrono::duration_cast<Nanoseconds>(now - message.scheduledAt).count();
+            stream.scheduledLatency[expected] =
+                std::chrono::duration_cast<Nanoseconds>(now - message.scheduledAt).count();
         stream.received.store(expected + 1, std::memory_order_release);
 
         if (message.phase == Phase::pipeline && lane != laneA)
@@ -277,10 +289,7 @@ class Worker : public Actor, public Actor::Callback
         }
     }
 
-    void onEvent(const Rejected &)
-    {
-        throw Actor::ReturnToSenderException();
-    }
+    void onEvent(const Rejected &) { throw Actor::ReturnToSenderException(); }
 
     template <std::size_t size> void onUndeliveredEvent(const Message<size> &)
     {
@@ -295,11 +304,11 @@ class Worker : public Actor, public Actor::Callback
             shared.fail("incorrect return-to-sender result");
     }
 
-  private:
-    Shared &shared;
+private:
+    Shared  &shared;
     unsigned lane;
-    bool announced = false;
-    Phase held = Phase::waiting;
+    bool     announced = false;
+    Phase    held      = Phase::waiting;
 
     void onDestroyRequest() noexcept override
     {
@@ -367,29 +376,31 @@ class Worker : public Actor, public Actor::Callback
             return;
         for (unsigned destination = 0; destination < workerCount; ++destination)
         {
-            Stream &stream = work.streams[lane][destination];
+            Stream  &stream   = work.streams[lane][destination];
             unsigned sequence = stream.sent.load(std::memory_order_relaxed);
-            unsigned limit = stream.total;
+            unsigned limit    = stream.total;
             if (sequence >= limit)
                 continue;
             if (phase == Phase::pipeline)
             {
                 const unsigned acknowledged = work.streams[laneHK][laneA].received.load(std::memory_order_acquire);
-                limit = std::min(limit, acknowledged + window);
+                limit                       = std::min(limit, acknowledged + window);
             }
             if (phase == Phase::paced)
             {
                 const auto elapsed = std::chrono::duration_cast<Nanoseconds>(Clock::now() - work.start);
                 // Cap catch-up batches while preserving the same offered schedule in every run.
-                const unsigned due = elapsed >= work.duration
-                    ? stream.total
-                    : 1 + static_cast<unsigned>(elapsed.count() * stream.total / work.duration.count());
+                const unsigned due =
+                    elapsed >= work.duration
+                        ? stream.total
+                        : 1 + static_cast<unsigned>(elapsed.count() * stream.total / work.duration.count());
                 limit = std::min(due, sequence + 32);
             }
             for (; sequence < limit; ++sequence)
             {
                 const auto now = Clock::now();
-                const auto scheduled = phase == Phase::paced ? work.start + work.duration * sequence / stream.total : now;
+                const auto scheduled =
+                    phase == Phase::paced ? work.start + work.duration * sequence / stream.total : now;
                 send(stream, destination, phase, sequence, now, scheduled);
             }
         }
@@ -399,7 +410,7 @@ class Worker : public Actor, public Actor::Callback
 std::unique_ptr<Engine> startEngine(const Config &config, Shared &shared)
 {
     const std::array cpus{config.cpuA, config.cpuB, config.housekeeping};
-    Engine::CoreSet cores;
+    Engine::CoreSet  cores;
     for (unsigned cpu : cpus)
         cores.set(static_cast<Actor::CoreId>(cpu));
     Engine::StartSequence start(cores);
@@ -445,12 +456,12 @@ void ready(Shared &shared, const Config &config, const char *runName)
     if (clock_gettime(CLOCK_MONOTONIC, &now) != 0)
         throw std::runtime_error("unable to read CLOCK_MONOTONIC for READY");
     constexpr std::array roles{"A", "B", "HK"};
-    const std::array cpus{config.cpuA, config.cpuB, config.housekeeping};
+    const std::array     cpus{config.cpuA, config.cpuB, config.housekeeping};
     for (unsigned lane = 0; lane < workerCount; ++lane)
     {
         const auto location = shared.locations[lane];
-        const int priority = lane == laneHK ? 0 : config.fifoPriority;
-        const int policy = priority == 0 ? SCHED_OTHER : SCHED_FIFO;
+        const int  priority = lane == laneHK ? 0 : config.fifoPriority;
+        const int  policy   = priority == 0 ? SCHED_OTHER : SCHED_FIFO;
         if (location.tid <= 0 || location.cpu != static_cast<int>(cpus[lane]) || location.policy != policy ||
             location.priority != priority)
             throw std::runtime_error("an Event worker reported unexpected CPU, scheduler policy, or priority");
@@ -464,10 +475,14 @@ void ready(Shared &shared, const Config &config, const char *runName)
 void drain(Shared &shared, Phase phase)
 {
     Work &work = shared.work(phase);
-    waitFor(shared, phaseNames[static_cast<std::size_t>(phase)], [&] {
-        work.observePending();
-        return work.complete();
-    }, work.duration + phaseTimeout);
+    waitFor(
+        shared, phaseNames[static_cast<std::size_t>(phase)],
+        [&]
+        {
+            work.observePending();
+            return work.complete();
+        },
+        work.duration + phaseTimeout);
 }
 
 void run(Shared &shared, Phase phase)
@@ -478,12 +493,14 @@ void run(Shared &shared, Phase phase)
 
 void verifyHold(Shared &shared, Phase phase, unsigned source, unsigned destination, unsigned expected)
 {
-    Work &work = shared.work(phase);
+    Work   &work   = shared.work(phase);
     Stream &stream = work.streams[source][destination];
-    waitFor(shared, "receiver failed to hold the expected backlog", [&] {
-        work.observePending();
-        return shared.receiverHeld.load() && stream.sent.load(std::memory_order_acquire) == expected;
-    });
+    waitFor(shared, "receiver failed to hold the expected backlog",
+            [&]
+            {
+                work.observePending();
+                return shared.receiverHeld.load() && stream.sent.load(std::memory_order_acquire) == expected;
+            });
     std::this_thread::sleep_for(40ms);
     work.observePending();
     if (stream.received.load(std::memory_order_acquire) != 0)
@@ -495,20 +512,21 @@ void printLatency(const char *prefix, std::vector<Nanoseconds::rep> &samples)
     if (samples.empty())
         return;
     std::ranges::sort(samples);
-    const auto percentile = [&](std::size_t thousandths) {
+    const auto percentile = [&](std::size_t thousandths)
+    {
         const auto rank = (samples.size() * thousandths + 999) / 1000;
         return samples[rank - 1];
     };
-    std::cout << ' ' << prefix << "_p50_ns=" << percentile(500) << ' ' << prefix << "_p99_ns=" << percentile(990)
-              << ' ' << prefix << "_p999_ns=" << percentile(999) << ' ' << prefix << "_max_ns=" << samples.back();
+    std::cout << ' ' << prefix << "_p50_ns=" << percentile(500) << ' ' << prefix << "_p99_ns=" << percentile(990) << ' '
+              << prefix << "_p999_ns=" << percentile(999) << ' ' << prefix << "_max_ns=" << samples.back();
 }
 
 void report(Phase phase, Shared &shared)
 {
-    Work &work = shared.work(phase);
-    unsigned sent = 0;
-    unsigned received = 0;
-    unsigned returned = 0;
+    Work                         &work     = shared.work(phase);
+    unsigned                      sent     = 0;
+    unsigned                      received = 0;
+    unsigned                      returned = 0;
     std::vector<Nanoseconds::rep> latencies;
     std::vector<Nanoseconds::rep> scheduled;
     for (const auto &outgoing : work.streams)
@@ -520,7 +538,8 @@ void report(Phase phase, Shared &shared)
             returned += stream.returned.load();
             latencies.insert(latencies.end(), stream.latency.begin(), stream.latency.begin() + delivered);
             if (!stream.scheduledLatency.empty())
-                scheduled.insert(scheduled.end(), stream.scheduledLatency.begin(), stream.scheduledLatency.begin() + delivered);
+                scheduled.insert(scheduled.end(), stream.scheduledLatency.begin(),
+                                 stream.scheduledLatency.begin() + delivered);
         }
     const auto start = std::chrono::duration_cast<Nanoseconds>(work.start.time_since_epoch()).count();
     std::cout << "phase=" << phaseNames[static_cast<std::size_t>(phase)] << " monotonic_start_ns=" << start
@@ -556,7 +575,8 @@ void exercise(const Config &config)
     shared.work(Phase::pipeline).setStream(laneHK, laneA, burstSize);
     Work &paced = shared.work(Phase::paced);
     paced.setAllDirections(config.messages, true);
-    paced.duration = std::max(1ns, std::chrono::duration_cast<Nanoseconds>(std::chrono::duration<double>(config.seconds)));
+    paced.duration =
+        std::max(1ns, std::chrono::duration_cast<Nanoseconds>(std::chrono::duration<double>(config.seconds)));
     shared.work(Phase::rejected).setStream(laneA, laneB, 1);
     shared.work(Phase::shutdown).setStream(laneA, laneB, burstSize);
 
@@ -587,19 +607,20 @@ void exercise(const Config &config)
     verifyHold(shared, Phase::shutdown, laneA, laneB, burstSize);
     const auto stoppedAt = Clock::now();
     {
-        std::jthread releaseAfterDestroyRequest([&] {
-            try
+        std::jthread releaseAfterDestroyRequest(
+            [&]
             {
-                waitFor(shared, "shutdown failed to request actor destruction", [&] {
-                    return shared.destructionRequested.load(std::memory_order_acquire);
-                });
-            }
-            catch (...)
-            {
-                shared.fail("shutdown failed to request actor destruction");
-            }
-            shared.releaseReceiver.store(true);
-        });
+                try
+                {
+                    waitFor(shared, "shutdown failed to request actor destruction",
+                            [&] { return shared.destructionRequested.load(std::memory_order_acquire); });
+                }
+                catch (...)
+                {
+                    shared.fail("shutdown failed to request actor destruction");
+                }
+                shared.releaseReceiver.store(true);
+            });
         engine.reset();
     }
     shared.check();
@@ -614,8 +635,8 @@ void exercise(const Config &config)
     for (unsigned lane = 0; lane < workerCount; ++lane)
     {
         const auto counts = shared.eventPages[lane];
-        std::cout << "worker=" << lane << " fresh_event_pages=" << counts.fresh << " reused_event_pages=" << counts.reused
-                  << '\n';
+        std::cout << "worker=" << lane << " fresh_event_pages=" << counts.fresh
+                  << " reused_event_pages=" << counts.reused << '\n';
         if (counts.fresh == 0 || counts.reused == 0)
             throw std::runtime_error("event-page positive control did not see both branches on every producer");
     }

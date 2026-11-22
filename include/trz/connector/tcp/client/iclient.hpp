@@ -35,14 +35,14 @@ using fd_t = int64_t;
 
 template <class _TNetwork> class IClient
 {
-    public:
+public:
     /**
      * @brief connection parameters
      *
      */
     class ConnectParam
     {
-        public:
+    public:
         string   m_ipAddressSource;
         string   m_ipAddress;
         int64_t  m_addressFamily;
@@ -52,26 +52,26 @@ template <class _TNetwork> class IClient
     };
 
     /**
-     * @brief this exception is thrown when a client registers itself for connection but is already connected or registered for connection
+     * @brief this exception is thrown when a client registers itself for connection but is already connected or
+     * registered for connection
      *
      */
     class AlreadyConnectedException : public exception
     {
-        public:
+    public:
         AlreadyConnectedException(const Actor::ActorId &actorId, const ConnectParam &currentConnectParam)
         {
             ostringstream msg;
             msg << "TcpClient (" << actorId << ") already connected ("
                 << " ipAddress:" << currentConnectParam.m_ipAddress
-                << " addressFamily:" << currentConnectParam.m_addressFamily
-                << " port:" << currentConnectParam.m_port << " timeoutUSec:" << currentConnectParam.m_timeoutUSec
-                << ")";
+                << " addressFamily:" << currentConnectParam.m_addressFamily << " port:" << currentConnectParam.m_port
+                << " timeoutUSec:" << currentConnectParam.m_timeoutUSec << ")";
             m_msg = msg.str();
         }
 
         virtual const char *what() const noexcept { return m_msg.c_str(); }
 
-        private:
+    private:
         string m_msg;
     };
 
@@ -81,7 +81,7 @@ template <class _TNetwork> class IClient
      */
     class NotConnectedException : public exception
     {
-        public:
+    public:
         NotConnectedException(const Actor::ActorId &actorId)
         {
             ostringstream msg;
@@ -91,7 +91,7 @@ template <class _TNetwork> class IClient
 
         virtual const char *what() const noexcept { return m_msg.c_str(); }
 
-        private:
+    private:
         string m_msg;
     };
 
@@ -102,7 +102,7 @@ template <class _TNetwork> class IClient
      */
     class SendBufferFullException : public exception
     {
-        public:
+    public:
         SendBufferFullException(const Actor::ActorId &actorId)
         {
             ostringstream msg;
@@ -112,7 +112,7 @@ template <class _TNetwork> class IClient
 
         virtual const char *what() const noexcept { return m_msg.c_str(); }
 
-        private:
+    private:
         string m_msg;
     };
 
@@ -211,7 +211,7 @@ template <class _TNetwork> class IClient
      * user code must thereafter call directSendBase(...) to actually send data
      *
      * @param data to send
-     * @param blocking flag, if false use a nonblocking send 
+     * @param blocking flag, if false use a nonblocking send
      * @param retry number of retries when the socket would block
      */
     virtual void directSend(const uint8_t data, const bool blocking = false, ssize_t retry = 10) = 0;
@@ -308,14 +308,16 @@ template <class _TNetwork> class IClient
      * @brief Get Auto-Read flag
      *
      * @return true network will automaticaly read any new messages, then trigger onDataReceived() callback
-     * @return false on new message, network will just set MessageToRead flag to true then trigger onNewMessageToReadBase() callback
+     * @return false on new message, network will just set MessageToRead flag to true then trigger
+     * onNewMessageToReadBase() callback
      */
     virtual bool getAutoReadFlag(void) const noexcept = 0;
 
     /**
      * @brief Set the Auto Read flag
      * true: true network will automaticaly read any new messages, then trigger onDataReceived() callback
-     * false: false on new message, network will just set MessageToRead flag to true then trigger onNewMessageToReadBase() callback
+     * false: false on new message, network will just set MessageToRead flag to true then trigger
+     * onNewMessageToReadBase() callback
      *
      * @param autoread flag value
      */
@@ -386,8 +388,8 @@ protected:
     virtual void onDataReceived(const uint8_t *data, size_t dataSize) noexcept = 0;
 
     /**
-     * @brief callback triggered after data is received but its size (according to header) would overflow receiver buffer. 
-     * Method will be called for each data chunk received until entire payload has been received. Hence, 
+     * @brief callback triggered after data is received but its size (according to header) would overflow receiver
+     * buffer. Method will be called for each data chunk received until entire payload has been received. Hence,
      * buffering must be managed by user code itself
      * Next header will be processed normally
      *
@@ -455,7 +457,7 @@ protected:
      */
     virtual size_t shiftBuffer(size_t dataSize) noexcept = 0;
 
-    private:
+private:
     /**
      * @brief low-level callback triggered by network when auto-read flag is false and new message is received
      * updates internal state then calls higher-level onNewMessageToRead()

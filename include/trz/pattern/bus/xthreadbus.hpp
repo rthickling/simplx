@@ -7,12 +7,13 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace xthreadbus {
+namespace xthreadbus
+{
 /**
  * @brief bus singleton containing channels
- * 
- * @tparam _TChannelId 
- * @tparam _MaxSize 
+ *
+ * @tparam _TChannelId
+ * @tparam _MaxSize
  */
 template <class _TChannelId, std::size_t _MaxSize> class XThreadBus
 {
@@ -20,16 +21,16 @@ template <class _TChannelId, std::size_t _MaxSize> class XThreadBus
     std::unordered_set<_TChannelId>                      m_subscribers;
     std::unordered_set<_TChannelId>                      m_publishers;
 
-    public:
+public:
     using Subscriber = typename Channel<_MaxSize>::Subscriber;
     using Publisher  = typename Channel<_MaxSize>::Publisher;
 
     /**
      * @brief Get Subscriber at first call of get
      * create channel if it doesn't exist
-     * 
-     * @param idChannel 
-     * @return Subscriber& 
+     *
+     * @param idChannel
+     * @return Subscriber&
      */
     Subscriber &getSubscriber(_TChannelId idChannel)
     {
@@ -49,13 +50,13 @@ template <class _TChannelId, std::size_t _MaxSize> class XThreadBus
         m_subscribers.emplace(idChannel);
         return it->second->getSubscriber();
     }
-    
+
     /**
      * @brief Get the Publisher at first call of get
      * create channel if it doesn't exist
-     * 
-     * @param idChannel 
-     * @return Publisher& 
+     *
+     * @param idChannel
+     * @return Publisher&
      */
     Publisher &getPublisher(_TChannelId idChannel)
     {
@@ -77,8 +78,8 @@ template <class _TChannelId, std::size_t _MaxSize> class XThreadBus
 
     /**
      * @brief get XThreadBus singleton
-     * 
-     * @return XThreadBus& 
+     *
+     * @return XThreadBus&
      */
     static XThreadBus &get()
     {
@@ -87,9 +88,9 @@ template <class _TChannelId, std::size_t _MaxSize> class XThreadBus
     }
 
     /**
-     * @brief get mutex singleton 
-     * 
-     * @return std::mutex& 
+     * @brief get mutex singleton
+     *
+     * @return std::mutex&
      */
     static std::mutex &mutex()
     {
@@ -97,11 +98,10 @@ template <class _TChannelId, std::size_t _MaxSize> class XThreadBus
         return m_mutex;
     }
 
-    private:
-    XThreadBus()                   = default;
-    ~XThreadBus()                  = default;
-    XThreadBus(const XThreadBus &) = delete;
+private:
+    XThreadBus()                              = default;
+    ~XThreadBus()                             = default;
+    XThreadBus(const XThreadBus &)            = delete;
     XThreadBus &operator=(const XThreadBus &) = delete;
-
 };
 } // namespace xthreadbus

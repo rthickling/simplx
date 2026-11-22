@@ -7,6 +7,6 @@
 
 #pragma once
 
-#define TREDZONE_ENGINE_VERSION_MAJOR 2                     // major version
-#define TREDZONE_ENGINE_VERSION_MINOR 7                     // minor version
-#define TREDZONE_ENGINE_VERSION_PATCH 1                     // patch version
+#define TREDZONE_ENGINE_VERSION_MAJOR 2 // major version
+#define TREDZONE_ENGINE_VERSION_MINOR 7 // minor version
+#define TREDZONE_ENGINE_VERSION_PATCH 1 // patch version

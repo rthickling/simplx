@@ -9,12 +9,10 @@
 #pragma once
 
 #include "trz/connector/tcp/server/iserver.hpp"
-#include <chrono>
 #include <cstdint>
 #include <exception>
 #include <list>
 #include <memory>
-#include <ostream>
 #include <tuple>
 #include <unordered_set>
 
@@ -50,7 +48,7 @@ template <class _TNetwork, class _TServerProcess> class TcpServer : public Actor
 
     using typename IServer<_TNetwork>::ListenParam;
 
-    public:
+public:
     static constexpr int64_t FD_DISCONNECTED = -1;
 
     /**
@@ -151,7 +149,7 @@ template <class _TNetwork, class _TServerProcess> class TcpServer : public Actor
      */
     void setMessageHeaderSize(size_t messageHeaderSize) { m_messageHeaderSize = messageHeaderSize; }
 
-    protected:
+protected:
     friend _TNetwork;
 
     /**
@@ -206,7 +204,7 @@ template <class _TNetwork, class _TServerProcess> class TcpServer : public Actor
      */
     virtual const ListenParam &getListenParam(void) const noexcept override { return m_listenParam; }
 
-    private:
+private:
     /**
      * @brief low-level callback triggered upon accepted new client
      *
@@ -227,7 +225,7 @@ template <class _TNetwork, class _TServerProcess> class TcpServer : public Actor
             ref->setFd(fd);
             ref->setMessageHeaderSize(m_messageHeaderSize);
         }
-        onNewConnection(fd, serverProcessIp, serverProcessActorId);         // call higher-level onNewConnection callback
+        onNewConnection(fd, serverProcessIp, serverProcessActorId); // call higher-level onNewConnection callback
     }
 
     /**
@@ -259,10 +257,10 @@ template <class _TNetwork, class _TServerProcess> class TcpServer : public Actor
     void onListenStoppedBase(void) noexcept override final
     {
         m_fd = FD_DISCONNECTED;
-        onListenStopped();      // call higher-level onListenStopped
+        onListenStopped(); // call higher-level onListenStopped
     }
 
-    protected:
+protected:
     ActorReference<_TNetwork> m_network;
 #if __GNUC__ < 6
     // previous gcc versions don't support custom allocator for unordered_set/map

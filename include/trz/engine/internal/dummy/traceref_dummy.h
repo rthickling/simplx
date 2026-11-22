@@ -10,4 +10,3 @@
 
 // nop
 #define TraceREF(nod_p, container_fn, src_actor_id, src_class_type, dest_actor_id, dest_class_type)
-
