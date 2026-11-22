@@ -46,6 +46,15 @@ include(CheckCXXCompilerFlag)
 find_package(Threads REQUIRED)
 option(SIMPLX_BUILD_TUTORIALS "Build the tutorial executables (do not run them)" ON)
 option(SIMPLX_WARNINGS_AS_ERRORS "Treat warnings in simplx targets as errors" ON)
+option(SIMPLX_BUILD_ISOLATION_TESTS "Build the Linux CPU isolation tests" OFF)
+option(SIMPLX_TEST_EVENT_PAGE_COUNTS "Enable per-worker Event page counts for isolation diagnostics" OFF)
+
+if(SIMPLX_BUILD_ISOLATION_TESTS AND NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(FATAL_ERROR "The isolation tests require Linux CPU affinity and scheduling APIs")
+endif()
+if(SIMPLX_TEST_EVENT_PAGE_COUNTS AND NOT SIMPLX_BUILD_ISOLATION_TESTS)
+    message(FATAL_ERROR "SIMPLX_TEST_EVENT_PAGE_COUNTS requires SIMPLX_BUILD_ISOLATION_TESTS")
+endif()
 
 add_library(simplx_build_options INTERFACE)
 target_compile_definitions(simplx_build_options INTERFACE TREDZONE_E2E=0)
@@ -78,6 +87,9 @@ add_library(engine STATIC
 target_include_directories(engine PUBLIC "${PROJECT_SOURCE_DIR}/include"
                                         "${PROJECT_SOURCE_DIR}")
 target_link_libraries(engine PUBLIC simplx_build_options)
+if(SIMPLX_TEST_EVENT_PAGE_COUNTS)
+    target_compile_definitions(engine PRIVATE SIMPLX_TEST_EVENT_PAGE_COUNTS)
+endif()
 
 add_library(timer STATIC src/pattern/timer/timeractor.cpp)
 target_link_libraries(timer PUBLIC engine)
@@ -114,6 +126,25 @@ if(BUILD_TESTING)
     target_include_directories(clientservertestu.bin PRIVATE
         "${PROJECT_SOURCE_DIR}/test/connector/tcp"
         "${PROJECT_SOURCE_DIR}/test/engine")
+endif()
+
+if(SIMPLX_BUILD_ISOLATION_TESTS)
+    function(simplx_isolation_test name source)
+        add_executable(${name} ${source})
+        target_include_directories(${name} PRIVATE "${PROJECT_SOURCE_DIR}/test")
+        target_link_libraries(${name} PRIVATE engine ${ARGN})
+    endfunction()
+
+    # The launcher supplies the CPU IDs, watchdog, and optional realtime privilege.
+    simplx_isolation_test(testisolatedengine.bin test/engine/testisolatedengine.cpp)
+    simplx_isolation_test(testisolatedevents.bin test/engine/testisolatedevents.cpp)
+    simplx_isolation_test(testisolatedtimer.bin test/engine/testisolatedtimer.cpp timer)
+    simplx_isolation_test(testisolatedtcp.bin test/connector/tcp/testisolatedtcp.cpp)
+    if(SIMPLX_TEST_EVENT_PAGE_COUNTS)
+        target_compile_definitions(testisolatedevents.bin PRIVATE SIMPLX_TEST_EVENT_PAGE_COUNTS)
+    endif()
+    add_custom_target(simplx_isolation_tests DEPENDS
+        testisolatedengine.bin testisolatedevents.bin testisolatedtimer.bin testisolatedtcp.bin)
 endif()
 
 if(SIMPLX_BUILD_TUTORIALS)

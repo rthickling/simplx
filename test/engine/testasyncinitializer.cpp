@@ -149,7 +149,7 @@ void test3()
     bool initDataDestroyedFlag = false;
     {
         Engine::CoreSet coreSet;
-        coreSet.set(0);
+        coreSet.set(testCore(0));
         Test2StartSequence test2StartSequence(std::make_pair(&data, &initDataDestroyedFlag), coreSet);
         test2StartSequence.addActor<Test2Actor>(testCore(0), &onInitializeCount1);
         test2StartSequence.addActor<Test2Actor>(testCore(0), &onInitializeCount2);

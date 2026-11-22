@@ -920,22 +920,30 @@ class Network : public Actor
                 continue;
             // get data to send
             const auto     messageToSend = it1->second->getDataToSend();
-            const uint8_t *dataToSend    = get<0>(messageToSend);
-            const size_t   dataSize      = get<1>(messageToSend);
-            if (dataSize > 0)
+            const uint8_t *dataToSend = get<0>(messageToSend);
+            const size_t dataSize = get<1>(messageToSend);
+            if (dataSize == 0)
+                continue;
+
+            --sendCount;
+            const ssize_t sent = _TNetworkCalls::send(socket, dataToSend, dataSize,
+                                                      _TNetworkCalls::Msg_dontwait | MSG_NOSIGNAL);
+            if (sent > 0)
             {
-                // send data
-                const size_t sentDataSize    = _TNetworkCalls::send(socket, dataToSend, dataSize, 0);
-                const bool   isRemainingData = it1->second->shiftBuffer(sentDataSize) > 0;
-                if (isRemainingData)
-                {
-                    // re-queue socket to send remaining data at next loop iteration
+                if (it1->second->shiftBuffer(static_cast<size_t>(sent)) > 0)
                     m_sendQueue.push(socket);
-                }
-                if (--sendCount == 0)
-                    break;
+            }
+            else if (sent == 0 || errno == EINTR || errno == _TNetworkCalls::Eagain || errno == _TNetworkCalls::Ewouldblock)
+            {
+                m_sendQueue.push(socket);
+            }
+            else
+            {
+                onConnectionLost(socket);
             }
         }
+        if (!m_sendQueue.empty())
+            registerCallbackOnce(m_sendCallback);
     }
 
     /**

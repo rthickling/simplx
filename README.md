@@ -50,6 +50,8 @@ without running interactive examples or long-running servers. The 15 registered
 CTest executables run sequentially because they share CPU affinity and TCP ports.
 A failed build, failed test, timeout or empty test selection fails the command.
 
+For the opt-in Linux tests with pinned workers, see [CPU isolation tests](doc/cpu-isolation.md).
+
 Binaries are under `build/debug/bin` and `build/release/bin`. For pingpong:
 
 ```sh

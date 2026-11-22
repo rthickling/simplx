@@ -290,10 +290,10 @@ void testBasicService()
 {
     TestBasicService::Shared shared;
     TestStartSequence startSequence;
-    startSequence.addServiceActor<TestBasicService::TestService<1>, TestBasicService>(0, &shared);
-    startSequence.addServiceActor<TestBasicService::TestService<2>, TestBasicService::Service2Actor>(0);
+    startSequence.addServiceActor<TestBasicService::TestService<1>, TestBasicService>(testCore(0), &shared);
+    startSequence.addServiceActor<TestBasicService::TestService<2>, TestBasicService::Service2Actor>(testCore(0));
 
-    ASSERT_THROW((startSequence.addServiceActor<TestBasicService::TestService<2>, TestBasicService::Service3Actor>(0)),
+    ASSERT_THROW((startSequence.addServiceActor<TestBasicService::TestService<2>, TestBasicService::Service3Actor>(testCore(0))),
                  Engine::StartSequence::DuplicateServiceException);
 
     startSequence.addServiceActor<TestBasicService::TestService<3>, TestBasicService::Service3Actor>(testCore(0));

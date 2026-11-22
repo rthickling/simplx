@@ -9,12 +9,26 @@
 #include <iostream>
 #include <fstream>
 
+#ifdef SIMPLX_TEST_EVENT_PAGE_COUNTS
+#include "trz/engine/internal/event_page_probe.h"
+#endif
 #include "trz/engine/internal/node.h"
 
 using namespace std;
 
 namespace tredzone
 {
+
+#ifdef SIMPLX_TEST_EVENT_PAGE_COUNTS
+namespace {
+thread_local detail::EventPageCounts eventPageCounts;
+}
+
+detail::EventPageCounts detail::currentEventPageCounts() noexcept
+{
+    return eventPageCounts;
+}
+#endif
 
 #ifndef NDEBUG
 volatile bool AsyncNodeAllocator::debugActivateMemoryLeakBacktraceFlag = false;
@@ -1273,10 +1287,16 @@ void AsyncNodesHandle::Shared::WriteCache::newEventPage()
             new (eventAllocatorPageAllocator.insert(CACHE_LINE_SIZE + eventAllocatorPageSize))
                 AsyncNodesHandle::Shared::EventAllocatorPage(nextEventAllocatorPageIndex));
         ++nextEventAllocatorPageIndex;
+#ifdef SIMPLX_TEST_EVENT_PAGE_COUNTS
+        ++eventPageCounts.fresh;
+#endif
     }
     else
     {
         usedEventAllocatorPageChain.push_front(freeEventAllocatorPageChain.pop_front());
+#ifdef SIMPLX_TEST_EVENT_PAGE_COUNTS
+        ++eventPageCounts.reused;
+#endif
     }
     frontUsedEventAllocatorPageChainOffset = 0;
 }
