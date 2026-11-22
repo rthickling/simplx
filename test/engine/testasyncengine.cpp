@@ -375,7 +375,7 @@ void testAnonymousService()
 void testInvalidCore()
 {
     TestStartSequence startSequence;
-    ASSERT_THROW(startSequence.addActor<TestActor>((tredzone::Engine::CoreId)tredzone::cpuGetCount()), std::runtime_error);
+    ASSERT_THROW(startSequence.addActor<TestActor>((tredzone::Engine::CoreId)tredzone::cpuGetConfiguredCount()), std::runtime_error);
 }
 
 void testUnreleasedMemory()                 // [PL to check]

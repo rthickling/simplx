@@ -774,11 +774,13 @@ public:
                   coreId(pcoreId),
                   isServiceFlag(pisServiceFlag), serviceIndex(pserviceIndex)
             {
-                if (pcoreId >= cpuGetCount())
+                // CoreId is a Linux logical CPU number. Under nosmt those ids are
+                // sparse and may be >= cpuGetCount() (online count).
+                if (pcoreId >= cpuGetConfiguredCount())
                 {
                     std::stringstream sstm;
                     sstm << "Invalid core : " << (int16_t)pcoreId << ". Maximum on this platform is "
-                         << cpuGetCount() - 1;
+                         << cpuGetConfiguredCount() - 1;
                     throw std::runtime_error(sstm.str());
                 }
             }

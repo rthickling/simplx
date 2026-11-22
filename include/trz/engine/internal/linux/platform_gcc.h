@@ -104,6 +104,7 @@ inline void mutexSignalNotify(signal_t &);
 // CPUs
 typedef std::bitset<1024> cpuset_type;
 size_t cpuGetCount();
+size_t cpuGetConfiguredCount();
 // thread
 struct ThreadRealTimeParam
 {

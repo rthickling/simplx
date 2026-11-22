@@ -192,6 +192,16 @@ size_t tredzone::cpuGetCount()
     return (size_t)ret;
 }
 
+size_t tredzone::cpuGetConfiguredCount()
+{
+    long ret;
+    if ((ret = sysconf(_SC_NPROCESSORS_CONF)) == -1)
+    {
+        throw RunTimeException(__FILE__, __LINE__, systemErrorToString(errno));
+    }
+    return (size_t)ret;
+}
+
 tredzone::thread_t tredzone::threadCreate(void (*fn)(void *), void *param, size_t stackSizeBytes)
 {
     struct Callback

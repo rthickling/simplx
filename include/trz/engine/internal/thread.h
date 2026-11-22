@@ -8,7 +8,6 @@
 #pragma once
 
 #include <cassert>
-#include <list>
 
 #include "trz/engine/platform.h"
 #include "trz/engine/internal/macro.h"
@@ -471,7 +470,12 @@ namespace tredzone
 /**
  * @fn size_t cpuGetCount()
  * @brief Get the number of logical cores present on the System as seen my the OS.
- * @return Logical CPU count
+ * @return Online logical CPU count
+ */
+/**
+ * @fn size_t cpuGetConfiguredCount()
+ * @brief Get the number of configured logical CPUs (including offline ones, e.g. under nosmt).
+ * @return Configured logical CPU count; Linux CPU ids are in [0, count).
  */
 
 /**

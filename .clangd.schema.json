@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "clangd config (local)",
+  "description": "Minimal local schema for .clangd; avoids SchemaStore base.json $ref bugs.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "CompileFlags": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "Add": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+        "Remove": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+        "Compiler": { "type": "string" }
+      }
+    },
+    "CompilationDatabase": {
+      "type": "string",
+      "description": "Directory containing compile_commands.json, or an absolute path to that file."
+    },
+    "Diagnostics": { "type": "object", "additionalProperties": true },
+    "Index": { "type": "object", "additionalProperties": true },
+    "If": { "type": "object", "additionalProperties": true }
+  }
+}
