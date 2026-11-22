@@ -19,6 +19,7 @@
 #include <array>
 
 
+#include <sched.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -201,6 +202,46 @@ size_t tredzone::cpuGetConfiguredCount()
     }
     return (size_t)ret;
 }
+
+tredzone::cpuset_type tredzone::cpuGetUsableSet()
+{
+    // CoreId is a Linux logical CPU id. Under nosmt those ids are sparse; only
+    // online CPUs that are also allowed for this process can be used for affinity.
+    cpu_set_t allowed;
+    CPU_ZERO(&allowed);
+    if (sched_getaffinity(0, sizeof(allowed), &allowed) != 0)
+    {
+        throw RunTimeException(__FILE__, __LINE__, systemErrorToString(errno));
+    }
+
+    const size_t configured = cpuGetConfiguredCount();
+    cpuset_type usable;
+    for (size_t i = 0; i < configured && i < CPU_SETSIZE && i < usable.size(); ++i)
+    {
+        if (!CPU_ISSET((int)i, &allowed))
+        {
+            continue;
+        }
+
+        // cpu0 often has no "online" sysfs node and is always online when present.
+        char path[64];
+        std::snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%zu/online", i);
+        if (FILE *f = std::fopen(path, "r"))
+        {
+            char flag = '0';
+            const size_t n = std::fread(&flag, 1, 1, f);
+            std::fclose(f);
+            if (n != 1 || flag != '1')
+            {
+                continue;
+            }
+        }
+
+        usable[i] = true;
+    }
+    return usable;
+}
+
 
 tredzone::thread_t tredzone::threadCreate(void (*fn)(void *), void *param, size_t stackSizeBytes)
 {

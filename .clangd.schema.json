@@ -11,12 +11,12 @@
       "properties": {
         "Add": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
         "Remove": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
-        "Compiler": { "type": "string" }
+        "Compiler": { "type": "string" },
+        "CompilationDatabase": {
+          "type": "string",
+          "description": "Directory containing compile_commands.json, relative to this config file."
+        }
       }
-    },
-    "CompilationDatabase": {
-      "type": "string",
-      "description": "Directory containing compile_commands.json, or an absolute path to that file."
     },
     "Diagnostics": { "type": "object", "additionalProperties": true },
     "Index": { "type": "object", "additionalProperties": true },

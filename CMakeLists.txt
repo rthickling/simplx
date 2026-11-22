@@ -112,7 +112,8 @@ if(BUILD_TESTING)
     simplx_test(circularbuffertestu.bin test/connector/tcp/circularbuffertestu.cpp)
     simplx_test(clientservertestu.bin test/connector/tcp/clientserverbehaviortest.cpp)
     target_include_directories(clientservertestu.bin PRIVATE
-        "${PROJECT_SOURCE_DIR}/test/connector/tcp")
+        "${PROJECT_SOURCE_DIR}/test/connector/tcp"
+        "${PROJECT_SOURCE_DIR}/test/engine")
 endif()
 
 if(SIMPLX_BUILD_TUTORIALS)

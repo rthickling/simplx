@@ -7,6 +7,8 @@
 
 #include "gtest/gtest.h"
 
+#include "testutil.h"
+
 #include "trz/engine/initializer.h"
 
 using namespace tredzone;
@@ -31,16 +33,6 @@ Mutex Test1InitData::mutex;
 
 // typedef InitializerStartSequence<Test1InitData> Test1StartSequence;
 
-struct TestCoreSet : tredzone::Engine::CoreSet
-{
-    TestCoreSet()
-    {
-        for (int i = 0, coreCount = std::min(16, (int)tredzone::cpuGetCount()); i < coreCount; ++i)
-        {
-            set((tredzone::Engine::CoreId)i);
-        }
-    }
-};
 
 struct Test1StartSequence : InitializerStartSequence<Test1InitData>
 {
@@ -86,7 +78,7 @@ void test1()
     bool initDataDestroyedFlag = false;
     {
         Test1StartSequence test1StartSequence(std::make_pair(&data, &initDataDestroyedFlag));
-        test1StartSequence.addActor<Test1Actor>(0, &onInitializeCount);
+        test1StartSequence.addActor<Test1Actor>(testCore(0), &onInitializeCount);
         Engine engine(test1StartSequence);
     }
     ASSERT_TRUE(initDataDestroyedFlag);
@@ -133,10 +125,10 @@ void test2()
     bool initDataDestroyedFlag = false;
     {
         Test2StartSequence test2StartSequence(std::make_pair(&data, &initDataDestroyedFlag));
-        test2StartSequence.addActor<Test2Actor>(0, &onInitializeCount1);
-        test2StartSequence.addActor<Test2Actor>(1, &onInitializeCount2);
-        test2StartSequence.addActor<Test2Actor>(1, &onInitializeCount3);
-        test2StartSequence.addActor<Test2Actor>(0, &onInitializeCount4);
+        test2StartSequence.addActor<Test2Actor>(testCore(0), &onInitializeCount1);
+        test2StartSequence.addActor<Test2Actor>(testCore(1), &onInitializeCount2);
+        test2StartSequence.addActor<Test2Actor>(testCore(1), &onInitializeCount3);
+        test2StartSequence.addActor<Test2Actor>(testCore(0), &onInitializeCount4);
         Engine engine(test2StartSequence);
     }
     ASSERT_TRUE(initDataDestroyedFlag);
@@ -159,10 +151,10 @@ void test3()
         Engine::CoreSet coreSet;
         coreSet.set(0);
         Test2StartSequence test2StartSequence(std::make_pair(&data, &initDataDestroyedFlag), coreSet);
-        test2StartSequence.addActor<Test2Actor>(0, &onInitializeCount1);
-        test2StartSequence.addActor<Test2Actor>(0, &onInitializeCount2);
-        test2StartSequence.addActor<Test2Actor>(0, &onInitializeCount3);
-        test2StartSequence.addActor<Test2Actor>(0, &onInitializeCount4);
+        test2StartSequence.addActor<Test2Actor>(testCore(0), &onInitializeCount1);
+        test2StartSequence.addActor<Test2Actor>(testCore(0), &onInitializeCount2);
+        test2StartSequence.addActor<Test2Actor>(testCore(0), &onInitializeCount3);
+        test2StartSequence.addActor<Test2Actor>(testCore(0), &onInitializeCount4);
         Engine engine(test2StartSequence);
     }
     ASSERT_TRUE(initDataDestroyedFlag);

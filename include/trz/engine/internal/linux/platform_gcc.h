@@ -105,6 +105,8 @@ inline void mutexSignalNotify(signal_t &);
 typedef std::bitset<1024> cpuset_type;
 size_t cpuGetCount();
 size_t cpuGetConfiguredCount();
+/** Online CPUs that are also in this process's affinity mask (nosmt-safe). */
+cpuset_type cpuGetUsableSet();
 // thread
 struct ThreadRealTimeParam
 {

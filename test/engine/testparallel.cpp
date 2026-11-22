@@ -8,6 +8,7 @@
 #include "gtest/gtest.h"
 
 #include <iostream>
+#include <list>
 
 #include "trz/engine/internal/parallel.h"
 

@@ -9,6 +9,8 @@
 
 #include "gtest/gtest.h"
 
+#include "testutil.h"
+
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -52,9 +54,9 @@ void runTest(const int64_t timeoutMs, const int64_t shouldTimeOut = false)
     clientParam.m_ipAddressSource   = "";
 
     Engine::StartSequence startSequence;
-    startSequence.addServiceActor<ValidatorService, ValidatorActor>(3, timeoutMs);
-    startSequence.addActor<_ServerTestClassType>(1, serverParam);
-    startSequence.addActor<_ClientTestClassType>(2, clientParam);
+    startSequence.addServiceActor<ValidatorService, ValidatorActor>(testCore(0), timeoutMs);
+    startSequence.addActor<_ServerTestClassType>(testCore(1), serverParam);
+    startSequence.addActor<_ClientTestClassType>(testCore(2), clientParam);
     Engine             engine(startSequence);
     unique_lock<mutex> lock(g_mutex);
     g_conditionVariable.wait(lock, [] { return g_finished; });

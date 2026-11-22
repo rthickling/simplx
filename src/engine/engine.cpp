@@ -678,14 +678,20 @@ Engine::CoreId Engine::CoreSet::at(NodeId nodeId) const
 
     Engine::FullCoreSet::FullCoreSet()
 {
-    size_t n = cpuGetCount();
-    if (n > (size_t)Actor::MAX_NODE_COUNT)
+    const cpuset_type usable = cpuGetUsableSet();
+    size_t n = 0;
+    for (size_t i = 0; i < usable.size(); ++i)
     {
-        throw TooManyCoresException();
-    }
-    for (size_t i = 0; i < n; ++i)
-    {
+        if (!usable[i])
+        {
+            continue;
+        }
+        if (n >= (size_t)Actor::MAX_NODE_COUNT)
+        {
+            throw TooManyCoresException();
+        }
         set((CoreId)i);
+        ++n;
     }
 }
 

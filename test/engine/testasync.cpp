@@ -36,16 +36,6 @@ struct TestEventLoop : tredzone::EngineCustomEventLoopFactory::EventLoopAutoPoin
     TestEventLoop(tredzone::AsyncNode &asyncNode) : EventLoopAutoPointerNew(asyncNode) {}
 };
 
-struct TestCoreSet : tredzone::Engine::CoreSet
-{
-    TestCoreSet()
-    {
-        for (int i = 0, coreCount = std::min(16, (int)tredzone::cpuGetCount()); i < coreCount; ++i)
-        {
-            set((tredzone::Engine::CoreId)i);
-        }
-    }
-};
 
 class TestInitActor : public tredzone::Actor
 {
@@ -87,7 +77,7 @@ static void testInit()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
     tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
-    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, 0, customEventLoopFactory));
+    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
         TestInitActor &handler1 = node.newActor<TestInitActor>(0);
         tredzone::Actor::ActorId handler1Id = handler1.getActorId();
@@ -341,7 +331,7 @@ void testInitRegisterEventHandler()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
     tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
-    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, 0, customEventLoopFactory));
+    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     node.newActor<TestInitRegisterEventHandler>();
     TestEventLoop testEventLoop(node);
 }
@@ -434,7 +424,7 @@ void testUniNodeEvent()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
     tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
-    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, 0, customEventLoopFactory));
+    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
         TestUniNodeEvent &handler = node.newActor<TestUniNodeEvent>(0);
         tredzone::Actor::Event::Pipe eventPipe(handler, handler);
@@ -579,8 +569,8 @@ void testMultinodeEvent()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
     tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
-    tredzone::AsyncNode node1(tredzone::AsyncNode::Init(nodeManager, 0, customEventLoopFactory));
-    tredzone::AsyncNode node2(tredzone::AsyncNode::Init(nodeManager, 1, customEventLoopFactory));
+    tredzone::AsyncNode node1(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
+    tredzone::AsyncNode node2(tredzone::AsyncNode::Init(nodeManager, testCore(1), customEventLoopFactory));
     {
         TestMultiNodeEvent &handler1 = node1.newActor<TestMultiNodeEvent>(0);
         TestMultiNodeEvent &handler2 = node2.newActor<TestMultiNodeEvent>(0);
@@ -642,7 +632,7 @@ static void testActorReference()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
     tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
-    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, 0, customEventLoopFactory));
+    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
         bool destroyedFlag = false;
         {
@@ -679,7 +669,7 @@ void testStaticActorCircularReference()
 {
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
     tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
-    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, 0, customEventLoopFactory));
+    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
         node.newActor<tredzone::Actor>();
 
@@ -762,7 +752,7 @@ void testOnEventException()
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
     TestOnEventException testOnEventException;
     tredzone::AsyncNodeManager nodeManager(testOnEventException, 1024, TestCoreSet());
-    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, 0, customEventLoopFactory));
+    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(0), customEventLoopFactory));
     {
         TestOnEventExceptionActor &handler = node.newActor<TestOnEventExceptionActor>(0);
 
@@ -794,7 +784,7 @@ void testOnEventException()
 
         _TREDZONE_TEST_EXIT_EXCEPTION_CATCH_BEGIN_
 
-        tredzone::AsyncNode node2(tredzone::AsyncNode::Init(nodeManager, 1, customEventLoopFactory));
+        tredzone::AsyncNode node2(tredzone::AsyncNode::Init(nodeManager, testCore(1), customEventLoopFactory));
         {
             TestOnEventExceptionActor &handler2 = node2.newActor<TestOnEventExceptionActor>(0);
             TestOnEventExceptionActor::ReturnToSenderEvent &event =
@@ -838,7 +828,7 @@ void testNoDestinationPipe()
 
     tredzone::EngineCustomEventLoopFactory customEventLoopFactory;
     tredzone::AsyncNodeManager nodeManager(1024, TestCoreSet());
-    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, 1, customEventLoopFactory));
+    tredzone::AsyncNode node(tredzone::AsyncNode::Init(nodeManager, testCore(1), customEventLoopFactory));
     {
         node.newActor<TestNoDestinationPipe>(&counter);
     }

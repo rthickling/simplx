@@ -78,12 +78,12 @@ void testUndelivered()
 {
     {
         tredzone::Engine::StartSequence startSequence;
-        startSequence.addActor<TestUndeliveredActor>(0);
+        startSequence.addActor<TestUndeliveredActor>(testCore(0));
         tredzone::TestEngine engine(startSequence);
     }
     {
         tredzone::Engine::StartSequence startSequence;
-        startSequence.addActor<TestUndeliveredActor>(0, 0);
+        startSequence.addActor<TestUndeliveredActor>(testCore(0), 0);
         tredzone::TestEngine engine(startSequence);
     }
 }
@@ -168,8 +168,8 @@ void testActorReference()
 {
     bool serviceDestroyedFlag = false;
     tredzone::Engine::StartSequence startSequence;
-    startSequence.addServiceActor<SimpleServiceActor::Tag, SimpleServiceActor>(0, &serviceDestroyedFlag);
-    startSequence.addActor<MyActor>(0, &serviceDestroyedFlag);
+    startSequence.addServiceActor<SimpleServiceActor::Tag, SimpleServiceActor>(testCore(0), &serviceDestroyedFlag);
+    startSequence.addActor<MyActor>(testCore(0), &serviceDestroyedFlag);
     {
         tredzone::Engine engine(startSequence);
     }
@@ -329,10 +329,10 @@ struct ActorMultipleReferenceTest2 : ActorMultipleReferenceTest
 void testActorMultipleReference()
 {
     tredzone::Engine::StartSequence startSequence;
-    startSequence.addServiceActor<ActorMultipleReferenceTest::Tag1, ActorMultipleReferenceTest>(0, 3u);
-    startSequence.addServiceActor<ActorMultipleReferenceTest::Tag2, ActorMultipleReferenceTest2>(0, 2u);
-    startSequence.addServiceActor<ActorMultipleReferenceTest::Tag3, ActorMultipleReferenceTest2>(0, 1u);
-    startSequence.addActor<ActorMultipleReferenceTest>(0);
+    startSequence.addServiceActor<ActorMultipleReferenceTest::Tag1, ActorMultipleReferenceTest>(testCore(0), 3u);
+    startSequence.addServiceActor<ActorMultipleReferenceTest::Tag2, ActorMultipleReferenceTest2>(testCore(0), 2u);
+    startSequence.addServiceActor<ActorMultipleReferenceTest::Tag3, ActorMultipleReferenceTest2>(testCore(0), 1u);
+    startSequence.addActor<ActorMultipleReferenceTest>(testCore(0));
     {
         tredzone::Engine engine(startSequence);
     }
@@ -483,9 +483,9 @@ void testDetectionOfEventLoopEnd(ActorIds &actorIds, const AbstractActorReferenc
     CustumCoreFactory custumCoreFactory(actorIds);
     tredzone::Engine::StartSequence startSequence;
     startSequence.setEngineCustomCoreActorFactory(custumCoreFactory);
-    startSequence.addServiceActor<ActorMultipleReferenceTest::Tag1, ActorIds::Actor>(0, &actorIds);
+    startSequence.addServiceActor<ActorMultipleReferenceTest::Tag1, ActorIds::Actor>(testCore(0), &actorIds);
     startSequence.addActor<TestDetectionOfEventLoopEndActor>(
-        0, TestDetectionOfEventLoopEndActor::Init(&actorIds, &treeFactory));
+        testCore(0), TestDetectionOfEventLoopEndActor::Init(&actorIds, &treeFactory));
     {
         for (tredzone::Engine engine(startSequence); actorIds.canStopEngine() == false; tredzone::threadSleep())
         {
@@ -755,8 +755,8 @@ void testLoopPerformanceCounter(
     TestLoopPerformanceNeutralActor::PerformanceCounters performanceCounters1;
     TestLoopPerformanceNeutralActor::PerformanceCounters performanceCounters2;
     tredzone::Engine::StartSequence startSequence;
-    startSequence.addActor<_ActorCore1>(0, &performanceCounters1);
-    startSequence.addActor<_ActorCore2>(1, &performanceCounters2);
+    startSequence.addActor<_ActorCore1>(testCore(0), &performanceCounters1);
+    startSequence.addActor<_ActorCore2>(testCore(1), &performanceCounters2);
     {
         tredzone::Engine engine(startSequence);
         tredzone::Thread::sleep(tredzone::Time::Second(1));

@@ -23,6 +23,32 @@
 #include "trz/engine/engine.h"
 #include "trz/engine/internal/thread.h"
 
+
+/** CoreSet of up to 16 usable (online ∩ affinity) Linux CPU ids — nosmt-safe. */
+struct TestCoreSet : tredzone::Engine::CoreSet
+{
+    TestCoreSet()
+    {
+        const tredzone::cpuset_type usable = tredzone::cpuGetUsableSet();
+        int added = 0;
+        for (size_t i = 0; i < usable.size() && added < 16; ++i)
+        {
+            if (usable[i])
+            {
+                set((tredzone::Engine::CoreId)i);
+                ++added;
+            }
+        }
+    }
+};
+
+inline tredzone::Engine::CoreId testCore(tredzone::Engine::CoreSet::NodeId index)
+{
+    static const TestCoreSet cores;
+    return cores.at(index);
+}
+
+
 static const char CHAIN_TEST_PREFIX = '+';
 
 inline

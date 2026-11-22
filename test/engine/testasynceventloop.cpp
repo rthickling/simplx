@@ -119,7 +119,7 @@ void testInit()
     TestEventLoopFactory<TestEventLoop> eventLoopFactory;
     TestStartSequence<TestEventLoopFactory<TestEventLoop>> startSequence(eventLoopFactory,
                                                                          eventLoopFactory.eventAllocatorPageSizeByte);
-    startSequence.addActor<Actor>(0);
+    startSequence.addActor<Actor>(testCore(0));
     Engine engine(startSequence);
 }
 
@@ -284,7 +284,7 @@ void testLocalEvent()
         TestEventLoopFactory<TestLocalEventLoop> eventLoopFactory;
         TestStartSequence<TestEventLoopFactory<TestLocalEventLoop>> startSequence(
             eventLoopFactory, eventLoopFactory.eventAllocatorPageSizeByte);
-        startSequence.addActor<TestLocalEventActor>(0, i);
+        startSequence.addActor<TestLocalEventActor>(testCore(0), i);
         Engine engine(startSequence);
     }
 }
@@ -356,8 +356,8 @@ void testCoreToCoreEvent()
         TestEventLoopFactory<TestLocalEventLoop> eventLoopFactory;
         TestStartSequence<TestEventLoopFactory<TestLocalEventLoop>> startSequence(
             eventLoopFactory, eventLoopFactory.eventAllocatorPageSizeByte);
-        startSequence.addActor<TestPongEventActor>(0, TestPongEventActor::Init(i, pongActorId));
-        startSequence.addActor<TestPingEventActor>(1, TestPingEventActor::Init(i, pongActorId));
+        startSequence.addActor<TestPongEventActor>(testCore(0), TestPongEventActor::Init(i, pongActorId));
+        startSequence.addActor<TestPingEventActor>(testCore(1), TestPingEventActor::Init(i, pongActorId));
         Engine engine(startSequence);
     }
 }
@@ -589,8 +589,8 @@ struct TestReturnToSenderInterlaced2PushOperator
 template <class _PushOperator, unsigned _deliveredEventCount, unsigned _undeliveredEventCount>
 void testReturnToSender(bool sameCoreFlag)
 {
-    static const Actor::CoreId FIRST_CORE_ID = 0;
-    static const Actor::CoreId SECOND_CORE_ID = 1;
+    static const Actor::CoreId FIRST_CORE_ID = testCore(0);
+    static const Actor::CoreId SECOND_CORE_ID = testCore(1);
 
     TestReturnToSenderEventLoop::clearCounters();
     TestReturnToSenderEventLoopFactory eventLoopFactory;

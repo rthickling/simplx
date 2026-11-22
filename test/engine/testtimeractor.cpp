@@ -9,6 +9,8 @@
 
 #include "gtest/gtest.h"
 
+#include "testutil.h"
+
 #include "trz/engine/actor.h"
 
 #include "trz/pattern/timer/timerevent.h"
@@ -140,18 +142,11 @@ TestTimerModule::TestTimerModule(const Parameters&) :
 	testMilestoneChain.push_back(new TestMilestone1(*this));
 }
 
-struct TestCoreSet: tredzone::Engine::CoreSet {
-	TestCoreSet() {
-		for(int i = 0, coreCount = std::min(16, (int)tredzone::cpuGetCount()); i < coreCount; ++i) {
-			set((tredzone::Engine::CoreId)i);
-		}
-	}
-};
 
 void testTimerModule(const char*) {
 	TestCoreSet coreSet;
 	Engine::StartSequence startSequence(coreSet);
-	startSequence.addActor<TestTimerModule>(0, Actor::property_type::Collection());
+	startSequence.addActor<TestTimerModule>(testCore(0), Actor::property_type::Collection());
 	Engine engine(startSequence);
 }
 
@@ -208,8 +203,8 @@ private:
 
 void testDateTimeClass(const char*) {
 	Engine::StartSequence startSequence;
-	startSequence.addServiceActor<service::Timer, timer::TimerActor>(0);
-	startSequence.addActor<TimerEventTestActor>(0);
+	startSequence.addServiceActor<service::Timer, timer::TimerActor>(testCore(0));
+	startSequence.addActor<TimerEventTestActor>(testCore(0));
 	Engine engine(startSequence);
 }
 
