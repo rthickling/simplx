@@ -35,7 +35,8 @@ just run hello_actor.bin
 
 ## Build and test
 
-Use the root justfile with GCC 16.2 selected (the default executable name is `g++-16`):
+Use the root justfile (it imports `format.just`, `isolation.just` and
+`docker.just`) with GCC 16.2 selected (the default executable name is `g++-16`):
 
 ```sh
 just deps
@@ -43,6 +44,7 @@ just build-debug
 just test-debug
 just test-release
 just check
+just format                  # optional: clang-format sources
 ```
 
 `just check` builds and tests Debug and Release. Builds include all tutorials,

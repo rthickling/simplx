@@ -4,6 +4,7 @@ The suite starts two dedicated Simplx workers on separate physical cores and a t
 
 ## Build and run with `just`
 
+Isolation recipes live in `isolation.just` (imported by the root justfile).
 From the Simplx root, run `just test-isolation` to build the suite in `build/isolation` and run all four tests with ordinary scheduling. The launcher prefers two eligible isolated workers plus a housekeeping core. If there is no valid isolated layout, it tries three housekeeping cores. Check the reported `mode` and `cpus` to see what it selected.
 
 ```sh

@@ -4,6 +4,10 @@ export CXX := env_var_or_default("CXX", "g++-16")
 export CMAKE_BUILD_PARALLEL_LEVEL := env_var_or_default("CMAKE_BUILD_PARALLEL_LEVEL", "2")
 export CTEST_TIMEOUT := env_var_or_default("CTEST_TIMEOUT", "300")
 
+import 'format.just'
+import 'isolation.just'
+import 'docker.just'
+
 # Show available commands.
 default:
     @just --list
@@ -39,18 +43,6 @@ test-debug: (test "debug")
 # Build and test Release.
 test-release: (test "release")
 
-# Build the standalone Linux CPU isolation tests.
-isolation-build:
-    cmake -S . -B build/isolation -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DSIMPLX_BUILD_TUTORIALS=OFF -DSIMPLX_BUILD_ISOLATION_TESTS=ON
-    cmake --build build/isolation --target simplx_isolation_tests --parallel
-
-# Build and run the CPU isolation suite. Pass launcher options after --.
-[positional-arguments]
-test-isolation *options: isolation-build
-    #!/usr/bin/env bash
-    if [[ ${1-} == -- ]]; then shift; fi
-    exec python3 tools/isolation.py run --build build/isolation "$@"
-
 # Build one named CMake target, e.g. just target pingpong.bin debug.
 target name mode="debug": (configure mode)
     cmake --build --preset "{{ mode }}" --target "{{ name }}" --parallel
@@ -63,40 +55,3 @@ run name="pingpong.bin" mode="debug": (target name mode)
 debug name="pingpong.bin": (target name "debug")
     gdb --args "./build/debug/bin/{{ name }}"
 
-# Build a cached test image: gcc (16.2) or clang (22).
-[positional-arguments]
-docker-build compiler="gcc":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    case "$1" in
-        gcc) base="${SIMPLX_GCC_IMAGE:-gcc:16.2.0-trixie}" ;;
-        clang) base="${SIMPLX_CLANG_IMAGE:-silkeh/clang:22-trixie}" ;;
-        *) echo "Unknown compiler: $1 (expected gcc or clang)" >&2; exit 2 ;;
-    esac
-    docker build --pull --build-arg "COMPILER_IMAGE=$base" \
-        --tag "simplx-test:$1" --file test/Dockerfile test
-
-# Build and test one compiler/configuration; host needs only Docker, Git and just.
-[positional-arguments]
-docker-test compiler="gcc" mode="debug": (docker-build compiler) deps
-    #!/usr/bin/env bash
-    set -euo pipefail
-    case "$1" in
-        gcc) cc=gcc; cxx=g++ ;;
-        clang) cc=clang; cxx=clang++ ;;
-        *) echo "Unknown compiler: $1 (expected gcc or clang)" >&2; exit 2 ;;
-    esac
-    case "$2" in
-        debug|release|relwithdebinfo) ;;
-        *) echo "Unknown configuration: $2" >&2; exit 2 ;;
-    esac
-    mkdir -p "build/docker/$1"
-    docker run --rm --user "$(id -u):$(id -g)" \
-        --mount "type=bind,src=$PWD,dst=/simplx,readonly" \
-        --mount "type=bind,src=$PWD/build/docker/$1,dst=/simplx/build" \
-        --workdir /simplx --env "CC=$cc" --env "CXX=$cxx" \
-        --env CMAKE_BUILD_PARALLEL_LEVEL --env CTEST_TIMEOUT \
-        "simplx-test:$1" bash -euc '"$CXX" --version; cmake --version; just test "$1"' bash "$2"
-
-# Run GCC and Clang, each in Debug and Release (stop on the first failure).
-docker-check: (docker-test "gcc" "debug") (docker-test "gcc" "release") (docker-test "clang" "debug") (docker-test "clang" "release")

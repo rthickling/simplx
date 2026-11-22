@@ -1,14 +1,17 @@
 # Building and debugging with just
 
 Run commands from the repository root. `just` also finds the root justfile when
-invoked from a subdirectory. The new root CMake project builds the engine once
-and shares it between the tests and tutorials. It does not invoke the historical
-per-tutorial CMakeLists.txt files or `test/build-and-test.sh`.
+invoked from a subdirectory. The root justfile imports focused recipe files:
+`format.just`, `isolation.just` and `docker.just`. Recipe names stay top-level
+(`just format`, `just docker-test`, …). The root CMake project builds the engine
+once and shares it between the tests and tutorials. It does not invoke the
+historical per-tutorial CMakeLists.txt files or `test/build-and-test.sh`.
 
 ## Requirements
 
 - Linux, GCC 16.2 or Clang 22 with C++26 mode support.
 - CMake 3.28 or newer, Ninja, Git and just. GDB is needed for `just debug`.
+- `clang-format` for `just format` (uses the repo `.clang-format`).
 - The public Google Test submodule. Initialise it with `just deps`.
 
 By default the justfile selects `g++-16`. If your compiler has another name:
@@ -26,6 +29,7 @@ enabled when the selected compiler accepts `-freflection`.
 ```sh
 just                         # List recipes
 just deps                    # Initialise public Google Test only
+just format                  # clang-format tracked C/C++ sources (skips thirdparty/)
 just build                   # Debug: libraries, 15 test executables, 17 tutorials
 just build-release           # Optimised Release build
 just test                    # Build Debug, then run CTest
@@ -35,6 +39,8 @@ just build relwithdebinfo    # Optimisation plus debug information
 just target pingpong.bin     # Build only pingpong and its dependencies in Debug
 just run pingpong.bin        # Build and run pingpong
 just debug pingpong.bin      # Build pingpong in Debug, then launch GDB
+just isolation-build         # Build opt-in CPU isolation suite (see doc/cpu-isolation.md)
+just test-isolation          # Build and run isolation suite
 ```
 
 `build-debug` and `test-debug` are explicit aliases for the default configuration.
@@ -98,7 +104,8 @@ recipe used locally. A failure in any job fails the workflow.
 
 ## Docker compiler matrix
 
-`test/docker_test.sh` has been replaced by these root justfile recipes:
+Docker recipes live in `docker.just` (imported by the root justfile).
+`test/docker_test.sh` has been replaced by:
 
 ```sh
 just docker-check                 # GCC + Clang, Debug + Release
@@ -145,7 +152,7 @@ Builds persist at `build/docker/<compiler>/<configuration>` (for example,
 libraries and are intended to run inside that container. GitHub Actions uses
 fresh workspaces, so its existing preset paths need no additional isolation.
 
-Compiler matrix changes should update both the justfile's image defaults and
+Compiler matrix changes should update both `docker.just`'s image defaults and
 the GitHub Actions matrix. Test timeouts and parallelism use the same
 `CTEST_TIMEOUT` and `CMAKE_BUILD_PARALLEL_LEVEL` environment overrides as native
 builds. Docker correctness tests are separate from latency measurements on
